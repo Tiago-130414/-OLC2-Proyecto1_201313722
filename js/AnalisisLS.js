@@ -75,9 +75,9 @@ var AnalisisLS = (function(){
 var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o};
 var parser = {trace: function trace () { },
 yy: {},
-symbols_: {"error":2,"INICIO":3,"Cadena":4,"EOF":5,"$accept":0,"$end":1},
+symbols_: {"error":2,"INICIO":3,"Cadena":4,"EOF":5,"LISTA_CADENAS":6,"$accept":0,"$end":1},
 terminals_: {2:"error",4:"Cadena",5:"EOF"},
-productions_: [0,[3,2]],
+productions_: [0,[3,2],[6,0]],
 performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
 /* this == yyval */
 
@@ -576,20 +576,128 @@ case 4:  return 4;
 break;
 case 5:  return 4; 
 break;
-case 6:return 'Decimal';
+case 6:  return 'T_Number';  
 break;
-case 7:return 'Entero';
+case 7:  return 'T_Boolean'; 
 break;
-case 8:return 'Identificador';
+case 8:  return 'T_String';  
 break;
-case 9:  return 5; 
+case 9:  return 'T_Type';    
 break;
-case 10:console.error("error lexico: " + yy_.yytext)
+case 10:  return 'T_Void';    
+break;
+case 11:  return 'R_Let';   
+break;
+case 12:  return 'R_Const'; 
+break;
+case 13:  return 'R_Array'; 
+break;
+case 14:  return 'R_Push';  
+break;
+case 15:  return 'R_Pop';   
+break;
+case 16:  return 'R_Length';
+break;
+case 17:return 'R_If';
+break;
+case 18:return 'R_Else';
+break;
+case 19:return 'R_Switch';
+break;
+case 20:return 'R_Case';
+break;
+case 21:return 'R_Default';
+break;
+case 22:return 'R_For';
+break;
+case 23:return 'R_In';
+break;
+case 24:return 'R_Of';
+break;
+case 25:return 'R_While';
+break;
+case 26:return 'R_Do';
+break;
+case 27:return 'R_Break';
+break;
+case 28:return 'R_Continue';
+break;
+case 29:return 'R_Return';
+break;
+case 30:return 'R_Console';
+break;
+case 31:return 'R_Log';
+break;
+case 32:return 'OP_Incremento';
+break;
+case 33:return 'OP_Decremento';
+break;
+case 34:return 'OP_Mas';
+break;
+case 35:return 'OP_Menos';
+break;
+case 36:return 'OP_Multiplicacion';
+break;
+case 37:return 'OP_Division';
+break;
+case 38:return 'OP_Exponenciacion';
+break;
+case 39:return 'OP_Modulo';
+break;
+case 40:return 'REL_MenorIgualQue';
+break;
+case 41:return 'REL_MayorIgualQue';
+break;
+case 42:return 'REL_IgualIgual';
+break;
+case 43:return 'S_Igual';
+break;
+case 44:return 'REL_Distinto';
+break;
+case 45:return 'REL_MenorQue';
+break;
+case 46:return 'REL_MayorQue';
+break;
+case 47:return 'LOG_Not';
+break;
+case 48:return 'LOG_Concatenar';
+break;
+case 49:return 'LOG_OR';
+break;
+case 50:return 'S_DosPuntos';
+break;
+case 51:return 'S_PuntoComa';
+break;
+case 52:return 'S_LlaveAbre';
+break;
+case 53:return 'S_LlaveCierra';
+break;
+case 54:return 'S_ParentesisAbre';
+break;
+case 55:return 'S_ParentesisCierra';
+break;
+case 56:return 'S_Punto';
+break;
+case 57:return 'S_ComillaSimple';
+break;
+case 58:return 'S_Coma';
+break;
+case 59:return 'S_ComillaDoble';
+break;
+case 60:return 'Decimal';
+break;
+case 61:return 'Entero';
+break;
+case 62:return 'Identificador';
+break;
+case 63:  return 5; 
+break;
+case 64:console.error("error lexico: " + yy_.yytext)
 break;
 }
 },
-rules: [/^(?:\s+)/,/^(?:\/\/.*)/,/^(?:[/][*][^*]*[*]+([^/*][^*]*[*]+)*[/])/,/^(?:[\"][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\"])/,/^(?:[\'][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\'])/,/^(?:[\`][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\`])/,/^(?:[0-9]+(\.[0-9]+)?\b)/,/^(?:[0-9]+\b)/,/^(?:([a-zA-Z_])[a-zA-Z0-9_]*)/,/^(?:$)/,/^(?:.)/],
-conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10],"inclusive":true}}
+rules: [/^(?:\s+)/,/^(?:\/\/.*)/,/^(?:[/][*][^*]*[*]+([^/*][^*]*[*]+)*[/])/,/^(?:[\"][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\"])/,/^(?:[\'][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\'])/,/^(?:[\`][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\`])/,/^(?:number\b)/,/^(?:boolean\b)/,/^(?:string\b)/,/^(?:type\b)/,/^(?:void\b)/,/^(?:let\b)/,/^(?:const\b)/,/^(?:Array\b)/,/^(?:push\b)/,/^(?:pop\b)/,/^(?:length\b)/,/^(?:if\b)/,/^(?:else\b)/,/^(?:switch\b)/,/^(?:case\b)/,/^(?:default\b)/,/^(?:for\b)/,/^(?:in\b)/,/^(?:of\b)/,/^(?:while\b)/,/^(?:do\b)/,/^(?:break\b)/,/^(?:continue\b)/,/^(?:return\b)/,/^(?:console\b)/,/^(?:log\b)/,/^(?:\+\+)/,/^(?:--)/,/^(?:\+)/,/^(?:-)/,/^(?:\*)/,/^(?:\/)/,/^(?:\*\*)/,/^(?:%)/,/^(?:<=)/,/^(?:>=)/,/^(?:==)/,/^(?:=)/,/^(?:!=)/,/^(?:<)/,/^(?:>)/,/^(?:!)/,/^(?:&&)/,/^(?:\|\|)/,/^(?::)/,/^(?:;)/,/^(?:\{)/,/^(?:\})/,/^(?:\()/,/^(?:\))/,/^(?:\.)/,/^(?:\\')/,/^(?:,)/,/^(?:")/,/^(?:[0-9]+(\.[0-9]+)?\b)/,/^(?:[0-9]+\b)/,/^(?:([a-zA-Z_])[a-zA-Z0-9_]*)/,/^(?:$)/,/^(?:.)/],
+conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64],"inclusive":true}}
 });
 return lexer;
 })();

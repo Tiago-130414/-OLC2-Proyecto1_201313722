@@ -67,7 +67,7 @@
     <link href="codemirror/lib/codemirror.css" rel="stylesheet" />
     <script src="codemirror/mode/javascript/javascript.js"></script>
     <script src="codemirror/addon/hint/javascript-hint.js"></script>
-    <link href="codemirror/theme/material-ocean.css" rel="stylesheet" />
+    <link href="codemirror/theme/night.css" rel="stylesheet" />
     <style>
       .my-custom-scrollbar {
         position: relative;
@@ -108,7 +108,7 @@
               <ul class="dropdown-menu">
                 <li class="dropdown-header">Menu</li>
                 <li>
-                  <a href="#" id="Traducir" onclick="analizarTexto();"
+                  <a href="#" id="Traducir" onclick="AnalizarCodigo();"
                     >Traducir</a
                   >
                 </li>
@@ -337,9 +337,7 @@
                             </tr>
                             <tr>
                               <th scope="row">6</th>
-                              <td>
-                                Ja
-                              </td>
+                              <td>Ja</td>
                               <td>Thornton</td>
                               <td>@fat</td>
                             </tr>
@@ -390,49 +388,10 @@
     <!-- Scripts -->
     <!-- Loads Bootstrap Main JS -->
     <script src="bootstrap/js/bootstrap.min.js"></script>
-    <script>
-      var Codigo = CodeMirror.fromTextArea(
-        document.getElementById("codigoTXT"),
-        {
-          mode: "javascript",
-          theme: "material-ocean",
-          lineNumbers: true,
-          hint: true,
-        }
-      );
-      Codigo.setSize("500", "500");
-    </script>
-    <script>
-      var TraduccionTP = CodeMirror.fromTextArea(
-        document.getElementById("traduccion"),
-        {
-          mode: "javascript",
-          theme: "material-ocean",
-          lineNumbers: true,
-          hint: true,
-        }
-      );
-      TraduccionTP.setSize("500", "500");
-    </script>
-    <script>
-      var Consola = CodeMirror.fromTextArea(
-        document.getElementById("salidaTxt"),
-        {
-          mode: "javascript",
-          theme: "material-ocean",
-          lineNumbers: true,
-          hint: true,
-        }
-      );
-      Consola.setSize("1000", "440");
-    </script>
-
-    <script>
-      function analizarTexto() {
-        console.log(Codigo.getValue());
-      }
-    </script>
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
     <script src="bootstrap/js/ie10-viewport-bug-workaround.js"></script>
+    <script src="js/AnalisisLS.js"></script>
+    <script src="js/Manipular_Interfaz.js"></script>
+    <script src="js/Modificar_TextArea_CodeMirror.js"></script>
   </body>
 </html>
