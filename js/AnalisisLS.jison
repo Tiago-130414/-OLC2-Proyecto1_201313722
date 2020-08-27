@@ -23,7 +23,7 @@
 "boolean"                                           {  return 'T_Boolean'; }
 "string"                                            {  return 'T_String';  }
 "type"                                              {  return 'T_Type';    }
-"void"                                              {  return 'T_Void';    }
+"void"                                              {  return 'T_Void';    }                              
 
 /*PALABRAS RESERVADAS*/
 
@@ -33,6 +33,7 @@
 "push"                                              {  return 'R_Push';  }
 "pop"                                               {  return 'R_Pop';   }
 "length"                                            {  return 'R_Length';}
+"function"                                          {  return 'R_Funcion';}
 
 /*ESTRUCTURAS DE CONTROL*/
 "if"                                                {return 'R_If';}
@@ -50,6 +51,8 @@
 "return"                                            {return 'R_Return';}
 "console"                                           {return 'R_Console';}
 "log"                                               {return 'R_Log';}
+"true"                                              {return 'R_True';}    
+"false"                                             {return 'R_False';}
 
 /*  EXPRESION */
 
@@ -90,6 +93,7 @@
 "\'"                                                {return 'S_ComillaSimple';}
 ","                                                 {return 'S_Coma';}
 "\""                                                {return 'S_ComillaDoble';}
+"?"                                                 {return 'S_Interrogacion';}
 
 /*  NUMEROS */
 [0-9]+("."[0-9]+)?\b                               {return 'Decimal';}
@@ -98,15 +102,77 @@
 /*  IDENTIFICADORES */
 ([a-zA-Z_])[a-zA-Z0-9_]*                           {return 'Identificador';}
 <<EOF>>                                            {  return 'EOF'; }
-.     
-                                             {console.error("error lexico: " + yytext)}
+.                                                  {console.error("error lexico: " + yytext)}
 /lex
+//PRECEDENCIA DE OPERADORES
+//prescedencia operadores logicos
+%left 'LOG_Concatenar' 'LOG_OR'
+//prescedencia operadores relcionales
+%left 'REL_IgualIgual' 'REL_Distinto' 'REL_MayorIgualQue' 'REL_MayorQue' 'REL_MenorIgualQue' 'REL_MenorQue'
+//prescedencia operadores aritmeticos
+%left 'OP_Mas' 'OP_Menos'
+%left 'OP_Multiplicacion' 'OP_Division' 
+%left 'OP_Potencia' 'OP_Modulo'
+%left UMINUS PRUEBA
 %start INICIO
 
 %%
-INICIO : Cadena EOF{console.log($$);}
+INICIO : LISTA_CONTENIDO EOF{console.log($$);}
 ;
 
-LISTA_CADENAS : 
-
+LISTA_CONTENIDO : LISTA_CONTENIDO CONTENIDO {$$ = $1 + $2}
+                | CONTENIDO {$$=$1}
 ;
+
+//aqui se agregara el resto de contenido que puede venir en un archivo
+CONTENIDO : FUNCIONES;
+
+FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre S_LlaveCierra {$$ = $1 + $2 +$3 +$4 +$5 +$6 }
+          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre S_LlaveCierra {$$ = $1 + $2 +$3 +$4 +$5 +$6 }
+          | R_Let Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre S_LlaveCierra S_PuntoComa {$$ = $1 + $2 +$3 +$4 +$5 +$6 +$7+$8+$9}
+          | R_Const Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre S_LlaveCierra S_PuntoComa
+          | VARIABLES
+;
+
+VARIABLES : R_Let Identificador COMPLEMENTO_VARIABLES S_PuntoComa
+          | R_Const Identificador COMPLEMENTO_VARIABLES S_PuntoComa
+;
+
+COMPLEMENTO_VARIABLES : S_DosPuntos TIPOS_DE_DATO
+                      | S_DosPuntos TIPOS_DE_DATO S_Igual CONTENIDO_VARIABLE
+                      |
+;
+
+CONTENIDO_VARIABLE : Cadena
+                   | Entero
+                   | Decimal
+                   | R_True
+                   | R_False
+//FALTAN EXPRESIONES ARITMETICAS,RELACIONALES,LOGICAS
+;
+
+PARAM: LISTA_PARAMETROS
+     |
+;
+
+LISTA_PARAMETROS : LISTA_PARAMETROS S_Coma PARAMETROS  {$$ = $1 + $2}
+                 | PARAMETROS {$$=$1}              
+;
+
+PARAMETROS : Identificador S_DosPuntos TIPOS_DE_DATO {$$ = $1 + $2 +$3}
+           | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual CONTENIDO_VARIABLE {$$ = $1 + $2 +$3 +$4}
+           | Identificador S_Interrogacion S_DosPuntos TIPOS_DE_DATO {$$ = $1 + $2 +$3 +$4}
+;
+
+TIPOS_DE_DATO : T_Number
+              | T_Boolean
+              | T_String
+              | T_Void
+;
+//agrega tipos de dato a funciones anonimas
+TIPAR_FUNCION : S_DosPuntos TIPOS_DE_DATO
+              |
+;
+
+
+
