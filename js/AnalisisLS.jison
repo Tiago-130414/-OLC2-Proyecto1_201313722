@@ -12,9 +12,9 @@
 [/][*][^*]*[*]+([^/*][^*]*[*]+)*[/] {/*comentario multilinea*/}
 
 /*  CADENAS  */
-[\"][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\"]           {  return 'Cadena'; }
-[\'][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\']           {  return 'Cadena'; }
-[\`][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\`]           {  return 'Cadena'; }
+[\"][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\"]            {  return 'Cadena'; }
+[\'][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\']            {  return 'Cadena'; }
+[\`][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\`]            {  return 'Cadena'; }
 
 
 /*TIPOS DE DATOS*/
@@ -96,13 +96,13 @@
 "?"                                                 {return 'S_Interrogacion';}
 
 /*  NUMEROS */
-[0-9]+("."[0-9]+)?\b                               {return 'Decimal';}
-[0-9]+\b                                           {return 'Entero';}
+[0-9]+("."[0-9]+)?\b                                {return 'Decimal';}
+[0-9]+\b                                            {return 'Entero';}
 
 /*  IDENTIFICADORES */
-([a-zA-Z_])[a-zA-Z0-9_]*                           {return 'Identificador';}
-<<EOF>>                                            {  return 'EOF'; }
-.                                                  {console.error("error lexico: " + yytext)}
+([a-zA-Z_])[a-zA-Z0-9_]*                            {return 'Identificador';}
+<<EOF>>                                             {  return 'EOF'; }
+.                                                   {console.error("error lexico: " + yytext)}
 /lex
 //PRECEDENCIA DE OPERADORES
 //prescedencia operadores logicos
@@ -117,7 +117,11 @@
 %start INICIO
 
 %%
-INICIO : LISTA_CONTENIDO EOF{console.log($$);}
+INICIO : CONT EOF{console.log($$);}
+;
+
+CONT: LISTA_CONTENIDO
+    |
 ;
 
 LISTA_CONTENIDO : LISTA_CONTENIDO CONTENIDO {$$ = $1 + $2}
@@ -125,32 +129,80 @@ LISTA_CONTENIDO : LISTA_CONTENIDO CONTENIDO {$$ = $1 + $2}
 ;
 
 //aqui se agregara el resto de contenido que puede venir en un archivo
-CONTENIDO : FUNCIONES;
-
-FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre S_LlaveCierra {$$ = $1 + $2 +$3 +$4 +$5 +$6 }
-          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre S_LlaveCierra {$$ = $1 + $2 +$3 +$4 +$5 +$6 }
-          | R_Let Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre S_LlaveCierra S_PuntoComa {$$ = $1 + $2 +$3 +$4 +$5 +$6 +$7+$8+$9}
-          | R_Const Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre S_LlaveCierra S_PuntoComa
+CONTENIDO : FUNCIONES
+          | ESTRUCTURAS_DE_CONTROL
           | VARIABLES
 ;
 
+FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre CONT S_LlaveCierra {$$ = $1 + $2 +$3 +$4 +$5 +$6 }
+          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre CONT S_LlaveCierra {$$ = $1 + $2 +$3 +$4 +$5 +$6 }
+          | R_Let Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre CONT S_LlaveCierra S_PuntoComa {$$ = $1 + $2 +$3 +$4 +$5 +$6 +$7+$8+$9}
+          | R_Const Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre CONT S_LlaveCierra S_PuntoComa
+;
+
+ESTRUCTURAS_DE_CONTROL: LISTADO_IF ELSE
+                      | SWITCH
+                      | IMPRIMIR
+                      | WHILE
+                      | DO_WHILE
+                      | R_Break S_PuntoComa
+                      | R_Continue S_PuntoComa
+                      | R_Return S_PuntoComa
+;
+/*---------------------------------------------IF---------------------------------------------------------*/
+LISTADO_IF : LISTADO_IF R_Else IF
+           | IF
+;
+
+IF : R_If S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre CONT S_LlaveCierra
+;
+
+ELSE : R_Else S_LlaveAbre CONT S_LlaveCierra
+     |
+;
+
+/*---------------------------------------------SWITCH---------------------------------------------------------*/
+SWITCH : R_Switch S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre CASE DEFINIR_DEFAULT S_LlaveCierra
+;
+
+CASE : LISTA_CASE
+     |
+;
+
+LISTA_CASE: LISTA_CASE DEFINIR_CASE
+          | DEFINIR_CASE
+;
+
+DEFINIR_CASE:R_Case EXPRESION_G S_DosPuntos CONT
+;
+
+DEFINIR_DEFAULT: R_Default S_DosPuntos CONT
+               |
+;
+/*---------------------------------------------IMPRIMIR---------------------------------------------------------*/
+IMPRIMIR: R_Console S_Punto R_Log S_ParentesisAbre FUNC S_ParentesisCierra S_PuntoComa
+;
+
+FUNC: EXPRESION_G
+    |
+;
+/*---------------------------------------------WHILE---------------------------------------------------------*/
+WHILE: R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre CONT S_LlaveCierra
+;
+/*---------------------------------------------DO-WHILE---------------------------------------------------------*/
+DO_WHILE: R_Do S_LlaveAbre CONT S_LlaveCierra R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_PuntoComa
+;
+/*---------------------------------------------VARIABLES---------------------------------------------------------*/
 VARIABLES : R_Let Identificador COMPLEMENTO_VARIABLES S_PuntoComa
           | R_Const Identificador COMPLEMENTO_VARIABLES S_PuntoComa
 ;
 
 COMPLEMENTO_VARIABLES : S_DosPuntos TIPOS_DE_DATO
-                      | S_DosPuntos TIPOS_DE_DATO S_Igual CONTENIDO_VARIABLE
+                      | S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G
+                      | S_Igual EXPRESION_G
                       |
 ;
-
-CONTENIDO_VARIABLE : Cadena
-                   | Entero
-                   | Decimal
-                   | R_True
-                   | R_False
-//FALTAN EXPRESIONES ARITMETICAS,RELACIONALES,LOGICAS
-;
-
+/*---------------------------------------------PARAMETROS---------------------------------------------------------*/
 PARAM: LISTA_PARAMETROS
      |
 ;
@@ -160,10 +212,10 @@ LISTA_PARAMETROS : LISTA_PARAMETROS S_Coma PARAMETROS  {$$ = $1 + $2}
 ;
 
 PARAMETROS : Identificador S_DosPuntos TIPOS_DE_DATO {$$ = $1 + $2 +$3}
-           | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual CONTENIDO_VARIABLE {$$ = $1 + $2 +$3 +$4}
+           | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G {$$ = $1 + $2 +$3 +$4}
            | Identificador S_Interrogacion S_DosPuntos TIPOS_DE_DATO {$$ = $1 + $2 +$3 +$4}
 ;
-
+/*---------------------------------------------TIPOS DE DATO---------------------------------------------------------*/
 TIPOS_DE_DATO : T_Number
               | T_Boolean
               | T_String
@@ -172,6 +224,40 @@ TIPOS_DE_DATO : T_Number
 //agrega tipos de dato a funciones anonimas
 TIPAR_FUNCION : S_DosPuntos TIPOS_DE_DATO
               |
+;
+/*---------------------------------------------EXPRESIONES---------------------------------------------------------*/
+EXPRESION_G 
+    : EXPRESION_G LOG_Concatenar EXPRESION_G                                                     { $$ = $1 + $2 + $3; }
+    | EXPRESION_G LOG_OR EXPRESION_G                                                             { $$ = $1 + $2 + $3; }
+    | EXPRESION_G REL_IgualIgual EXPRESION_G                                                     { $$ = $1 + $2 + $3; }   
+    | EXPRESION_G REL_MayorIgualQue EXPRESION_G                                                  { $$ = $1 + $2 + $3; }
+    | EXPRESION_G REL_MayorQue EXPRESION_G                                                       { $$ = $1 + $2 + $3; }
+    | EXPRESION_G REL_MenorIgualQue EXPRESION_G                                                  { $$ = $1 + $2 + $3; }
+    | EXPRESION_G REL_MenorQue EXPRESION_G                                                       { $$ = $1 + $2 + $3; }
+    | EXPRESION_G REL_Distinto EXPRESION_G                                                       { $$ = $1 + $2 + $3; }       
+    | EXPRESION_G OP_Mas EXPRESION_G                                                             { $$ = $1 + $2 + $3; }
+    | EXPRESION_G OP_Menos EXPRESION_G                                                           { $$ = $1 + $2 + $3; }
+    | EXPRESION_G OP_Multiplicacion EXPRESION_G                                                  { $$ = $1 + $2 + $3; }
+    | EXPRESION_G OP_Division EXPRESION_G                                                        { $$ = $1 + $2 + $3; }   
+    | EXPRESION_G OP_Potencia EXPRESION_G                                                        { $$ = $1 + $2 + $3; }
+    | EXPRESION_G OP_Modulo EXPRESION_G                                                          { $$ = $1 + $2 + $3; }
+    | CONTENIDO_EXPRESION OP_Decremento %prec PRUEBA                                             { $$ = $1 + $2; }
+    | CONTENIDO_EXPRESION OP_Incremento %prec PRUEBA                                             { $$ = $1 + $2; }
+    | OP_Decremento CONTENIDO_EXPRESION                                                          { $$ = $1 + $2;}
+    | OP_Incremento CONTENIDO_EXPRESION                                                          { $$ = $1 + $2;}
+    | OP_Menos  CONTENIDO_EXPRESION     %prec UMINUS                                             { $$ = $1 + $2; }
+    | LOG_Not   CONTENIDO_EXPRESION     %prec UMINUS                                             { $$ = $1 + $2; }
+    | CONTENIDO_EXPRESION
+;
+
+ CONTENIDO_EXPRESION
+    : Entero
+    | Decimal
+    | R_True
+    | R_False
+    | S_ParentesisAbre EXPRESION_G S_ParentesisCierra                                            { $$ = $1 + $2 + $3; }
+    | Identificador
+    | Cadena
 ;
 
 
