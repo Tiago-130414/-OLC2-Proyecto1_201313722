@@ -119,7 +119,7 @@
 %%
 INICIO : CONT EOF{console.log($$);}
 ;
-
+/*---------------------------------------------LISTA DE CONTENIDO GLOBAL---------------------------------------------------------*/
 CONT: LISTA_CONTENIDO
     |
 ;
@@ -128,42 +128,64 @@ LISTA_CONTENIDO : LISTA_CONTENIDO CONTENIDO {$$ = $1 + $2}
                 | CONTENIDO {$$=$1}
 ;
 
-//aqui se agregara el resto de contenido que puede venir en un archivo
+//CONTENIDO GLOBAL
 CONTENIDO : FUNCIONES
           | ESTRUCTURAS_DE_CONTROL
-          | VARIABLES
 ;
-
+/*---------------------------------------------DEFINICION DE FUNCIONES---------------------------------------------------------*/
 FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre CONT S_LlaveCierra {$$ = $1 + $2 +$3 +$4 +$5 +$6 }
           | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre CONT S_LlaveCierra {$$ = $1 + $2 +$3 +$4 +$5 +$6 }
           | R_Let Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre CONT S_LlaveCierra S_PuntoComa {$$ = $1 + $2 +$3 +$4 +$5 +$6 +$7+$8+$9}
           | R_Const Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre CONT S_LlaveCierra S_PuntoComa
 ;
+/*---------------------------------------------LISTADO DE ESTRUCTURAS DE CONTROL---------------------------------------------------------*/
+EDD:LISTADO_ESTRUCTURAS
+   |
+;
 
-ESTRUCTURAS_DE_CONTROL: LISTADO_IF ELSE
+LISTADO_ESTRUCTURAS : LISTADO_ESTRUCTURAS ESTRUCTURAS_DE_CONTROL
+                    | ESTRUCTURAS_DE_CONTROL
+;
+
+ESTRUCTURAS_DE_CONTROL: VARIABLES
+                      | ASIGNACION
+                      | LISTADO_IF ELSE
                       | SWITCH
                       | IMPRIMIR
                       | WHILE
                       | DO_WHILE
-                      | R_Break S_PuntoComa
-                      | R_Continue S_PuntoComa
-                      | R_Return S_PuntoComa
+                      | FOR
+                      | FOR_OF
+                      | FOR_IN
+                      | SENTENCIAS_TRANSFERENCIA
+                      | LLAMADA_FUNC
+
 ;
-/*---------------------------------------------IF---------------------------------------------------------*/
+/*--------------------------------------------- SENTENCIAS DE TRANSFERENCIA ---------------------------------------------------------*/
+
+SENTENCIAS_TRANSFERENCIA : R_Break S_PuntoComa
+                         | R_Continue S_PuntoComa
+                         | R_Return S_PuntoComa
+                         | R_Return EXPRESION_G S_PuntoComa
+;
+
+/*--------------------------------------------- LISTADO IF---------------------------------------------------------*/
 LISTADO_IF : LISTADO_IF R_Else IF
            | IF
 ;
 
-IF : R_If S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre CONT S_LlaveCierra
+IF : R_If S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra
 ;
 
-ELSE : R_Else S_LlaveAbre CONT S_LlaveCierra
+ELSE : R_Else S_LlaveAbre EDD S_LlaveCierra
      |
 ;
 
 /*---------------------------------------------SWITCH---------------------------------------------------------*/
 SWITCH : R_Switch S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre CASE DEFINIR_DEFAULT S_LlaveCierra
 ;
+
+/*---------------------------------------------LISTADO DE CASE---------------------------------------------------------*/
 
 CASE : LISTA_CASE
      |
@@ -173,10 +195,11 @@ LISTA_CASE: LISTA_CASE DEFINIR_CASE
           | DEFINIR_CASE
 ;
 
-DEFINIR_CASE:R_Case EXPRESION_G S_DosPuntos CONT
+DEFINIR_CASE:R_Case EXPRESION_G S_DosPuntos EDD
 ;
+/*---------------------------------------------DEFINICION DE DEFAULT---------------------------------------------------------*/
 
-DEFINIR_DEFAULT: R_Default S_DosPuntos CONT
+DEFINIR_DEFAULT: R_Default S_DosPuntos EDD
                |
 ;
 /*---------------------------------------------IMPRIMIR---------------------------------------------------------*/
@@ -187,21 +210,105 @@ FUNC: EXPRESION_G
     |
 ;
 /*---------------------------------------------WHILE---------------------------------------------------------*/
-WHILE: R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre CONT S_LlaveCierra
+WHILE: R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra
 ;
 /*---------------------------------------------DO-WHILE---------------------------------------------------------*/
-DO_WHILE: R_Do S_LlaveAbre CONT S_LlaveCierra R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_PuntoComa
-;
-/*---------------------------------------------VARIABLES---------------------------------------------------------*/
-VARIABLES : R_Let Identificador COMPLEMENTO_VARIABLES S_PuntoComa
-          | R_Const Identificador COMPLEMENTO_VARIABLES S_PuntoComa
+DO_WHILE: R_Do S_LlaveAbre EDD S_LlaveCierra R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_PuntoComa
 ;
 
-COMPLEMENTO_VARIABLES : S_DosPuntos TIPOS_DE_DATO
-                      | S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G
-                      | S_Igual EXPRESION_G
+/*---------------------------------------------FOR---------------------------------------------------------*/
+FOR : R_For S_ParentesisAbre CONT_FOR EXPRESION_G S_PuntoComa FIN_FOR S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra { $$ = $1 + $2 + $3 + $4 + $5 + $6 + $7 + $8 + $9 + $10; } 
+;
+
+CONT_FOR
+    : R_Let Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G S_PuntoComa
+    | R_Let Identificador S_Igual EXPRESION_G S_PuntoComa
+    | Identificador S_PuntoComa
+    | Identificador S_Igual EXPRESION_G S_PuntoComa
+;
+
+FIN_FOR
+    : Identificador S_Igual EXPRESION_G                                                { $$ = $1 + $2 + $3; }
+    | Identificador OP_Incremento
+    | OP_Incremento Identificador
+    | Identificador OP_Decremento
+    | OP_Decremento IdentificadorG                                                                      
+    ;
+/*---------------------------------------------FOR IN---------------------------------------------------------*/
+
+FOR_IN: R_For S_ParentesisAbre CONT_FOR_IN S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra
+;
+
+CONT_FOR_IN : R_Const Identificador R_In Identificador
+            | R_Let Identificador R_In Identificador
+            | Identificador R_In Identificador
+;
+
+
+/*---------------------------------------------FOR OF---------------------------------------------------------*/
+FOR_OF: R_For S_ParentesisAbre CONT_FOR_OF S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra
+;
+
+CONT_FOR_OF : R_Const Identificador R_Of Identificador
+            | R_Let Identificador R_Of Identificador
+            | Identificador R_Of Identificador
+;
+
+/*---------------------------------------------ASIGNACION VARIABLES---------------------------------------------------------*/
+
+ASIGNACION : Identificador S_Igual EXPRESION_G COMPLETAR_ASIGNACION S_PuntoComa
+           | Identificador OP_Incremento COMPLETAR_ASIGNACION S_PuntoComa
+           | OP_Incremento Identificador COMPLETAR_ASIGNACION S_PuntoComa
+           | Identificador OP_Decremento COMPLETAR_ASIGNACION S_PuntoComa
+           | OP_Decremento Identificador COMPLETAR_ASIGNACION S_PuntoComa
+;
+
+COMPLETAR_ASIGNACION : LISTADO_ASIGNACION
                       |
 ;
+
+LISTADO_ASIGNACION: LISTADO_ASIGNACION  CONTENIDO_ASIGNACION
+                  | CONTENIDO_ASIGNACION
+;
+
+CONTENIDO_ASIGNACION: S_Coma Identificador S_Igual EXPRESION_G
+                    | S_Coma Identificador OP_Incremento
+                    | S_Coma OP_Incremento Identificador
+                    | S_Coma Identificador OP_Decremento
+                    | S_Coma OP_Decremento Identificador
+;
+
+
+/*---------------------------------------------VARIABLES---------------------------------------------------------*/
+
+VARIABLES : R_Let LISTADO_VAR S_PuntoComa
+          | R_Const LISTADO_VAR S_PuntoComa
+;
+
+/*---------------------------------------------LISTADO VARIABLES---------------------------------------------------------*/
+
+LISTADO_VAR : LISTADO_VAR S_Coma CONT_VAR
+            | CONT_VAR
+;
+/*--------------------------------------------- DEFINICION DE VARIABLES---------------------------------------------------------*/
+
+CONT_VAR: Identificador
+        | Identificador S_DosPuntos TIPOS_DE_DATO
+        | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G
+        | Identificador S_Igual EXPRESION_G
+;
+/*---------------------------------------------LLAMADAS A FUNCION---------------------------------------------------------*/
+
+LLAMADA_FUNC
+    : Identificador S_ParentesisAbre PARAMETROS_FUNC S_ParentesisCierra S_PuntoComa {$$ = $1 + $2 + $3 + $4 + $5;}
+;
+
+PARAMETROS_FUNC
+    : PARAMETROS_FUNC S_Coma EXPRESION_G {$$ = $1 + $2 + $3;}
+    | EXPRESION_G
+    | {$$='';}
+;
+
 /*---------------------------------------------PARAMETROS---------------------------------------------------------*/
 PARAM: LISTA_PARAMETROS
      |
@@ -255,10 +362,14 @@ EXPRESION_G
     | Decimal
     | R_True
     | R_False
+    | Identificador S_ParentesisAbre S_ParentesisCierra                                          { $$ = $1 + $2 + $3; }
+    | Identificador S_ParentesisAbre OPCIONAL S_ParentesisCierra                                 { $$ = $1 + $2 + $3 + $4; }
     | S_ParentesisAbre EXPRESION_G S_ParentesisCierra                                            { $$ = $1 + $2 + $3; }
     | Identificador
     | Cadena
 ;
 
-
-
+OPCIONAL 
+    : OPCIONAL S_Coma EXPRESION_G                                                                { $$ = $1 + $2 + $3; }
+    |EXPRESION_G    
+; 
