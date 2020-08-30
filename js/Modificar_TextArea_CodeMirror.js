@@ -1,6 +1,7 @@
 var Consola = CodeMirror.fromTextArea(document.getElementById("salidaTxt"), {
   mode: "javascript",
   theme: "material-palenight",
+  styleActiveLine: true,
   lineNumbers: true,
   matchBrackets: true,
   continueComments: "Enter",
@@ -13,6 +14,7 @@ var TraduccionTP = CodeMirror.fromTextArea(
   {
     mode: "javascript",
     theme: "material-palenight",
+    styleActiveLine: true,
     lineNumbers: true,
     matchBrackets: true,
     continueComments: "Enter",
@@ -24,6 +26,7 @@ TraduccionTP.setSize("500", "500");
 var Codigo = CodeMirror.fromTextArea(document.getElementById("codigoTXT"), {
   mode: "javascript",
   theme: "material-palenight",
+  styleActiveLine: true,
   lineNumbers: true,
   matchBrackets: true,
   continueComments: "Enter",

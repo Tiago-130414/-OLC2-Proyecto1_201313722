@@ -13,8 +13,8 @@
 
 /*  CADENAS  */
 [\"][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\"]            {  return 'Cadena'; }
-[\'][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\']            {  return 'Cadena'; }
-[\`][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\`]            {  return 'Cadena'; }
+[\'][^\\\']*([\\][\\\'ntr][^\\\']*)*[\']            {  return 'Cadena'; }
+[\`][^\\\`]*([\\][\\\`ntr][^\\\`]*)*[\`]            {  return 'Cadena'; }
 
 
 /*TIPOS DE DATOS*/
@@ -29,7 +29,7 @@
 
 "let"                                               {  return 'R_Let';   }
 "const"                                             {  return 'R_Const'; }
-"Array"                                             {  return 'R_Array'; }                }
+"Array"                                             {  return 'R_Array'; }
 "push"                                              {  return 'R_Push';  }
 "pop"                                               {  return 'R_Pop';   }
 "length"                                            {  return 'R_Length';}
@@ -53,6 +53,7 @@
 "log"                                               {return 'R_Log';}
 "true"                                              {return 'R_True';}    
 "false"                                             {return 'R_False';}
+"undefined"                                         {return 'R_Undefined';}
 
 /*  EXPRESION */
 
@@ -60,9 +61,9 @@
 "--"                                                {return 'OP_Decremento';}
 "+"                                                 {return 'OP_Mas';}
 "-"                                                 {return 'OP_Menos';}
+"**"                                                {return 'OP_Exponenciacion';}
 "*"                                                 {return 'OP_Multiplicacion';}
 "/"                                                 {return 'OP_Division';}
-"**"                                                {return 'OP_Exponenciacion';}
 "%"                                                 {return 'OP_Modulo';}
 
 /* OPERADORES RELACIONALES*/
@@ -94,6 +95,8 @@
 ","                                                 {return 'S_Coma';}
 "\""                                                {return 'S_ComillaDoble';}
 "?"                                                 {return 'S_Interrogacion';}
+"["                                                 {return 'S_CorcheteAbre';}
+"]"                                                 {return 'S_CorcheteCierra';}
 
 /*  NUMEROS */
 [0-9]+("."[0-9]+)?\b                                {return 'Decimal';}
@@ -112,7 +115,7 @@
 //prescedencia operadores aritmeticos
 %left 'OP_Mas' 'OP_Menos'
 %left 'OP_Multiplicacion' 'OP_Division' 
-%left 'OP_Potencia' 'OP_Modulo'
+%left 'OP_Exponenciacion' 'OP_Modulo'
 %left UMINUS PRUEBA
 %start INICIO
 
@@ -159,6 +162,7 @@ ESTRUCTURAS_DE_CONTROL: VARIABLES
                       | FOR_IN
                       | SENTENCIAS_TRANSFERENCIA
                       | LLAMADA_FUNC
+                      | TYPES
 
 ;
 /*--------------------------------------------- SENTENCIAS DE TRANSFERENCIA ---------------------------------------------------------*/
@@ -292,15 +296,37 @@ LISTADO_VAR : LISTADO_VAR S_Coma CONT_VAR
 ;
 /*--------------------------------------------- DEFINICION DE VARIABLES---------------------------------------------------------*/
 
-CONT_VAR: Identificador
-        | Identificador S_DosPuntos TIPOS_DE_DATO
-        | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G
-        | Identificador S_Igual EXPRESION_G
+CONT_VAR: Identificador //declaracion de variable
+        | Identificador S_DosPuntos TIPOS_DE_DATO  //declaracion de variable con tipo de dato
+        | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G   //declaracion de variable con tipo y asignacion de valo
+        | Identificador S_Igual EXPRESION_G //declaracion de variable con asignacion de valor
+        | Identificador S_Igual S_CorcheteAbre LISTADO_ARRAY S_CorcheteCierra //array
+        | Identificador S_DosPuntos TIPOS_DE_DATO S_CorcheteAbre S_CorcheteCierra //array
+        | Identificador S_DosPuntos TIPOS_DE_DATO S_CorcheteAbre S_CorcheteCierra S_Igual S_CorcheteAbre LISTADO_ARRAY S_CorcheteCierra //array
+        | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra //types
 ;
+/*--------------------------------------------- CONTENIDO ARRAY ---------------------------------------------------------*/
+
+CONTENIDO_ARRAY: LISTADO_ARRAY
+                |
+;
+
+LISTADO_ARRAY: LISTADO_ARRAY S_Coma CONT_ARR
+            | CONT_ARR
+;
+
+CONT_ARR: S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra
+        | EXPRESION_G
+;
+
+
+
+
 /*---------------------------------------------LLAMADAS A FUNCION---------------------------------------------------------*/
 
 LLAMADA_FUNC
     : Identificador S_ParentesisAbre PARAMETROS_FUNC S_ParentesisCierra S_PuntoComa {$$ = $1 + $2 + $3 + $4 + $5;}
+    | Identificador S_CorcheteAbre EXPRESION_G S_CorcheteCierra S_Igual EXPRESION_G S_PuntoComa {$$ = $1 + $2 + $3 + $4 + $5+ $6+ $7;}
 ;
 
 PARAMETROS_FUNC
@@ -322,11 +348,39 @@ PARAMETROS : Identificador S_DosPuntos TIPOS_DE_DATO {$$ = $1 + $2 +$3}
            | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G {$$ = $1 + $2 +$3 +$4}
            | Identificador S_Interrogacion S_DosPuntos TIPOS_DE_DATO {$$ = $1 + $2 +$3 +$4}
 ;
+/*---------------------------------------------TYPES---------------------------------------------------------*/
+
+
+TYPES: T_Type Identificador S_Igual S_LlaveAbre LISTA_TYPES S_LlaveCierra
+;
+
+LISTA_TYPES: LISTA_TYPES SEPARADOR CONTENIDO_TYPES
+           | CONTENIDO_TYPES
+;
+
+CONTENIDO_TYPES : Identificador S_DosPuntos TIPOS_DE_DATO
+;
+
+SEPARADOR : S_Coma
+          | S_PuntoComa
+;
+/*---------------------------------------------DECLARACION DE TYPES---------------------------------------------------------*/
+LISTA_DECLARACION_TYPES: LISTA_DECLARACION_TYPES SEPARADOR_DECLARACION_TYPES CONTENIDO_DECLARACION_TYPES
+                        | CONTENIDO_DECLARACION_TYPES
+;
+
+CONTENIDO_DECLARACION_TYPES : Identificador S_DosPuntos EXPRESION_G
+;
+
+SEPARADOR_DECLARACION_TYPES : S_Coma
+                            | S_PuntoComa
+;
 /*---------------------------------------------TIPOS DE DATO---------------------------------------------------------*/
 TIPOS_DE_DATO : T_Number
               | T_Boolean
               | T_String
               | T_Void
+              | Identificador
 ;
 //agrega tipos de dato a funciones anonimas
 TIPAR_FUNCION : S_DosPuntos TIPOS_DE_DATO
@@ -346,7 +400,7 @@ EXPRESION_G
     | EXPRESION_G OP_Menos EXPRESION_G                                                           { $$ = $1 + $2 + $3; }
     | EXPRESION_G OP_Multiplicacion EXPRESION_G                                                  { $$ = $1 + $2 + $3; }
     | EXPRESION_G OP_Division EXPRESION_G                                                        { $$ = $1 + $2 + $3; }   
-    | EXPRESION_G OP_Potencia EXPRESION_G                                                        { $$ = $1 + $2 + $3; }
+    | EXPRESION_G OP_Exponenciacion EXPRESION_G                                                  { $$ = $1 + $2 + $3; }
     | EXPRESION_G OP_Modulo EXPRESION_G                                                          { $$ = $1 + $2 + $3; }
     | CONTENIDO_EXPRESION OP_Decremento %prec PRUEBA                                             { $$ = $1 + $2; }
     | CONTENIDO_EXPRESION OP_Incremento %prec PRUEBA                                             { $$ = $1 + $2; }
@@ -365,6 +419,7 @@ EXPRESION_G
     | Identificador S_ParentesisAbre S_ParentesisCierra                                          { $$ = $1 + $2 + $3; }
     | Identificador S_ParentesisAbre OPCIONAL S_ParentesisCierra                                 { $$ = $1 + $2 + $3 + $4; }
     | S_ParentesisAbre EXPRESION_G S_ParentesisCierra                                            { $$ = $1 + $2 + $3; }
+    | Identificador S_CorcheteAbre EXPRESION_G S_CorcheteCierra
     | Identificador
     | Cadena
 ;
