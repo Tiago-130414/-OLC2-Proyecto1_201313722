@@ -120,49 +120,49 @@
 %start INICIO
 
 %%
-INICIO : CONT EOF{console.log($$);}
+INICIO : CONT EOF{console.log($1);}
 ;
 /*---------------------------------------------LISTA DE CONTENIDO GLOBAL---------------------------------------------------------*/
-CONT: LISTA_CONTENIDO
-    |
+CONT: LISTA_CONTENIDO                                       {$$ = {Nombre:"CONT",vector:[$1]};}
+    |                                                       {$$ = {Nombre:"CONT",vector:[]};}
 ;
 
-LISTA_CONTENIDO : LISTA_CONTENIDO CONTENIDO {$$ = $1 + $2}
-                | CONTENIDO {$$=$1}
+LISTA_CONTENIDO : LISTA_CONTENIDO CONTENIDO                 {$1.vector.push($2); $$ = $1;}
+                | CONTENIDO                                 {$$ = {Nombre:"LISTA_CONTENIDO",vector:[$1]};}
 ;
 
 //CONTENIDO GLOBAL
-CONTENIDO : FUNCIONES
-          | ESTRUCTURAS_DE_CONTROL
+CONTENIDO : FUNCIONES                                       {$$ = {Nombre:"CONTENIDO",vector:[$1]};}
+          | ESTRUCTURAS_DE_CONTROL                          {$$ = {Nombre:"CONTENIDO",vector:[$1]};}
 ;
 /*---------------------------------------------DEFINICION DE FUNCIONES---------------------------------------------------------*/
-FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre CONT S_LlaveCierra {$$ = $1 + $2 +$3 +$4 +$5 +$6 }
-          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre CONT S_LlaveCierra {$$ = $1 + $2 +$3 +$4 +$5 +$6 }
-          | R_Let Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre CONT S_LlaveCierra S_PuntoComa {$$ = $1 + $2 +$3 +$4 +$5 +$6 +$7+$8+$9}
-          | R_Const Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre CONT S_LlaveCierra S_PuntoComa
+FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre CONT S_LlaveCierra                                            {$$ = {Nombre:"FUNCIONES",vector:[$2,$4,$7]};}
+          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre CONT S_LlaveCierra                  {$$ = {Nombre:"FUNCIONES",vector:[$2,$4,$7,$9]};}
+          | R_Let Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre CONT S_LlaveCierra S_PuntoComa    {$$ = {Nombre:"FUNCIONES",vector:[$2,$6,$8,$10]};}
+          | R_Const Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre CONT S_LlaveCierra S_PuntoComa  {$$ = {Nombre:"FUNCIONES",vector:[$2,$4,$8,$10]};}
 ;
 /*---------------------------------------------LISTADO DE ESTRUCTURAS DE CONTROL---------------------------------------------------------*/
-EDD:LISTADO_ESTRUCTURAS
-   |
+EDD:LISTADO_ESTRUCTURAS                                                 {$$ = {Nombre:"EDD",vector:[$1]};}
+   |                                                                    {$$ = {Nombre:"EDD",vector:[]};}
 ;
 
-LISTADO_ESTRUCTURAS : LISTADO_ESTRUCTURAS ESTRUCTURAS_DE_CONTROL
-                    | ESTRUCTURAS_DE_CONTROL
+LISTADO_ESTRUCTURAS : LISTADO_ESTRUCTURAS ESTRUCTURAS_DE_CONTROL        {$1.vector.push($2); $$ = $1;}
+                    | ESTRUCTURAS_DE_CONTROL                            {$$ = {Nombre:"LISTADO_ESTRUCTURAS",vector:[$1]};}
 ;
 
-ESTRUCTURAS_DE_CONTROL: VARIABLES
-                      | ASIGNACION
-                      | LISTADO_IF ELSE
-                      | SWITCH
-                      | IMPRIMIR
-                      | WHILE
-                      | DO_WHILE
-                      | FOR
-                      | FOR_OF
-                      | FOR_IN
-                      | SENTENCIAS_TRANSFERENCIA
-                      | LLAMADA_FUNC
-                      | TYPES
+ESTRUCTURAS_DE_CONTROL: VARIABLES                                       {$$ = {Nombre:"ESTRUCTURAS_DE_CONTROL",vector:[$1]};}
+                      | ASIGNACION                                      {$$ = {Nombre:"ESTRUCTURAS_DE_CONTROL",vector:[$1]};}
+                      | LISTADO_IF ELSE                                 {$1.vector.push($2); $$ = $1;}
+                      | SWITCH                                          {$$ = {Nombre:"ESTRUCTURAS_DE_CONTROL",vector:[$1]};}
+                      | IMPRIMIR                                        {$$ = {Nombre:"ESTRUCTURAS_DE_CONTROL",vector:[$1]};}
+                      | WHILE                                           {$$ = {Nombre:"ESTRUCTURAS_DE_CONTROL",vector:[$1]};}
+                      | DO_WHILE                                        {$$ = {Nombre:"ESTRUCTURAS_DE_CONTROL",vector:[$1]};}
+                      | FOR                                             {$$ = {Nombre:"ESTRUCTURAS_DE_CONTROL",vector:[$1]};}
+                      | FOR_OF                                          {$$ = {Nombre:"ESTRUCTURAS_DE_CONTROL",vector:[$1]};}
+                      | FOR_IN                                          {$$ = {Nombre:"ESTRUCTURAS_DE_CONTROL",vector:[$1]};}
+                      | SENTENCIAS_TRANSFERENCIA                        {$$ = {Nombre:"ESTRUCTURAS_DE_CONTROL",vector:[$1]};}
+                      | LLAMADA_FUNC                                    {$$ = {Nombre:"ESTRUCTURAS_DE_CONTROL",vector:[$1]};}
+                      | TYPES                                           {$$ = {Nombre:"ESTRUCTURAS_DE_CONTROL",vector:[$1]};}
 
 ;
 /*--------------------------------------------- SENTENCIAS DE TRANSFERENCIA ---------------------------------------------------------*/
@@ -174,15 +174,15 @@ SENTENCIAS_TRANSFERENCIA : R_Break S_PuntoComa
 ;
 
 /*--------------------------------------------- LISTADO IF---------------------------------------------------------*/
-LISTADO_IF : LISTADO_IF R_Else IF
-           | IF
+LISTADO_IF : LISTADO_IF R_Else IF                                       {$3.Nombre = "ELSE_IF";$1.vector.push($3); $$ = $1;}
+           | IF                                                         {$$ = {Nombre:"LISTADO_IF",vector:[$1]};}
 ;
 
-IF : R_If S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra
+IF : R_If S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra     {$$ = {Nombre:"IF",vector:[$3,$6]};}
 ;
 
-ELSE : R_Else S_LlaveAbre EDD S_LlaveCierra
-     |
+ELSE : R_Else S_LlaveAbre EDD S_LlaveCierra                                                 {$$ = {Nombre:"ELSE",vector:[$3]};}
+     |                                                                                      {$$ = {Nombre:"VACIO",vector:[]};}
 ;
 
 /*---------------------------------------------SWITCH---------------------------------------------------------*/
@@ -207,7 +207,7 @@ DEFINIR_DEFAULT: R_Default S_DosPuntos EDD
                |
 ;
 /*---------------------------------------------IMPRIMIR---------------------------------------------------------*/
-IMPRIMIR: R_Console S_Punto R_Log S_ParentesisAbre FUNC S_ParentesisCierra S_PuntoComa
+IMPRIMIR: R_Console S_Punto R_Log S_ParentesisAbre FUNC S_ParentesisCierra S_PuntoComa                      {$$ = {Nombre:"IMPRIMIR",vector:[$5]};}
 ;
 
 FUNC: EXPRESION_G
@@ -260,11 +260,13 @@ CONT_FOR_OF : R_Const Identificador R_Of Identificador
 
 /*---------------------------------------------ASIGNACION VARIABLES---------------------------------------------------------*/
 
-ASIGNACION : Identificador S_Igual EXPRESION_G COMPLETAR_ASIGNACION S_PuntoComa
-           | Identificador OP_Incremento COMPLETAR_ASIGNACION S_PuntoComa
-           | OP_Incremento Identificador COMPLETAR_ASIGNACION S_PuntoComa
-           | Identificador OP_Decremento COMPLETAR_ASIGNACION S_PuntoComa
-           | OP_Decremento Identificador COMPLETAR_ASIGNACION S_PuntoComa
+ASIGNACION : ATRIBUTOS S_Igual LISTA_DE_ASIGNACIONES S_PuntoComa
+           //incrementos 
+           | ATRIBUTOS OP_Incremento COMPLETAR_ASIGNACION S_PuntoComa
+           | OP_Incremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa
+           | ATRIBUTOS OP_Decremento COMPLETAR_ASIGNACION S_PuntoComa
+           | OP_Decremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa
+           | ATRIBUTOS S_Punto R_Push S_ParentesisAbre LISTA_DE_ASIGNACIONES S_ParentesisCierra  S_PuntoComa
 ;
 
 COMPLETAR_ASIGNACION : LISTADO_ASIGNACION
@@ -282,6 +284,28 @@ CONTENIDO_ASIGNACION: S_Coma Identificador S_Igual EXPRESION_G
                     | S_Coma OP_Decremento Identificador
 ;
 
+LISTA_DE_ASIGNACIONES : EXPRESION_G
+                      | S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra 
+                      | S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra
+;
+
+
+
+
+/*---------------------------------------------LISTA DE ASIGNACION ARRAY DENTRO DE ARRAY---------------------------------------------------------*/
+CONT_ASIG_ARRAY: LISTA_ASIGN_ARRAY
+               |
+;
+
+LISTA_ASIGN_ARRAY: LISTA_ASIGN_ARRAY S_Coma CONT_ARRAY_ASIGN_VV
+                 | CONT_ARRAY_ASIGN_VV
+;   
+
+CONT_ARRAY_ASIGN_VV: EXPRESION_G 
+                   | S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra
+                   | S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra
+;
+
 
 /*---------------------------------------------VARIABLES---------------------------------------------------------*/
 
@@ -296,15 +320,22 @@ LISTADO_VAR : LISTADO_VAR S_Coma CONT_VAR
 ;
 /*--------------------------------------------- DEFINICION DE VARIABLES---------------------------------------------------------*/
 
-CONT_VAR: Identificador //declaracion de variable
+CONT_VAR: Identificador //declaracion de variable solo id
         | Identificador S_DosPuntos TIPOS_DE_DATO  //declaracion de variable con tipo de dato
-        | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G   //declaracion de variable con tipo y asignacion de valo
+        | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G   //declaracion de variable con tipo y asignacion de valor
         | Identificador S_Igual EXPRESION_G //declaracion de variable con asignacion de valor
-        | Identificador S_Igual S_CorcheteAbre LISTADO_ARRAY S_CorcheteCierra //array
+
+
+        | Identificador S_Igual S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra //array
         | Identificador S_DosPuntos TIPOS_DE_DATO S_CorcheteAbre S_CorcheteCierra //array
-        | Identificador S_DosPuntos TIPOS_DE_DATO S_CorcheteAbre S_CorcheteCierra S_Igual S_CorcheteAbre LISTADO_ARRAY S_CorcheteCierra //array
+        | Identificador S_DosPuntos TIPOS_DE_DATO S_CorcheteAbre S_CorcheteCierra S_Igual S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra //array
+
+
         | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra //types
+        | Identificador S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra //types
 ;
+
+
 /*--------------------------------------------- CONTENIDO ARRAY ---------------------------------------------------------*/
 
 CONTENIDO_ARRAY: LISTADO_ARRAY
@@ -319,14 +350,11 @@ CONT_ARR: S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra
         | EXPRESION_G
 ;
 
-
-
-
 /*---------------------------------------------LLAMADAS A FUNCION---------------------------------------------------------*/
 
 LLAMADA_FUNC
     : Identificador S_ParentesisAbre PARAMETROS_FUNC S_ParentesisCierra S_PuntoComa {$$ = $1 + $2 + $3 + $4 + $5;}
-    | Identificador S_CorcheteAbre EXPRESION_G S_CorcheteCierra S_Igual EXPRESION_G S_PuntoComa {$$ = $1 + $2 + $3 + $4 + $5+ $6+ $7;}
+    | ATRIBUTOS S_Punto R_Pop S_ParentesisAbre S_ParentesisCierra S_PuntoComa {$$ = $1 + $2 + $3 + $4 + $5;}
 ;
 
 PARAMETROS_FUNC
@@ -351,7 +379,7 @@ PARAMETROS : Identificador S_DosPuntos TIPOS_DE_DATO {$$ = $1 + $2 +$3}
 /*---------------------------------------------TYPES---------------------------------------------------------*/
 
 
-TYPES: T_Type Identificador S_Igual S_LlaveAbre LISTA_TYPES S_LlaveCierra
+TYPES: T_Type Identificador S_Igual S_LlaveAbre LISTA_TYPES FIN_TYPES
 ;
 
 LISTA_TYPES: LISTA_TYPES SEPARADOR CONTENIDO_TYPES
@@ -359,22 +387,29 @@ LISTA_TYPES: LISTA_TYPES SEPARADOR CONTENIDO_TYPES
 ;
 
 CONTENIDO_TYPES : Identificador S_DosPuntos TIPOS_DE_DATO
+                | Identificador S_DosPuntos Identificador S_CorcheteAbre S_CorcheteCierra
 ;
 
 SEPARADOR : S_Coma
           | S_PuntoComa
 ;
+
+FIN_TYPES: S_LlaveCierra S_PuntoComa
+         | S_LlaveCierra
+;
+
 /*---------------------------------------------DECLARACION DE TYPES---------------------------------------------------------*/
 LISTA_DECLARACION_TYPES: LISTA_DECLARACION_TYPES SEPARADOR_DECLARACION_TYPES CONTENIDO_DECLARACION_TYPES
                         | CONTENIDO_DECLARACION_TYPES
 ;
 
-CONTENIDO_DECLARACION_TYPES : Identificador S_DosPuntos EXPRESION_G
+CONTENIDO_DECLARACION_TYPES : Identificador S_DosPuntos LISTA_DE_ASIGNACIONES
 ;
 
 SEPARADOR_DECLARACION_TYPES : S_Coma
                             | S_PuntoComa
 ;
+
 /*---------------------------------------------TIPOS DE DATO---------------------------------------------------------*/
 TIPOS_DE_DATO : T_Number
               | T_Boolean
@@ -386,6 +421,16 @@ TIPOS_DE_DATO : T_Number
 TIPAR_FUNCION : S_DosPuntos TIPOS_DE_DATO
               |
 ;
+/*---------------------------------------------ACCEDER A ATRIBUTOS---------------------------------------------------------*/
+
+ ATRIBUTOS: ATRIBUTOS S_Punto CONT_ATRIBUTOS
+          | CONT_ATRIBUTOS
+ ;
+
+ CONT_ATRIBUTOS:  Identificador S_CorcheteAbre EXPRESION_G S_CorcheteCierra
+               |  Identificador
+;
+
 /*---------------------------------------------EXPRESIONES---------------------------------------------------------*/
 EXPRESION_G 
     : EXPRESION_G LOG_Concatenar EXPRESION_G                                                     { $$ = $1 + $2 + $3; }
@@ -419,10 +464,11 @@ EXPRESION_G
     | Identificador S_ParentesisAbre S_ParentesisCierra                                          { $$ = $1 + $2 + $3; }
     | Identificador S_ParentesisAbre OPCIONAL S_ParentesisCierra                                 { $$ = $1 + $2 + $3 + $4; }
     | S_ParentesisAbre EXPRESION_G S_ParentesisCierra                                            { $$ = $1 + $2 + $3; }
-    | Identificador S_CorcheteAbre EXPRESION_G S_CorcheteCierra
-    | Identificador
     | Cadena
-;
+    | ATRIBUTOS
+    | ATRIBUTOS S_Punto R_Length
+    | ATRIBUTOS S_Punto R_Pop S_ParentesisAbre S_ParentesisCierra
+; /*ATRIBUTOS CONTIENE ID Y VECTOR */
 
 OPCIONAL 
     : OPCIONAL S_Coma EXPRESION_G                                                                { $$ = $1 + $2 + $3; }
