@@ -124,7 +124,9 @@
               <ul class="dropdown-menu">
                 <li class="dropdown-header">Reportes</li>
                 <li>
-                  <a href="#">Reporte Ast</a>
+                  <a href="#" id="ReporteArbol" onclick="reporteAST();"
+                    >Reporte Ast</a
+                  >
                 </li>
                 <li>
                   <a href="#">Reporte Tabla de Simbolos</a>
@@ -362,7 +364,7 @@
                 <!-- Tabpanel -->
                 <div id="tabpanel5">
                   <h2>Reporte AST</h2>
-                  <div id="JSTree"></div>
+                  <div id="ArbolAST1" style="text-align: center"></div>
                 </div>
               </div>
             </div>
@@ -385,13 +387,17 @@
         </div>
       </div>
     </footer>
-    <!-- Scripts -->
-    <!-- Loads Bootstrap Main JS -->
+    <!-- SCRIPTS -->
     <script src="bootstrap/js/bootstrap.min.js"></script>
-    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
     <script src="bootstrap/js/ie10-viewport-bug-workaround.js"></script>
+    <!-- MANIPULAR ELEMENTOS Y FUNCIONES DEL PROYECTO -->
     <script src="js/AnalisisLS.js"></script>
     <script src="js/Manipular_Interfaz.js"></script>
     <script src="js/Modificar_TextArea_CodeMirror.js"></script>
+    <!-- LIBRERIAS PARA GENERAR GRAPHVIZ WEB -->
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://unpkg.com/@hpcc-js/wasm@0.3.11/dist/index.min.js"></script>
+    <script src="https://unpkg.com/d3-graphviz@3.0.5/build/d3-graphviz.js"></script>
+    <script src="js/Reporte_AST.js"></script>
   </body>
 </html>
