@@ -132,7 +132,9 @@
                   <a href="#">Reporte Tabla de Simbolos</a>
                 </li>
                 <li>
-                  <a href="#">Reporte de Errores</a>
+                  <a href="#" id="ReporteErrores" onclick="errores();"
+                    >Reporte de Errores</a
+                  >
                 </li>
               </ul>
             </li>
@@ -277,9 +279,10 @@
                           <thead>
                             <tr>
                               <th scope="col">#</th>
-                              <th scope="col">Nombre</th>
-                              <th scope="col">Tipo</th>
-                              <th scope="col">Linea</th>
+                              <th scope="col">Tipo Error</th>
+                              <th scope="col">Error</th>
+                              <th scope="col">Fila</th>
+                              <th scope="col">Columna</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -391,13 +394,19 @@
     <script src="bootstrap/js/bootstrap.min.js"></script>
     <script src="bootstrap/js/ie10-viewport-bug-workaround.js"></script>
     <!-- MANIPULAR ELEMENTOS Y FUNCIONES DEL PROYECTO -->
-    <script src="js/AnalisisLS.js"></script>
+    <!-- REPORTE DE ARBOL-->
+    <script src="js/Reporte_Arbol.js"></script>
+    <script src="js/Reporte_AST.js"></script>
+    <!--REPORTE DE ERRORES-->
+    <script src="js/Reporte_Errores.js"></script>
+    <script src="js/Manejo_Errores.js"></script>
+    <!--ANALISIS-->
     <script src="js/Manipular_Interfaz.js"></script>
+    <!--INTERFAZ-->
     <script src="js/Modificar_TextArea_CodeMirror.js"></script>
     <!-- LIBRERIAS PARA GENERAR GRAPHVIZ WEB -->
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script src="https://unpkg.com/@hpcc-js/wasm@0.3.11/dist/index.min.js"></script>
     <script src="https://unpkg.com/d3-graphviz@3.0.5/build/d3-graphviz.js"></script>
-    <script src="js/Reporte_AST.js"></script>
   </body>
 </html>

@@ -144,7 +144,7 @@ INICIO : CONT EOF{console.log(graficar($1));return graficar($1);}
 ;
 /*---------------------------------------------LISTA DE CONTENIDO GLOBAL---------------------------------------------------------*/
 CONT: LISTA_CONTENIDO                                       {$$ = {Nombre:"CONT",vector:[$1]};}
-    |                                                       {$$ = {Nombre:"CONT",vector:[]};}
+    |                                                       {$$ = {Nombre:"CONT",vector:[{Nombre : "&epsilon;" , vector : []}]};}
 ;
 
 LISTA_CONTENIDO : LISTA_CONTENIDO CONTENIDO                 {$$ = {Nombre: "LISTA_CONTENIDO" , vector:[$1,$2]};}
@@ -163,7 +163,7 @@ FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_
 ;
 /*---------------------------------------------LISTADO DE ESTRUCTURAS DE CONTROL---------------------------------------------------------*/
 EDD:LISTADO_ESTRUCTURAS                                                 {$$ = $1;}
-   |                                                                    {$$ = {Nombre: "LISTADO_ESTRUCTURAS" , vector: []};}                     
+   |                                                                    {$$ = {Nombre: "LISTADO_ESTRUCTURAS" , vector: [{Nombre : "&epsilon;" , vector : []}]};}                     
 ;
 
 LISTADO_ESTRUCTURAS : LISTADO_ESTRUCTURAS ESTRUCTURAS_DE_CONTROL        {$$ = {Nombre:"LISTADO_ESTRUCTURAS",vector:[$1,$2]};}
@@ -202,7 +202,7 @@ IF : R_If S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_Llav
 ;
 
 ELSE : R_Else S_LlaveAbre EDD S_LlaveCierra                                                                             {$$ = {Nombre:"ELSE",vector:[$3]};}
-     |                                                                                                                  {$$ = {Nombre : "ELSE", vector : []};}
+     |                                                                                                                  {$$ = {Nombre : "ELSE", vector : [{Nombre : "&epsilon;" , vector : []}]};}
 ;
 
 /*---------------------------------------------SWITCH---------------------------------------------------------*/
@@ -212,7 +212,7 @@ SWITCH : R_Switch S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre CA
 /*---------------------------------------------LISTADO DE CASE---------------------------------------------------------*/
 
 CASE : LISTA_CASE
-     |                                                                                                                  {$$ = {Nombre:"CASE",vector:[]};}
+     |                                                                                                                  {$$ = {Nombre:"CASE",vector:[{Nombre : "&epsilon;" , vector : []}]};}
 ;
 
 LISTA_CASE: LISTA_CASE DEFINIR_CASE                                                                                     {$$ = {Nombre:"LISTA_CASE",vector:[$1,$2]};}
@@ -224,14 +224,14 @@ DEFINIR_CASE:R_Case EXPRESION_G S_DosPuntos EDD                                 
 /*---------------------------------------------DEFINICION DE DEFAULT---------------------------------------------------------*/
 
 DEFINIR_DEFAULT: R_Default S_DosPuntos EDD                                                                              {$$ = {Nombre:"DEFAULT",vector:[$3]};}
-               |                                                                                                        {$$ = {Nombre:"DEFAULT",vector:[]};}
+               |                                                                                                        {$$ = {Nombre:"DEFAULT",vector:[{Nombre : "&epsilon;" , vector : []}]};}
 ;
 /*---------------------------------------------IMPRIMIR---------------------------------------------------------*/
 IMPRIMIR: R_Console S_Punto R_Log S_ParentesisAbre FUNC S_ParentesisCierra S_PuntoComa                                  {$$ = {Nombre:"IMPRIMIR",vector:[$5]};}
 ;
 
 FUNC: EXPRESION_G                                                                                                       {$$ = $1;}
-    |                                                                                                                   {$$ = {Nombre:"FUNC",vector:[]};}
+    |                                                                                                                   {$$ = {Nombre:"FUNC",vector:[{Nombre : "&epsilon;" , vector : []}]};}
 ;
 /*---------------------------------------------WHILE---------------------------------------------------------*/
 WHILE: R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra                            {$$ = {Nombre:"WHILE",vector:[$3,$6]};}           
@@ -290,7 +290,7 @@ ASIGNACION : ATRIBUTOS S_Igual LISTA_DE_ASIGNACIONES S_PuntoComa                
 ;
 
 COMPLETAR_ASIGNACION : LISTADO_ASIGNACION
-                      |                                                                             {$$ = { Nombre : "COMPLETAR_ASIGNACION" , vector : []};}
+                      |                                                                             {$$ = { Nombre : "COMPLETAR_ASIGNACION" , vector : [{Nombre : "&epsilon;" , vector : []}]};}
 ;
 
 LISTADO_ASIGNACION: LISTADO_ASIGNACION  CONTENIDO_ASIGNACION                                        {$$ = { Nombre : "LISTADO_ASIGNACION" , vector : [$1,$2]};}
@@ -314,7 +314,7 @@ LISTA_DE_ASIGNACIONES : EXPRESION_G                                             
 
 /*---------------------------------------------LISTA DE ASIGNACION ARRAY DENTRO DE ARRAY---------------------------------------------------------*/
 CONT_ASIG_ARRAY: LISTA_ASIGN_ARRAY                                                                                                  
-               |                                                                                                                    {$$ = {Nombre : "CONT_ASIG_ARRAY", vector : []};}
+               |                                                                                                                    {$$ = {Nombre : "CONT_ASIG_ARRAY", vector : [{Nombre : "&epsilon;" , vector : []}]};}
 ;
 
 LISTA_ASIGN_ARRAY: LISTA_ASIGN_ARRAY S_Coma CONT_ARRAY_ASIGN_VV                                                                     {$$ = {Nombre : "LISTA_ASIGN_ARRAY", vector : [$1,$3]};}
@@ -369,12 +369,12 @@ LLAMADA_FUNC
 PARAMETROS_FUNC
     : PARAMETROS_FUNC S_Coma EXPRESION_G                                                                {$$ = {Nombre : "PARAMETROS_FUNC" , vector : [$1,$3] };}
     | EXPRESION_G                                                                                       {$$ = {Nombre : "PARAMETROS_FUNC" , vector : [$1] };}
-    |                                                                                                   {$$ = {Nombre : "PARAMETROS_FUNC" , vector : [] };}
+    |                                                                                                   {$$ = {Nombre : "PARAMETROS_FUNC" , vector : [{Nombre : "&epsilon;" , vector : []}] };}
 ;
 
 /*---------------------------------------------PARAMETROS---------------------------------------------------------*/
 PARAM: LISTA_PARAMETROS
-     |                                                                                                  {$$ = {Nombre : "PARAM" , vector : []};}
+     |                                                                                                  {$$ = {Nombre : "PARAM" , vector : [{Nombre : "&epsilon;" , vector : []}]};}
 ;
 
 LISTA_PARAMETROS : LISTA_PARAMETROS S_Coma PARAMETROS                                                   {$$ = {Nombre : "LISTA_PARAMETROS" , vector : [$1,$3]};}
@@ -428,7 +428,7 @@ TIPOS_DE_DATO : T_Number                                                        
 ;
 //agrega tipos de dato a funciones anonimas
 TIPAR_FUNCION : S_DosPuntos TIPOS_DE_DATO                                           {$$=$2;}
-              |                                                                     {$$ = {Nombre : "TIPAR_FUNCION" ,vector:[]};}
+              |                                                                     {$$ = {Nombre : "TIPAR_FUNCION" ,vector:[{Nombre : "&epsilon;" , vector : []}]};}
 ;
 /*---------------------------------------------ACCEDER A ATRIBUTOS---------------------------------------------------------*/
 

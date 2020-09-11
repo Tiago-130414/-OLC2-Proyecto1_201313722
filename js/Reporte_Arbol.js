@@ -71,7 +71,7 @@
     recoverable: (boolean: TRUE when the parser has a error recovery rule available for this particular error)
   }
 */
-var AnalisisLS = (function(){
+var Reporte_Arbol = (function(){
 var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[1,7],$V1=[1,35],$V2=[1,8],$V3=[1,9],$V4=[1,32],$V5=[1,33],$V6=[1,34],$V7=[1,38],$V8=[1,27],$V9=[1,28],$Va=[1,29],$Vb=[1,30],$Vc=[1,31],$Vd=[1,24],$Ve=[1,25],$Vf=[1,36],$Vg=[5,10,11,20,24,40,41,42,46,47,54,58,59,60,63,64,90],$Vh=[5,10,11,17,20,24,40,41,42,46,47,52,53,54,58,59,60,63,64,90],$Vi=[1,54],$Vj=[5,10,11,17,20,24,40,41,42,44,46,47,52,53,54,58,59,60,63,64,90],$Vk=[1,73],$Vl=[1,74],$Vm=[1,65],$Vn=[1,66],$Vo=[1,68],$Vp=[1,69],$Vq=[1,70],$Vr=[1,71],$Vs=[1,72],$Vt=[2,143],$Vu=[1,77],$Vv=[14,17,18,21,23,55,63,64,76,79,102,103,104,105,106,107,108,109,110,111,112,113,114,115],$Vw=[23,76],$Vx=[2,98],$Vy=[1,82],$Vz=[1,84],$VA=[1,92],$VB=[1,91],$VC=[2,76],$VD=[1,96],$VE=[1,102],$VF=[2,13],$VG=[1,110],$VH=[1,111],$VI=[1,119],$VJ=[1,120],$VK=[1,121],$VL=[1,122],$VM=[1,123],$VN=[1,124],$VO=[1,125],$VP=[1,126],$VQ=[1,127],$VR=[1,128],$VS=[1,129],$VT=[1,130],$VU=[1,131],$VV=[1,132],$VW=[14,17,18,23,76,79,102,103,104,105,106,107,108,109,110,111,112,113,114,115],$VX=[14,76],$VY=[1,146],$VZ=[2,113],$V_=[1,150],$V$=[1,149],$V01=[1,156],$V11=[1,152],$V21=[1,153],$V31=[1,154],$V41=[1,155],$V51=[1,158],$V61=[14,17,23,76],$V71=[1,167],$V81=[1,166],$V91=[2,88],$Va1=[1,170],$Vb1=[17,52,53],$Vc1=[11,17,20,24,40,41,42,46,47,52,53,54,58,59,60,63,64,90],$Vd1=[14,15,17,21,23,76,77],$Ve1=[2,137],$Vf1=[76,79],$Vg1=[1,239],$Vh1=[1,238],$Vi1=[17,23,76],$Vj1=[11,12,111,117,118,119,120,121,122],$Vk1=[14,17,18,23,76,79,102,103],$Vl1=[14,17,18,23,76,79,102,103,104,105,106,107,108,109],$Vm1=[14,17,18,23,76,79,102,103,104,105,106,107,108,109,110,111],$Vn1=[14,17,18,23,76,79,102,103,104,105,106,107,108,109,110,111,112,113],$Vo1=[1,272],$Vp1=[17,53],$Vq1=[1,297],$Vr1=[2,139],$Vs1=[1,358];
 var parser = {trace: function trace () { },
 yy: {},
@@ -90,7 +90,7 @@ case 2:
 this.$ = {Nombre:"CONT",vector:[$$[$0]]};
 break;
 case 3:
-this.$ = {Nombre:"CONT",vector:[]};
+this.$ = {Nombre:"CONT",vector:[{Nombre : "&epsilon;" , vector : []}]};
 break;
 case 4:
 this.$ = {Nombre: "LISTA_CONTENIDO" , vector:[$$[$0-1],$$[$0]]};
@@ -117,7 +117,7 @@ case 12: case 47: case 84: case 91: case 169:
 this.$ = $$[$0];
 break;
 case 13:
-this.$ = {Nombre: "LISTADO_ESTRUCTURAS" , vector: []};
+this.$ = {Nombre: "LISTADO_ESTRUCTURAS" , vector: [{Nombre : "&epsilon;" , vector : []}]};
 break;
 case 14:
 this.$ = {Nombre:"LISTADO_ESTRUCTURAS",vector:[$$[$0-1],$$[$0]]};
@@ -168,13 +168,13 @@ case 36:
 this.$ = {Nombre:"ELSE",vector:[$$[$0-1]]};
 break;
 case 37:
-this.$ = {Nombre : "ELSE", vector : []};
+this.$ = {Nombre : "ELSE", vector : [{Nombre : "&epsilon;" , vector : []}]};
 break;
 case 38:
 this.$ = {Nombre:"SWITCH",vector:[$$[$0-5],$$[$0-2],$$[$0-1]]};
 break;
 case 40:
-this.$ = {Nombre:"CASE",vector:[]};
+this.$ = {Nombre:"CASE",vector:[{Nombre : "&epsilon;" , vector : []}]};
 break;
 case 41:
 this.$ = {Nombre:"LISTA_CASE",vector:[$$[$0-1],$$[$0]]};
@@ -189,13 +189,13 @@ case 44:
 this.$ = {Nombre:"DEFAULT",vector:[$$[$0]]};
 break;
 case 45:
-this.$ = {Nombre:"DEFAULT",vector:[]};
+this.$ = {Nombre:"DEFAULT",vector:[{Nombre : "&epsilon;" , vector : []}]};
 break;
 case 46:
 this.$ = {Nombre:"IMPRIMIR",vector:[$$[$0-2]]};
 break;
 case 48:
-this.$ = {Nombre:"FUNC",vector:[]};
+this.$ = {Nombre:"FUNC",vector:[{Nombre : "&epsilon;" , vector : []}]};
 break;
 case 49:
 this.$ = {Nombre:"WHILE",vector:[$$[$0-4],$$[$0-1]]};
@@ -255,7 +255,7 @@ case 74:
 this.$ = {Nombre : "ASIGNACION" , vector : [$$[$0-6],{Nombre: $$[$0-4] , vector : []},$$[$0-2]]};
 break;
 case 76:
-this.$ = { Nombre : "COMPLETAR_ASIGNACION" , vector : []};
+this.$ = { Nombre : "COMPLETAR_ASIGNACION" , vector : [{Nombre : "&epsilon;" , vector : []}]};
 break;
 case 77:
 this.$ = { Nombre : "LISTADO_ASIGNACION" , vector : [$$[$0-1],$$[$0]]};
@@ -276,7 +276,7 @@ case 85: case 86: case 92: case 93: case 168:
 this.$ = $$[$0-1];
 break;
 case 88:
-this.$ = {Nombre : "CONT_ASIG_ARRAY", vector : []};
+this.$ = {Nombre : "CONT_ASIG_ARRAY", vector : [{Nombre : "&epsilon;" , vector : []}]};
 break;
 case 89:
 this.$ = {Nombre : "LISTA_ASIGN_ARRAY", vector : [$$[$0-2],$$[$0]]};
@@ -330,10 +330,10 @@ case 110:
 this.$ = {Nombre : "PARAMETROS_FUNC" , vector : [$$[$0]] };
 break;
 case 111:
-this.$ = {Nombre : "PARAMETROS_FUNC" , vector : [] };
+this.$ = {Nombre : "PARAMETROS_FUNC" , vector : [{Nombre : "&epsilon;" , vector : []}] };
 break;
 case 113:
-this.$ = {Nombre : "PARAM" , vector : []};
+this.$ = {Nombre : "PARAM" , vector : [{Nombre : "&epsilon;" , vector : []}]};
 break;
 case 114:
 this.$ = {Nombre : "LISTA_PARAMETROS" , vector : [$$[$0-2],$$[$0]]};
@@ -381,7 +381,7 @@ case 138:
 this.$=$$[$0];
 break;
 case 139:
-this.$ = {Nombre : "TIPAR_FUNCION" ,vector:[]};
+this.$ = {Nombre : "TIPAR_FUNCION" ,vector:[{Nombre : "&epsilon;" , vector : []}]};
 break;
 case 140:
 this.$ = {Nombre : "ATRIBUTOS" ,vector:[$$[$0-2],$$[$0]]};
@@ -1077,9 +1077,9 @@ return new Parser;
 
 
 if (typeof require !== 'undefined' && typeof exports !== 'undefined') {
-exports.parser = AnalisisLS;
-exports.Parser = AnalisisLS.Parser;
-exports.parse = function () { return AnalisisLS.parse.apply(AnalisisLS, arguments); };
+exports.parser = Reporte_Arbol;
+exports.Parser = Reporte_Arbol.Parser;
+exports.parse = function () { return Reporte_Arbol.parse.apply(Reporte_Arbol, arguments); };
 exports.main = function commonjsMain (args) {
     if (!args[1]) {
         console.log('Usage: '+args[0]+' FILE');
