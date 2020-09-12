@@ -1,5 +1,5 @@
-function AnalizarCodigo() {
+function traducir() {
   var texto = Codigo.getValue();
-  Reporte_Errores.parse(texto);
+  Traduccion.parse(texto);
   alert("Analizado");
 }

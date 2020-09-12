@@ -120,37 +120,66 @@
 %start INICIO
 
 %%
-INICIO : CONT EOF{console.log($$);}
+INICIO : CONT EOF {console.log($1);}
 ;
 /*---------------------------------------------LISTA DE CONTENIDO GLOBAL---------------------------------------------------------*/
-CONT: LISTA_CONTENIDO
+CONT: LISTA_CONTENIDO {$$ =$1;}
     |
 ;
 
-LISTA_CONTENIDO : CONTENIDO LISTA_CONTENIDO_PRIM
+LISTA_CONTENIDO : CONTENIDO LISTA_CONTENIDO_PRIM                {$$ = $2;}               
 ;
 
-LISTA_CONTENIDO_PRIM : CONTENIDO LISTA_CONTENIDO_PRIM
-                    |
+LISTA_CONTENIDO_PRIM : CONTENIDO LISTA_CONTENIDO_PRIM          {$$ = $2;} 
+                    |                                           {
+                                                                var pila = eval('$$');
+                                                                var valSintetizar = pila[pila.length - 1 ];
+                                                                $$ = valSintetizar;
+                                                                }
 ;
 
 //CONTENIDO GLOBAL
-CONTENIDO : FUNCIONES
-          | ESTRUCTURAS_DE_CONTROL
+CONTENIDO : FUNCIONES                   { 
+                                        var pila = eval('$$');
+                                        //console.log(pila);
+                                        var anterior = pila[pila.length - 2];  
+                                        if(Array.isArray(anterior)){
+                                            var temp = anterior.concat($1);
+                                        }else{
+                                            var temp  = [$1];
+                                        }
+                                        $$ = temp;
+                                        }
+          | ESTRUCTURAS_DE_CONTROL      { 
+                                        var pila = eval('$$');
+                                        //console.log(pila);
+                                        var anterior = pila[pila.length - 2];  
+                                        if(Array.isArray(anterior)){
+                                            var temp = anterior.concat($1);
+                                        }else{
+                                            var temp  = [$1];
+                                        }
+                                        $$ = temp;
+                                        }
+          |  error  {$$ ='';console.log({ Tipo_Error  : ' Error_Sintactico ', Error  : yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
 ;
 /*---------------------------------------------DEFINICION DE FUNCIONES---------------------------------------------------------*/
-FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra {$$ = $1 + $2 +$3 +$4 +$5 +$6 }
-          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre EDD S_LlaveCierra {$$ = $1 + $2 +$3 +$4 +$5 +$6 }
-          | R_Let Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre EDD S_LlaveCierra S_PuntoComa {$$ = $1 + $2 +$3 +$4 +$5 +$6 +$7+$8+$9}
-          | R_Const Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre EDD S_LlaveCierra S_PuntoComa
+FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre CONT S_LlaveCierra {var json  = { tipo: "funcion" , contenido : [{tipo : "reservada", contenido : $1},{tipo : "identificador", contenido : $2},{tipo : "simbolo", contenido : $3},{tipo : "parametros", contenido : [$4]},{tipo : "simbolo", contenido : $5},{tipo : "simbolo", contenido : $6},{tipo : "instrucciones", contenido : $7},{tipo : "simbolo", contenido : $8}]};$$ = json; }
+          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre CONT S_LlaveCierra {$$ = $1 + $2 +$3 +$4 +$5 +$6; }
+          | R_Let Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre CONT S_LlaveCierra S_PuntoComa {$$ = $1 + $2 +$3 +$4 +$5 +$6 +$7+$8+$9;}
+          | R_Const Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre CONT S_LlaveCierra S_PuntoComa
 ;
 /*---------------------------------------------LISTADO DE ESTRUCTURAS DE CONTROL---------------------------------------------------------*/
 EDD:LISTADO_ESTRUCTURAS
    |
 ;
 
-LISTADO_ESTRUCTURAS : LISTADO_ESTRUCTURAS ESTRUCTURAS_DE_CONTROL
-                    | ESTRUCTURAS_DE_CONTROL
+LISTADO_ESTRUCTURAS : LISTADO_ESTRUCTURAS CONT_ESTRUCTURAS_CONTROL
+                    | CONT_ESTRUCTURAS_CONTROL
+;
+
+CONT_ESTRUCTURAS_CONTROL : ESTRUCTURAS_DE_CONTROL
+                         |error  {$$ ='';console.log({ Tipo_Error  : ' Error_Sintactico ', Error  : yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
 ;
 
 ESTRUCTURAS_DE_CONTROL: VARIABLES
@@ -177,11 +206,11 @@ SENTENCIAS_TRANSFERENCIA : R_Break S_PuntoComa
 ;
 
 /*--------------------------------------------- LISTADO IF---------------------------------------------------------*/
-LISTADO_IF : LISTADO_IF R_Else IF
+LISTADO_IF : LISTADO_IF R_Else IF                                                       
            | IF
 ;
 
-IF : R_If S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra
+IF : R_If S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra         {$$ = $1+$2+$3+$4+$5+$6+$7;}
 ;
 
 ELSE : R_Else S_LlaveAbre EDD S_LlaveCierra
@@ -210,7 +239,7 @@ DEFINIR_DEFAULT: R_Default S_DosPuntos EDD
                |
 ;
 /*---------------------------------------------IMPRIMIR---------------------------------------------------------*/
-IMPRIMIR: R_Console S_Punto R_Log S_ParentesisAbre FUNC S_ParentesisCierra S_PuntoComa
+IMPRIMIR: R_Console S_Punto R_Log S_ParentesisAbre FUNC S_ParentesisCierra S_PuntoComa {$$ = $1+$2+$3+$4+$5+$6+$7;}
 ;
 
 FUNC: EXPRESION_G
@@ -375,9 +404,9 @@ LISTA_PARAMETROS : LISTA_PARAMETROS S_Coma PARAMETROS  {$$ = $1 + $2}
                  | PARAMETROS {$$=$1}              
 ;
 
-PARAMETROS : Identificador S_DosPuntos TIPOS_DE_DATO {$$ = $1 + $2 +$3}
-           | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G {$$ = $1 + $2 +$3 +$4}
-           | Identificador S_Interrogacion S_DosPuntos TIPOS_DE_DATO {$$ = $1 + $2 +$3 +$4}
+PARAMETROS : Identificador S_DosPuntos TIPOS_DE_DATO {$$ = $1 + $2 +$3;}
+           | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G {$$ = $1 + $2 +$3 +$4;}
+           | Identificador S_Interrogacion S_DosPuntos TIPOS_DE_DATO {$$ = $1 + $2 +$3 +$4;}
 ;
 /*---------------------------------------------TYPES---------------------------------------------------------*/
 
