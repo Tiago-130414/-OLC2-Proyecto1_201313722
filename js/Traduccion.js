@@ -116,13 +116,10 @@ case 9: case 19:
 this.$ ='';console.log({ Tipo_Error  : ' Error_Sintactico ', Error  : yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });
 break;
 case 10:
-var json  = { tipo: "funcion" , contenido : [{tipo : "reservada", contenido : $$[$0-7]},{tipo : "identificador", contenido : $$[$0-6]},{tipo : "simbolo", contenido : $$[$0-5]},{tipo : "parametros", contenido : [$$[$0-4]]},{tipo : "simbolo", contenido : $$[$0-3]},{tipo : "simbolo", contenido : $$[$0-2]},{tipo : "instrucciones", contenido : $$[$0-1]},{tipo : "simbolo", contenido : $$[$0]}]};this.$ = json; 
+var json  = { tipo: "funcion" , contenido : [{tipo : "identificador", contenido : $$[$0-6]},{tipo : "parametros", contenido : [$$[$0-4]]},{tipo : "instrucciones", contenido : $$[$0-1]}]};this.$ = json;
 break;
 case 11:
-this.$ = $$[$0-9] + $$[$0-8] +$$[$0-7] +$$[$0-6] +$$[$0-5] +$$[$0-4]; 
-break;
-case 12:
-this.$ = $$[$0-11] + $$[$0-10] +$$[$0-9] +$$[$0-8] +$$[$0-7] +$$[$0-6] +$$[$0-5]+$$[$0-4]+$$[$0-3];
+var json = {tipo : "funcion" ,contenido : [{tipo : "identificador", contenido : $$[$0-8]},{tipo : "parametros", contenido : [$$[$0-6]]},{tipo : "tipoDato", contenido : $$[$0-3]},{tipo : "instrucciones", contenido : $$[$0-1]}] }; this.$ = json;
 break;
 case 39: case 50:
 this.$ = $$[$0-6]+$$[$0-5]+$$[$0-4]+$$[$0-3]+$$[$0-2]+$$[$0-1]+$$[$0];
@@ -152,13 +149,10 @@ case 125:
 this.$=$$[$0]
 break;
 case 126:
-this.$ = $$[$0-2] + $$[$0-1] +$$[$0];
+var json = {tipo : "identificador" , contenido : $$[$0-2]} ; this.$ = json;
 break;
-case 127:
-this.$ = $$[$0-4] + $$[$0-3] +$$[$0-2] +$$[$0-1];
-break;
-case 128:
-this.$ = $$[$0-3] + $$[$0-2] +$$[$0-1] +$$[$0];
+case 127: case 128:
+var json = {tipo : "" , contenido :} ; this.$ = json;
 break;
 case 168: case 169: case 172: case 173:
  this.$ = $$[$0-1] + $$[$0]; 

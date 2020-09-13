@@ -107,6 +107,8 @@
 <<EOF>>                                             {  return 'EOF'; }
 .                                                   {console.error("error lexico: " + yytext)}
 /lex
+
+
 //PRECEDENCIA DE OPERADORES
 //prescedencia operadores logicos
 %left 'LOG_Concatenar' 'LOG_OR'
@@ -164,10 +166,10 @@ CONTENIDO : FUNCIONES                   {
           |  error  {$$ ='';console.log({ Tipo_Error  : ' Error_Sintactico ', Error  : yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
 ;
 /*---------------------------------------------DEFINICION DE FUNCIONES---------------------------------------------------------*/
-FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre CONT S_LlaveCierra {var json  = { tipo: "funcion" , contenido : [{tipo : "reservada", contenido : $1},{tipo : "identificador", contenido : $2},{tipo : "simbolo", contenido : $3},{tipo : "parametros", contenido : [$4]},{tipo : "simbolo", contenido : $5},{tipo : "simbolo", contenido : $6},{tipo : "instrucciones", contenido : $7},{tipo : "simbolo", contenido : $8}]};$$ = json; }
-          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre CONT S_LlaveCierra {$$ = $1 + $2 +$3 +$4 +$5 +$6; }
-          | R_Let Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre CONT S_LlaveCierra S_PuntoComa {$$ = $1 + $2 +$3 +$4 +$5 +$6 +$7+$8+$9;}
-          | R_Const Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre CONT S_LlaveCierra S_PuntoComa
+FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre CONT S_LlaveCierra {var json  = { tipo: "funcion" , contenido : [{tipo : "identificador", contenido : $2},{tipo : "parametros", contenido : [$4]},{tipo : "instrucciones", contenido : $7}]};$$ = json;}
+          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre CONT S_LlaveCierra {var json = {tipo : "funcion" ,contenido : [{tipo : "identificador", contenido : $2},{tipo : "parametros", contenido : [$4]},{tipo : "tipoDato", contenido : $7},{tipo : "instrucciones", contenido : $9}] }; $$ = json;}
+          | R_Let Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre CONT S_LlaveCierra S_PuntoComa //{var json = {tipo : "funcion" ,contenido : [{tipo : "concatenar", contenido :$1} , {tipo : "identificador", contenido :$2},{tipo : "concatenar", contenido :$3},{tipo : "concatenar", contenido :$4},{tipo : "concatenar", contenido :$5},{tipo : "parametros", contenido :$6},{tipo : "concatenar", contenido :$7},{tipo : "concatenar", contenido :$8},{tipo : "concatenar", contenido :$9},{tipo : "instrucciones", contenido :$10},{tipo : "concatenar", contenido :$11},{tipo : "concatenar", contenido :$12}] }; $$ = json;}
+          | R_Const Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre CONT S_LlaveCierra S_PuntoComa //{var json = {tipo : "funcion" ,contenido : [{tipo : "concatenar", contenido :$1} , {tipo : "identificador", contenido :$2},{tipo : "concatenar", contenido :$3},{tipo : "concatenar", contenido :$4},{tipo : "concatenar", contenido :$5},{tipo : "parametros", contenido :$6},{tipo : "concatenar", contenido :$7},{tipo : "concatenar", contenido :$8},{tipo : "concatenar", contenido :$9},{tipo : "instrucciones", contenido :$10},{tipo : "concatenar", contenido :$11},{tipo : "concatenar", contenido :$12}] }; $$ = json;}
 ;
 /*---------------------------------------------LISTADO DE ESTRUCTURAS DE CONTROL---------------------------------------------------------*/
 EDD:LISTADO_ESTRUCTURAS
@@ -404,9 +406,9 @@ LISTA_PARAMETROS : LISTA_PARAMETROS S_Coma PARAMETROS  {$$ = $1 + $2}
                  | PARAMETROS {$$=$1}              
 ;
 
-PARAMETROS : Identificador S_DosPuntos TIPOS_DE_DATO {$$ = $1 + $2 +$3;}
-           | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G {$$ = $1 + $2 +$3 +$4;}
-           | Identificador S_Interrogacion S_DosPuntos TIPOS_DE_DATO {$$ = $1 + $2 +$3 +$4;}
+PARAMETROS : Identificador S_DosPuntos TIPOS_DE_DATO {var json = {tipo : "identificador" , contenido : $1} ; $$ = json;}
+           | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G {var json = {tipo : "" , contenido :} ; $$ = json;}
+           | Identificador S_Interrogacion S_DosPuntos TIPOS_DE_DATO {var json = {tipo : "" , contenido :} ; $$ = json;}
 ;
 /*---------------------------------------------TYPES---------------------------------------------------------*/
 
