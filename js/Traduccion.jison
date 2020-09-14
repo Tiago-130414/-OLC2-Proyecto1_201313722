@@ -59,9 +59,9 @@
 
 "++"                                                {return 'OP_Incremento';}
 "--"                                                {return 'OP_Decremento';}
+"**"                                                {return 'OP_Exponenciacion';}
 "+"                                                 {return 'OP_Mas';}
 "-"                                                 {return 'OP_Menos';}
-"**"                                                {return 'OP_Exponenciacion';}
 "*"                                                 {return 'OP_Multiplicacion';}
 "/"                                                 {return 'OP_Division';}
 "%"                                                 {return 'OP_Modulo';}
@@ -107,7 +107,30 @@
 <<EOF>>                                             {  return 'EOF'; }
 .                                                   {console.error("error lexico: " + yytext)}
 /lex
+%{
+function expresion(valor1, operador, valor2) {
+    var json = [];
+    json = json.concat(returnVector(valor1));
+    json = json.concat(returnVector(operador));
+    json = json.concat(returnVector(valor2));
+    return json;
+}
 
+function unaria(valor1,valor2){
+    var json = [];
+    json = json.concat(returnVector(valor1));
+    json = json.concat(returnVector(valor2));
+    return json;
+}
+
+function returnVector(val){
+    if(Array.isArray(val)==true){
+        return val;
+    }else{
+        return [val];
+    }
+}
+%}
 
 //PRECEDENCIA DE OPERADORES
 //prescedencia operadores logicos
@@ -166,8 +189,8 @@ CONTENIDO : FUNCIONES                   {
           |  error  {$$ ='';console.log({ Tipo_Error  : ' Error_Sintactico ', Error  : yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
 ;
 /*---------------------------------------------DEFINICION DE FUNCIONES---------------------------------------------------------*/
-FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre CONT S_LlaveCierra {var json  = { tipo: "funcion" , contenido : [{tipo : "identificador", contenido : $2},{tipo : "parametros", contenido : [$4]},{tipo : "instrucciones", contenido : $7}]};$$ = json;}
-          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre CONT S_LlaveCierra {var json = {tipo : "funcion" ,contenido : [{tipo : "identificador", contenido : $2},{tipo : "parametros", contenido : [$4]},{tipo : "tipoDato", contenido : $7},{tipo : "instrucciones", contenido : $9}] }; $$ = json;}
+FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre CONT S_LlaveCierra {var json  = { tipo: "funcion" , contenido : [{tipo : "identificador", contenido : $2},{tipo : "parametros", contenido : $4},{tipo : "instrucciones", contenido : $7}]};$$ = json;}
+          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre CONT S_LlaveCierra {var json = {tipo : "funcion" ,contenido : [{tipo : "identificador", contenido : $2},{tipo : "parametros", contenido : $4},{tipo : "tipoDato", contenido : $7},{tipo : "instrucciones", contenido : $9}] }; $$ = json;}
           | R_Let Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre CONT S_LlaveCierra S_PuntoComa //{var json = {tipo : "funcion" ,contenido : [{tipo : "concatenar", contenido :$1} , {tipo : "identificador", contenido :$2},{tipo : "concatenar", contenido :$3},{tipo : "concatenar", contenido :$4},{tipo : "concatenar", contenido :$5},{tipo : "parametros", contenido :$6},{tipo : "concatenar", contenido :$7},{tipo : "concatenar", contenido :$8},{tipo : "concatenar", contenido :$9},{tipo : "instrucciones", contenido :$10},{tipo : "concatenar", contenido :$11},{tipo : "concatenar", contenido :$12}] }; $$ = json;}
           | R_Const Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre CONT S_LlaveCierra S_PuntoComa //{var json = {tipo : "funcion" ,contenido : [{tipo : "concatenar", contenido :$1} , {tipo : "identificador", contenido :$2},{tipo : "concatenar", contenido :$3},{tipo : "concatenar", contenido :$4},{tipo : "concatenar", contenido :$5},{tipo : "parametros", contenido :$6},{tipo : "concatenar", contenido :$7},{tipo : "concatenar", contenido :$8},{tipo : "concatenar", contenido :$9},{tipo : "instrucciones", contenido :$10},{tipo : "concatenar", contenido :$11},{tipo : "concatenar", contenido :$12}] }; $$ = json;}
 ;
@@ -399,16 +422,16 @@ PARAMETROS_FUNC
 
 /*---------------------------------------------PARAMETROS---------------------------------------------------------*/
 PARAM: LISTA_PARAMETROS
-     |
+     |                                                  {$$=[];}
 ;
 
-LISTA_PARAMETROS : LISTA_PARAMETROS S_Coma PARAMETROS  {$$ = $1 + $2}
-                 | PARAMETROS {$$=$1}              
+LISTA_PARAMETROS : LISTA_PARAMETROS S_Coma PARAMETROS  {$1.push({tipo:"concatenar",contenido : $2});$1.push($3); $$ = $1;}
+                 | PARAMETROS {$$=[$1];}              
 ;
 
-PARAMETROS : Identificador S_DosPuntos TIPOS_DE_DATO {var json = {tipo : "identificador" , contenido : $1} ; $$ = json;}
-           | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G {var json = {tipo : "" , contenido :} ; $$ = json;}
-           | Identificador S_Interrogacion S_DosPuntos TIPOS_DE_DATO {var json = {tipo : "" , contenido :} ; $$ = json;}
+PARAMETROS : Identificador S_DosPuntos TIPOS_DE_DATO  {var json = {tipo : "parametro" , contenido : [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "tipoDato" , contenido : $3}]} ; $$ = json;}
+           | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G {var json = {tipo : "parametro" , contenido : [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "tipoDato" , contenido : $3},{tipo : "concatenar" , contenido : $4},{tipo : "expresion" , contenido : $5}]} ; $$ = json;}
+           | Identificador S_Interrogacion S_DosPuntos TIPOS_DE_DATO //{var json = {tipo : "" , contenido :} ; $$ = json;}
 ;
 /*---------------------------------------------TYPES---------------------------------------------------------*/
 
@@ -445,66 +468,67 @@ SEPARADOR_DECLARACION_TYPES : S_Coma
 ;
 
 /*---------------------------------------------TIPOS DE DATO---------------------------------------------------------*/
-TIPOS_DE_DATO : T_Number
-              | T_Boolean
-              | T_String
-              | T_Void
-              | Identificador
+// ESTO NO SE MODIFICA PARA RETORNAR VALORES PARA FORMAR JSON
+TIPOS_DE_DATO : T_Number                                                                        
+              | T_Boolean                                                                       
+              | T_String                                                                        
+              | T_Void                                                                          
+              | Identificador                                                                  
 ;
 //agrega tipos de dato a funciones anonimas
-TIPAR_FUNCION : S_DosPuntos TIPOS_DE_DATO
+TIPAR_FUNCION : S_DosPuntos TIPOS_DE_DATO                                                       
               |
 ;
 /*---------------------------------------------ACCEDER A ATRIBUTOS---------------------------------------------------------*/
 
- ATRIBUTOS: ATRIBUTOS S_Punto CONT_ATRIBUTOS
-          | CONT_ATRIBUTOS
+ ATRIBUTOS: ATRIBUTOS S_Punto CONT_ATRIBUTOS                                                    {$1.push({tipo : "concatenar" , contenido : $2});$1.push($3);$$=$1;}
+          | CONT_ATRIBUTOS                                                                      {$$ = [$1];}
  ;
 
- CONT_ATRIBUTOS:  Identificador S_CorcheteAbre EXPRESION_G S_CorcheteCierra
-               |  Identificador
+ CONT_ATRIBUTOS:  Identificador S_CorcheteAbre EXPRESION_G S_CorcheteCierra                     //{var json  = {tipo : "valor" , contenido : $1}; $$ = json;}
+               |  Identificador                                                                 {var json  = {tipo : "identificador" , contenido : $1}; $$ = json;}
 ;
 
 /*---------------------------------------------EXPRESIONES---------------------------------------------------------*/
 EXPRESION_G 
-    : EXPRESION_G LOG_Concatenar EXPRESION_G                                                     { $$ = $1 + $2 + $3; }
-    | EXPRESION_G LOG_OR EXPRESION_G                                                             { $$ = $1 + $2 + $3; }
-    | EXPRESION_G REL_IgualIgual EXPRESION_G                                                     { $$ = $1 + $2 + $3; }   
-    | EXPRESION_G REL_MayorIgualQue EXPRESION_G                                                  { $$ = $1 + $2 + $3; }
-    | EXPRESION_G REL_MayorQue EXPRESION_G                                                       { $$ = $1 + $2 + $3; }
-    | EXPRESION_G REL_MenorIgualQue EXPRESION_G                                                  { $$ = $1 + $2 + $3; }
-    | EXPRESION_G REL_MenorQue EXPRESION_G                                                       { $$ = $1 + $2 + $3; }
-    | EXPRESION_G REL_Distinto EXPRESION_G                                                       { $$ = $1 + $2 + $3; }       
-    | EXPRESION_G OP_Mas EXPRESION_G                                                             { $$ = $1 + $2 + $3; }
-    | EXPRESION_G OP_Menos EXPRESION_G                                                           { $$ = $1 + $2 + $3; }
-    | EXPRESION_G OP_Multiplicacion EXPRESION_G                                                  { $$ = $1 + $2 + $3; }
-    | EXPRESION_G OP_Division EXPRESION_G                                                        { $$ = $1 + $2 + $3; }   
-    | EXPRESION_G OP_Exponenciacion EXPRESION_G                                                  { $$ = $1 + $2 + $3; }
-    | EXPRESION_G OP_Modulo EXPRESION_G                                                          { $$ = $1 + $2 + $3; }
-    | CONTENIDO_EXPRESION OP_Decremento %prec PRUEBA                                             { $$ = $1 + $2; }
-    | CONTENIDO_EXPRESION OP_Incremento %prec PRUEBA                                             { $$ = $1 + $2; }
-    | OP_Decremento CONTENIDO_EXPRESION                                                          { $$ = $1 + $2;}
-    | OP_Incremento CONTENIDO_EXPRESION                                                          { $$ = $1 + $2;}
-    | OP_Menos  CONTENIDO_EXPRESION     %prec UMINUS                                             { $$ = $1 + $2; }
-    | LOG_Not   CONTENIDO_EXPRESION     %prec UMINUS                                             { $$ = $1 + $2; }
+    : EXPRESION_G LOG_Concatenar EXPRESION_G                                                     { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
+    | EXPRESION_G LOG_OR EXPRESION_G                                                             { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
+    | EXPRESION_G REL_IgualIgual EXPRESION_G                                                     { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
+    | EXPRESION_G REL_MayorIgualQue EXPRESION_G                                                  { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
+    | EXPRESION_G REL_MayorQue EXPRESION_G                                                       { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
+    | EXPRESION_G REL_MenorIgualQue EXPRESION_G                                                  { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
+    | EXPRESION_G REL_MenorQue EXPRESION_G                                                       { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
+    | EXPRESION_G REL_Distinto EXPRESION_G                                                       { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}     
+    | EXPRESION_G OP_Mas EXPRESION_G                                                             { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
+    | EXPRESION_G OP_Menos EXPRESION_G                                                           { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
+    | EXPRESION_G OP_Multiplicacion EXPRESION_G                                                  { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
+    | EXPRESION_G OP_Division EXPRESION_G                                                        { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
+    | EXPRESION_G OP_Exponenciacion EXPRESION_G                                                  { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
+    | EXPRESION_G OP_Modulo EXPRESION_G                                                          { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
+    | CONTENIDO_EXPRESION OP_Decremento %prec PRUEBA                                             { $$ = unaria($1,{ tipo : "concatenar", contenido : $2}); }
+    | CONTENIDO_EXPRESION OP_Incremento %prec PRUEBA                                             { $$ = unaria($1,{ tipo : "concatenar", contenido : $2}); }
+    | OP_Decremento CONTENIDO_EXPRESION                                                          { $$ = unaria({ tipo : "concatenar", contenido : $1},$2); }
+    | OP_Incremento CONTENIDO_EXPRESION                                                          { $$ = unaria({ tipo : "concatenar", contenido : $1},$2); }
+    | OP_Menos  CONTENIDO_EXPRESION     %prec UMINUS                                             { $$ = unaria({ tipo : "concatenar", contenido : $1},$2); }
+    | LOG_Not   CONTENIDO_EXPRESION     %prec UMINUS                                             { $$ = unaria({ tipo : "concatenar", contenido : $1},$2); }
     | CONTENIDO_EXPRESION
 ;
 
  CONTENIDO_EXPRESION
-    : Entero
-    | Decimal
-    | R_True
-    | R_False
-    | Identificador S_ParentesisAbre S_ParentesisCierra                                          { $$ = $1 + $2 + $3; }
-    | Identificador S_ParentesisAbre OPCIONAL S_ParentesisCierra                                 { $$ = $1 + $2 + $3 + $4; }
-    | S_ParentesisAbre EXPRESION_G S_ParentesisCierra                                            { $$ = $1 + $2 + $3; }
-    | Cadena
+    : Entero                                                                                    {var json  = {tipo : "valor" , contenido : $1}; $$ = json;}
+    | Decimal                                                                                   {var json  = {tipo : "valor" , contenido : $1}; $$ = json;}
+    | R_True                                                                                    {var json  = {tipo : "valor" , contenido : $1}; $$ = json;}
+    | R_False                                                                                   {var json  = {tipo : "valor" , contenido : $1}; $$ = json;}
+    | Cadena                                                                                    {var json  = {tipo : "valor" , contenido : $1}; $$ = json;}
+    | Identificador S_ParentesisAbre S_ParentesisCierra                                         { $$ = $1 + $2 + $3; }
+    | Identificador S_ParentesisAbre OPCIONAL S_ParentesisCierra                                { var json = [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2}]; var temp = json.concat($3); temp.push({tipo : "concatenar" , contenido : $4}); $$ = temp;}
+    | S_ParentesisAbre EXPRESION_G S_ParentesisCierra                                           { $$ = expresion({ tipo : "concatenar", contenido : $1},$2,{ tipo : "concatenar", contenido : $3});}                                                               
     | ATRIBUTOS
-    | ATRIBUTOS S_Punto R_Length
+    | ATRIBUTOS S_Punto R_Length                                                                 
     | ATRIBUTOS S_Punto R_Pop S_ParentesisAbre S_ParentesisCierra
 ; /*ATRIBUTOS CONTIENE ID Y VECTOR */
 
 OPCIONAL 
-    : OPCIONAL S_Coma EXPRESION_G                                                                { $$ = $1 + $2 + $3; }
-    | EXPRESION_G    
+    : OPCIONAL S_Coma EXPRESION_G                                                               {$1.push({tipo : "concatenar" , contenido : $2}); $1.push($3);$$ = $1;}                                                              
+    | EXPRESION_G                                                                               {$$ = [$1];}
 ; 
