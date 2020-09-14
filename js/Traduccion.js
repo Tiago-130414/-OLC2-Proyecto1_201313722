@@ -89,7 +89,7 @@ break;
 case 2:
 this.$ =$$[$0];
 break;
-case 4: case 5:
+case 4: case 5: case 88: case 94: case 95: case 101: case 139: case 183:
 this.$ = $$[$0];
 break;
 case 6:
@@ -127,8 +127,53 @@ break;
 case 55:
  this.$ = $$[$0-9] + $$[$0-8] + $$[$0-7] + $$[$0-6] + $$[$0-5] + $$[$0-4] + $$[$0-3] + $$[$0-2] + $$[$0-1] + $$[$0]; 
 break;
-case 60: case 180:
+case 60:
  this.$ = $$[$0-2] + $$[$0-1] + $$[$0]; 
+break;
+case 89: case 90: case 96: case 97:
+var json = []; json.push({tipo : "concatenar" , contenido : $$[$0-2]});json = json.concat($$[$0-1]);json.push({tipo : "concatenar" , contenido : $$[$0]}); this.$ = json;
+break;
+case 92:
+this.$ = [];
+break;
+case 93:
+var json = [] ; $$[$0-2].push({tipo : "concatenar" , contenido : $$[$0-1]}); json = $$[$0-2].concat($$[$0]); this.$ = json;
+break;
+case 98:
+var json = []; json = json.concat($$[$0-1]); json.push({tipo : "concatenar" , contenido : $$[$0]}); this.$ = {tipo : "variable_let" , contenido : json};
+break;
+case 99:
+var json = []; json = json.concat($$[$0-1]); json.push({tipo : "concatenar" , contenido : $$[$0]}); this.$ = {tipo : "variable_const" , contenido : json};
+break;
+case 100:
+$$[$0-2].push({tipo : "concatenar" , contenido : $$[$0-1]});var json = $$[$0-2].concat($$[$0]);this.$ = json;
+break;
+case 102:
+this.$ = [{tipo : "identificador" ,contenido : $$[$0]}];
+break;
+case 103:
+var json = [{tipo : "identificador" ,contenido : $$[$0-2]},{tipo : "concatenar" ,contenido : $$[$0-1]},{tipo : "tipoDato" ,contenido : $$[$0]}];this.$ = json;
+break;
+case 104:
+var json = [{tipo : "identificador" ,contenido : $$[$0-4]},{tipo : "concatenar" ,contenido : $$[$0-3]},{tipo : "tipoDato" ,contenido : $$[$0-2]},{tipo : "tipoDato" ,contenido : $$[$0-1]}];json = json.concat($$[$0]);this.$ = json;
+break;
+case 105:
+var json = [{tipo : "identificador" ,contenido : $$[$0-2]},{tipo : "concatenar" ,contenido : $$[$0-1]}];json = json.concat($$[$0]);this.$ = json;
+break;
+case 106:
+var json = [{tipo : "identificador" ,contenido : $$[$0-4]},{tipo : "concatenar" ,contenido : $$[$0-3]},{tipo : "concatenar" ,contenido : $$[$0-2]}]; json = json.concat($$[$0-1]);json.push({tipo : "concatenar" ,contenido : $$[$0]});this.$ = json;
+break;
+case 107:
+var json = [{tipo : "identificador" ,contenido : $$[$0-4]},{tipo : "concatenar" ,contenido : $$[$0-3]},{tipo : "tipoDato" ,contenido : $$[$0-2]},{tipo : "concatenar" ,contenido : $$[$0-1]},{tipo : "concatenar" ,contenido : $$[$0]}];this.$ = json;
+break;
+case 108:
+var json = [{tipo : "identificador" ,contenido : $$[$0-8]},{tipo : "concatenar" ,contenido : $$[$0-7]},{tipo : "tipoDato" ,contenido : $$[$0-6]},{tipo : "concatenar" ,contenido : $$[$0-5]},{tipo : "concatenar" ,contenido : $$[$0-4]},{tipo : "concatenar" ,contenido : $$[$0-3]},{tipo : "concatenar" ,contenido : $$[$0-2]}];json = json.concat($$[$0-1]);json.push({tipo : "concatenar" ,contenido : $$[$0]});this.$ = json;
+break;
+case 109:
+var json = [{tipo : "identificador" ,contenido : $$[$0-6]},{tipo : "concatenar" ,contenido : $$[$0-5]},{tipo : "tipoDato" ,contenido : $$[$0-4]},{tipo : "concatenar" ,contenido : $$[$0-3]},{tipo : "concatenar" ,contenido : $$[$0-2]}];json = json.concat($$[$0-1]);json.push({tipo : "concatenar" ,contenido : $$[$0]});this.$ = json;
+break;
+case 110:
+var json = [{tipo : "identificador" ,contenido : $$[$0-4]},{tipo : "concatenar" ,contenido : $$[$0-3]},{tipo : "concatenar" ,contenido : $$[$0-2]}]; json = json.concat($$[$0-1]);json.push({tipo : "concatenar" ,contenido : $$[$0]});this.$=json;
 break;
 case 117:
 this.$ = $$[$0-4] + $$[$0-3] + $$[$0-2] + $$[$0-1] + $$[$0];
@@ -157,11 +202,23 @@ break;
 case 127:
 var json = {tipo : "parametro" , contenido : [{tipo : "identificador" , contenido : $$[$0-4]},{tipo : "concatenar" , contenido : $$[$0-3]},{tipo : "tipoDato" , contenido : $$[$0-2]},{tipo : "concatenar" , contenido : $$[$0-1]},{tipo : "expresion" , contenido : $$[$0]}]} ; this.$ = json;
 break;
+case 138:
+var json = $$[$0-2];json.push($$[$0-1]); json = json.concat($$[$0]);this.$ =json;
+break;
+case 140:
+var json = [{tipo : "identificador" , contenido : $$[$0-2]},{tipo : "concatenar" , contenido : $$[$0-1]}].concat($$[$0]);this.$ = json;
+break;
+case 141: case 142:
+this.$ = {tipo : "concatenar" , contenido : $$[$0]};
+break;
 case 150:
 $$[$0-2].push({tipo : "concatenar" , contenido : $$[$0-1]});$$[$0-2].push($$[$0]);this.$=$$[$0-2];
 break;
 case 151: case 187:
 this.$ = [$$[$0]];
+break;
+case 152: case 181:
+ var json = [{tipo : "identificador" , contenido : $$[$0-3]},{tipo : "concatenar" , contenido : $$[$0-2]}]; var temp = json.concat($$[$0-1]); temp.push({tipo : "concatenar" , contenido : $$[$0]}); this.$ = temp;
 break;
 case 153:
 var json  = {tipo : "identificador" , contenido : $$[$0]}; this.$ = json;
@@ -178,11 +235,17 @@ break;
 case 175: case 176: case 177: case 178: case 179:
 var json  = {tipo : "valor" , contenido : $$[$0]}; this.$ = json;
 break;
-case 181:
- var json = [{tipo : "identificador" , contenido : $$[$0-3]},{tipo : "concatenar" , contenido : $$[$0-2]}]; var temp = json.concat($$[$0-1]); temp.push({tipo : "concatenar" , contenido : $$[$0]}); this.$ = temp;
+case 180:
+ var json = [{tipo : "identificador" , contenido : $$[$0-2]},{tipo : "concatenar" , contenido : $$[$0-1]},{tipo : "concatenar" , contenido : $$[$0]}]; this.$ = json;
 break;
 case 182:
  this.$ = expresion({ tipo : "concatenar", contenido : $$[$0-2]},$$[$0-1],{ tipo : "concatenar", contenido : $$[$0]});
+break;
+case 184:
+$$[$0-2].push({tipo : "concatenar" , contenido : $$[$0-1] });$$[$0-2].push({tipo : "concatenar" , contenido : $$[$0] });this.$=$$[$0-2];
+break;
+case 185:
+$$[$0-4].push({tipo : "concatenar" , contenido : $$[$0-3] });$$[$0-4].push({tipo : "concatenar" , contenido : $$[$0-2] });$$[$0-4].push({tipo : "concatenar" , contenido : $$[$0-1] });$$[$0-4].push({tipo : "concatenar" , contenido : $$[$0] });this.$=$$[$0-4];
 break;
 case 186:
 $$[$0-2].push({tipo : "concatenar" , contenido : $$[$0-1]}); $$[$0-2].push($$[$0]);this.$ = $$[$0-2];
