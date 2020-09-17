@@ -131,6 +131,49 @@ function returnVector(val){
         return [val];
     }
 }
+
+function recorrerJson(json){
+    var instr = [];
+    var t = [];
+    if(json.tipo == "funcion"){
+        for( var element of json.contenido){
+            if(element.tipo == "instrucciones"){
+                for(var ele of element.contenido){
+                    var index = element.contenido.indexOf(ele);
+                    if(ele.tipo == "funcion"){
+                        t.push(ele);
+                    }else{
+                        instr.push(ele);
+                    }
+                }
+                
+                element.contenido = instr;
+                break;
+            }
+        }
+    }
+    if(t.length == 0){
+        return json;
+    }else{
+        return [json].concat(t);
+        //console.log(json);
+    }
+    
+}
+
+function rJson(t){
+    for(let element of t){
+
+    }
+}
+
+
+function renombrar(funcionP,cN){
+    var nNombre = funcionP+"_"+cN;
+    return nNombre;
+}
+
+
 %}
 
 //PRECEDENCIA DE OPERADORES
@@ -146,11 +189,11 @@ function returnVector(val){
 %start INICIO
 
 %%
-INICIO : CONT EOF {console.log($1);}
+INICIO : CONT EOF {var t = { tipo : "contenidoGlobal" , contenido : $1};console.log(t);}
 ;
 /*---------------------------------------------LISTA DE CONTENIDO GLOBAL---------------------------------------------------------*/
-CONT: LISTA_CONTENIDO {$$ =$1;}
-    |
+CONT: LISTA_CONTENIDO 
+    |                                                           {$$ = [];}
 ;
 
 LISTA_CONTENIDO : CONTENIDO LISTA_CONTENIDO_PRIM                {$$ = $2;}               
@@ -172,7 +215,11 @@ CONTENIDO : FUNCIONES                   {
                                         if(Array.isArray(anterior)){
                                             var temp = anterior.concat($1);
                                         }else{
-                                            var temp  = [$1];
+                                            if(Array.isArray($1)){
+                                                var temp = $1;
+                                            }else{
+                                                var temp  = [$1];
+                                            }
                                         }
                                         $$ = temp;
                                         }
@@ -190,8 +237,8 @@ CONTENIDO : FUNCIONES                   {
           |  error  {$$ ='';console.log({ Tipo_Error  : ' Error_Sintactico ', Error  : yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
 ;
 /*---------------------------------------------DEFINICION DE FUNCIONES---------------------------------------------------------*/
-FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre CONT S_LlaveCierra {var json  = { tipo: "funcion" , contenido : [{tipo : "identificador", contenido : $2},{tipo : "parametros", contenido : $4},{tipo : "instrucciones", contenido : $7}]};$$ = json;}
-          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre CONT S_LlaveCierra {var json = {tipo : "funcion" ,contenido : [{tipo : "identificador", contenido : $2},{tipo : "parametros", contenido : $4},{tipo : "tipoDato", contenido : $7},{tipo : "instrucciones", contenido : $9}] }; $$ = json;}
+FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre CONT S_LlaveCierra {var json  = { tipo: "funcion" , contenido : [{tipo : "identificador", contenido : $2},{tipo : "parametros", contenido : $4},{tipo : "instrucciones", contenido : $7}]};$$ =recorrerJson(json);}//contenido : [$7]
+          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre CONT S_LlaveCierra {var json = {tipo : "funcion" ,contenido : [{tipo : "identificador", contenido : $2},{tipo : "parametros", contenido : $4},{tipo : "tipoDato", contenido : $7},{tipo : "instrucciones", contenido : [$9]}] }; $$ = json;}
           | R_Let Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre CONT S_LlaveCierra S_PuntoComa //{var json = {tipo : "funcion" ,contenido : [{tipo : "concatenar", contenido :$1} , {tipo : "identificador", contenido :$2},{tipo : "concatenar", contenido :$3},{tipo : "concatenar", contenido :$4},{tipo : "concatenar", contenido :$5},{tipo : "parametros", contenido :$6},{tipo : "concatenar", contenido :$7},{tipo : "concatenar", contenido :$8},{tipo : "concatenar", contenido :$9},{tipo : "instrucciones", contenido :$10},{tipo : "concatenar", contenido :$11},{tipo : "concatenar", contenido :$12}] }; $$ = json;}
           | R_Const Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre CONT S_LlaveCierra S_PuntoComa //{var json = {tipo : "funcion" ,contenido : [{tipo : "concatenar", contenido :$1} , {tipo : "identificador", contenido :$2},{tipo : "concatenar", contenido :$3},{tipo : "concatenar", contenido :$4},{tipo : "concatenar", contenido :$5},{tipo : "parametros", contenido :$6},{tipo : "concatenar", contenido :$7},{tipo : "concatenar", contenido :$8},{tipo : "concatenar", contenido :$9},{tipo : "instrucciones", contenido :$10},{tipo : "concatenar", contenido :$11},{tipo : "concatenar", contenido :$12}] }; $$ = json;}
 ;
@@ -346,7 +393,7 @@ CONTENIDO_ASIGNACION: S_Coma Identificador S_Igual EXPRESION_G              { va
                     | S_Coma OP_Decremento Identificador                    { var json = [{tipo : "concatenar" , contenido : $1},{tipo : "concatenar"    , contenido : $2},{tipo : "identificador" , contenido : $3}]; $$ = json;}
 ;
 
-LISTA_DE_ASIGNACIONES : EXPRESION_G                                             {$$ = $1;}
+LISTA_DE_ASIGNACIONES : EXPRESION_G                                             {$$ = [$1];}
                       | S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra         {var json = []; json.push({tipo : "concatenar" , contenido : $1});json = json.concat($2);json.push({tipo : "concatenar" , contenido : $3}); $$ = json;}
                       | S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra       {var json = []; json.push({tipo : "concatenar" , contenido : $1});json = json.concat($2);json.push({tipo : "concatenar" , contenido : $3}); $$ = json;}
 ;
@@ -363,7 +410,7 @@ LISTA_ASIGN_ARRAY: LISTA_ASIGN_ARRAY S_Coma CONT_ARRAY_ASIGN_VV             {var
                  | CONT_ARRAY_ASIGN_VV                                      {$$ = $1;}
 ;   
 
-CONT_ARRAY_ASIGN_VV: EXPRESION_G                                            {$$ = $1;}
+CONT_ARRAY_ASIGN_VV: EXPRESION_G                                            {$$ = [$1];}
                    | S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra        {var json = []; json.push({tipo : "concatenar" , contenido : $1});json = json.concat($2);json.push({tipo : "concatenar" , contenido : $3}); $$ = json;}
                    | S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra      {var json = []; json.push({tipo : "concatenar" , contenido : $1});json = json.concat($2);json.push({tipo : "concatenar" , contenido : $3}); $$ = json;}
 ;
