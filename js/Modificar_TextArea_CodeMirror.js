@@ -16,6 +16,7 @@ var TraduccionTP = CodeMirror.fromTextArea(
     theme: "material-palenight",
     styleActiveLine: true,
     lineNumbers: true,
+    smartIndent: true,
     matchBrackets: true,
     continueComments: "Enter",
     hint: true,

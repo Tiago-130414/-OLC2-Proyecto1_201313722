@@ -137,7 +137,7 @@ function recorrerJson(json){
     var t = [];
     var fPadre = "";
     var fHijo = "";
-    if(json.tipo == "funcion"){
+    if(json.tipo == "funcion" || json.tipo == "funcionT" ){
         for( var element of json.contenido){
             if(element.tipo == "identificador"){          
                     fPadre = element.contenido;
@@ -146,6 +146,8 @@ function recorrerJson(json){
                 for(var ele of element.contenido){
                     var index = element.contenido.indexOf(ele);
                     if(ele.tipo == "funcion"){
+                        t.push(ele);
+                    }else if(ele.tipo == "funcionT"){
                         t.push(ele);
                     }else{
                         instr.push(ele);
@@ -193,7 +195,41 @@ function recursiva(idP ,idB ,arbol){
     }
 }
 
+function traducir(json){
+    var traduccion = ""
+    for(var element of json){
+        if(element.tipo == "funcion"){
+            traduccion += tFuncion(element)
+        }else if(element.tipo == "funcionT"){
+            traduccion += tFuncionT(element)
+        }
+    }
 
+    return traduccion;
+}
+
+function tFuncion(f){
+    var cad= "";
+    var par = "";
+    var inst ="";
+    cad += "function " + f.contenido[0].contenido  + "(" + "){\n";
+    cad += "}";
+    return cad;
+}
+
+function tFuncionT(f){
+    var cad= "";
+    var par = "";
+    var inst ="";
+    cad += "function " + f.contenido[0].contenido  + "(" + ") : "+ f.contenido[2].contenido +"{\n";
+    cad += "}";
+    return cad;
+}
+
+function fo(format){
+    var indented = indent.js(code, {tabString: '\t'});
+    console.log(indented);
+}
 
 %}
 
@@ -210,7 +246,7 @@ function recursiva(idP ,idB ,arbol){
 %start INICIO
 
 %%
-INICIO : CONT EOF {var t = { tipo : "contenidoGlobal" , contenido : $1};console.log(t);}
+INICIO : CONT EOF {var t = { tipo : "contenidoGlobal" , contenido : $1};console.log(t); fo(traducir($1)) ;return traducir($1);}
 ;
 /*---------------------------------------------LISTA DE CONTENIDO GLOBAL---------------------------------------------------------*/
 CONT: LISTA_CONTENIDO 
@@ -259,7 +295,7 @@ CONTENIDO : FUNCIONES                   {
 ;
 /*---------------------------------------------DEFINICION DE FUNCIONES---------------------------------------------------------*/
 FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre CONT S_LlaveCierra {var json  = { tipo: "funcion" , contenido : [{tipo : "identificador", contenido : $2},{tipo : "parametros", contenido : $4},{tipo : "instrucciones", contenido : $7}]};$$ =recorrerJson(json);}//contenido : [$7]
-          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre CONT S_LlaveCierra {var json = {tipo : "funcion" ,contenido : [{tipo : "identificador", contenido : $2},{tipo : "parametros", contenido : $4},{tipo : "tipoDato", contenido : $7},{tipo : "instrucciones", contenido : [$9]}] }; $$ = json;}
+          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre CONT S_LlaveCierra {var json = {tipo : "funcionT" ,contenido : [{tipo : "identificador", contenido : $2},{tipo : "parametros", contenido : $4},{tipo : "tipoDato", contenido : $7},{tipo : "instrucciones", contenido : $9}] }; $$ =recorrerJson(json);}
           | R_Let Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre CONT S_LlaveCierra S_PuntoComa //{var json = {tipo : "funcion" ,contenido : [{tipo : "concatenar", contenido :$1} , {tipo : "identificador", contenido :$2},{tipo : "concatenar", contenido :$3},{tipo : "concatenar", contenido :$4},{tipo : "concatenar", contenido :$5},{tipo : "parametros", contenido :$6},{tipo : "concatenar", contenido :$7},{tipo : "concatenar", contenido :$8},{tipo : "concatenar", contenido :$9},{tipo : "instrucciones", contenido :$10},{tipo : "concatenar", contenido :$11},{tipo : "concatenar", contenido :$12}] }; $$ = json;}
           | R_Const Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre CONT S_LlaveCierra S_PuntoComa //{var json = {tipo : "funcion" ,contenido : [{tipo : "concatenar", contenido :$1} , {tipo : "identificador", contenido :$2},{tipo : "concatenar", contenido :$3},{tipo : "concatenar", contenido :$4},{tipo : "concatenar", contenido :$5},{tipo : "parametros", contenido :$6},{tipo : "concatenar", contenido :$7},{tipo : "concatenar", contenido :$8},{tipo : "concatenar", contenido :$9},{tipo : "instrucciones", contenido :$10},{tipo : "concatenar", contenido :$11},{tipo : "concatenar", contenido :$12}] }; $$ = json;}
 ;
