@@ -135,8 +135,13 @@ function returnVector(val){
 function recorrerJson(json){
     var instr = [];
     var t = [];
+    var fPadre = "";
+    var fHijo = "";
     if(json.tipo == "funcion"){
         for( var element of json.contenido){
+            if(element.tipo == "identificador"){          
+                    fPadre = element.contenido;
+            }
             if(element.tipo == "instrucciones"){
                 for(var ele of element.contenido){
                     var index = element.contenido.indexOf(ele);
@@ -145,8 +150,10 @@ function recorrerJson(json){
                     }else{
                         instr.push(ele);
                     }
-                }
-                
+                }   
+                if(t.length != 0){
+                  recV(fPadre,t,instr);
+                }      
                 element.contenido = instr;
                 break;
             }
@@ -156,22 +163,36 @@ function recorrerJson(json){
         return json;
     }else{
         return [json].concat(t);
-        //console.log(json);
-    }
-    
-}
-
-function rJson(t){
-    for(let element of t){
-
     }
 }
 
+function recV (idP ,t,instr){
+    for(var element of t){
+        var fH = element.contenido[0].contenido;
+        for(var e of t){
+            recursiva(idP,fH,e);
+        }
 
-function renombrar(funcionP,cN){
-    var nNombre = funcionP+"_"+cN;
-    return nNombre;
+        for(var el of instr){
+            recursiva(idP,fH,el);
+        }
+    }
 }
+
+function recursiva(idP ,idB ,arbol){
+    if(arbol.tipo == "identificador"){
+        if(arbol.contenido == idB){
+            arbol.contenido = idP+"_"+arbol.contenido;
+        }
+    }else{
+        if(Array.isArray(arbol.contenido)){
+            for(var e of arbol.contenido){
+                recursiva(idP,idB,e);
+            }
+        }
+    }
+}
+
 
 
 %}
