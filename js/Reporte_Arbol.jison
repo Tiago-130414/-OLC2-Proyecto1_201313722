@@ -147,6 +147,7 @@ CONT: LISTA_CONTENIDO                                       {$$ = {Nombre:"CONT"
     |                                                       {$$ = {Nombre:"CONT",vector:[{Nombre : "&epsilon;" , vector : []}]};}
 ;
 
+
 LISTA_CONTENIDO : LISTA_CONTENIDO CONTENIDO                 {$$ = {Nombre: "LISTA_CONTENIDO" , vector:[$1,$2]};}
                 | CONTENIDO                                 {$$ = {Nombre:"LISTA_CONTENIDO",vector:[$1]};}
 ;
@@ -154,6 +155,7 @@ LISTA_CONTENIDO : LISTA_CONTENIDO CONTENIDO                 {$$ = {Nombre: "LIST
 //CONTENIDO GLOBAL
 CONTENIDO : FUNCIONES                                       {$$ = {Nombre:"CONTENIDO",vector:[$1]};}
           | ESTRUCTURAS_DE_CONTROL                          {$$ = {Nombre:"CONTENIDO",vector:[$1]};}
+          |  error  {$$ ='';console.log({ Tipo_Error  : ' Error_Sintactico ', Error  : yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
 ;
 /*---------------------------------------------DEFINICION DE FUNCIONES---------------------------------------------------------*/
 FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra                                            {$$ = {Nombre:"FUNCIONES",vector:[{Nombre:$2,vector :[]},$4,$7]};}
@@ -166,8 +168,12 @@ EDD:LISTADO_ESTRUCTURAS                                                 {$$ = $1
    |                                                                    {$$ = {Nombre: "LISTADO_ESTRUCTURAS" , vector: [{Nombre : "&epsilon;" , vector : []}]};}                     
 ;
 
-LISTADO_ESTRUCTURAS : LISTADO_ESTRUCTURAS ESTRUCTURAS_DE_CONTROL        {$$ = {Nombre:"LISTADO_ESTRUCTURAS",vector:[$1,$2]};}
-                    | ESTRUCTURAS_DE_CONTROL                            {$$ = {Nombre:"LISTADO_ESTRUCTURAS",vector:[$1]};}
+LISTADO_ESTRUCTURAS : LISTADO_ESTRUCTURAS CONT_ESTRUCTURAS_CONTROL        {$$ = {Nombre:"LISTADO_ESTRUCTURAS",vector:[$1,$2]};}
+                    | CONT_ESTRUCTURAS_CONTROL                            {$$ = {Nombre:"LISTADO_ESTRUCTURAS",vector:[$1]};}
+;
+
+CONT_ESTRUCTURAS_CONTROL : ESTRUCTURAS_DE_CONTROL
+                         | error  {$$ ='';console.log({ Tipo_Error  : ' Error_Sintactico ', Error  : yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
 ;
 
 ESTRUCTURAS_DE_CONTROL: VARIABLES                                       {$$ = {Nombre:"DECLARACION_VARIABLES",vector:[$1]};}
@@ -181,9 +187,12 @@ ESTRUCTURAS_DE_CONTROL: VARIABLES                                       {$$ = {N
                       | FOR_OF                                          {$$ = {Nombre:"CICLO",vector:[$1]};}
                       | FOR_IN                                          {$$ = {Nombre:"CICLO",vector:[$1]};}
                       | SENTENCIAS_TRANSFERENCIA                        
+                      | FUNCION_GRAFICAR
                       | LLAMADA_FUNC                                    {$$ = {Nombre:"ESTRUCTURAS_DE_CONTROL",vector:[$1]};}
                       | TYPES                                           {$$ = {Nombre:"DECLARACION_TYPE",vector:[$1]};}
-
+;
+/*--------------------------------------------- FUNCIONES NATIVAS ---------------------------------------------------------*/
+FUNCION_GRAFICAR : R_Graficar S_ParentesisAbre S_ParentesisCierra S_PuntoComa      {$$ = {Nombre : "GRAFICAR_TS" , vector:[]};}
 ;
 /*--------------------------------------------- SENTENCIAS DE TRANSFERENCIA ---------------------------------------------------------*/
 
@@ -308,9 +317,16 @@ LISTA_DE_ASIGNACIONES : EXPRESION_G                                             
                       | S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra                             {$$ = $2;}
                       | S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra                           {$$ = $2;}
 ;
+/*---------------------------------------------LISTA DE CORCHETES PARA MATRIZ Y ARRAY---------------------------------------------------------*/
+/*LISTA PARA DECLARACIONES*/
+LISTA_CORCHETE : S_CorcheteAbre S_CorcheteCierra                                    
+               | S_CorcheteAbre S_CorcheteCierra S_CorcheteAbre S_CorcheteCierra    
+;
 
-
-
+/*LISTA PARA ASIGNACIONES MATRIZ Y VECTOR*/
+LISTA_AS_MV: S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra                                                    
+           | S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra    
+;
 
 /*---------------------------------------------LISTA DE ASIGNACION ARRAY DENTRO DE ARRAY---------------------------------------------------------*/
 CONT_ASIG_ARRAY: LISTA_ASIGN_ARRAY                                                                                                  
@@ -382,7 +398,7 @@ LISTA_PARAMETROS : LISTA_PARAMETROS S_Coma PARAMETROS                           
 ;
 
 PARAMETROS : Identificador S_DosPuntos TIPOS_DE_DATO                                                    {$$ = {Nombre : "PARAMETROS" , vector : [{Nombre: $1 , vector : []}, $3]};}
-           | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G                                {$$ = {Nombre : "PARAMETROS" , vector : [{Nombre: $1 , vector : []}, $3,$5]};}
+           | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual LISTA_DE_ASIGNACIONES                      {$$ = {Nombre : "PARAMETROS" , vector : [{Nombre: $1 , vector : []}, $3,$5]};}
            | Identificador S_Interrogacion S_DosPuntos TIPOS_DE_DATO                                    {$$ = {Nombre : "PARAMETROS_OPCIONALES" , vector : [{Nombre: $1 , vector : []}, $4]};}
 ;
 /*---------------------------------------------TYPES---------------------------------------------------------*/
@@ -437,6 +453,7 @@ TIPAR_FUNCION : S_DosPuntos TIPOS_DE_DATO                                       
  ;
 
  CONT_ATRIBUTOS:  Identificador S_CorcheteAbre EXPRESION_G S_CorcheteCierra                       {$$ = {Nombre: "CONT_ATRIBUTOS" , vector : [{Nombre: $1 , vector : []},$3]};}
+               |  Identificador S_CorcheteAbre EXPRESION_G S_CorcheteCierra S_CorcheteAbre EXPRESION_G S_CorcheteCierra  
                |  Identificador                                                                   {$$ = {Nombre: $1 , vector : []};}
 ;
 
@@ -456,6 +473,8 @@ EXPRESION_G
     | EXPRESION_G OP_Division EXPRESION_G                                                        { $$ = {Nombre:"EXPRESION_G",vector : [$1, {Nombre: $2 , vector : []},$3]}; }                                            
     | EXPRESION_G OP_Exponenciacion EXPRESION_G                                                  { $$ = {Nombre:"EXPRESION_G",vector : [$1, {Nombre: $2 , vector : []},$3]}; }                                                 
     | EXPRESION_G OP_Modulo EXPRESION_G                                                          { $$ = {Nombre:"EXPRESION_G",vector : [$1, {Nombre: $2 , vector : []},$3]}; }                                                                                                              
+    | OP_Decremento CONTENIDO_EXPRESION                                                          { $$ = {Nombre:"EXPRESION_G",vector : [{Nombre: $1 , vector : []},$2]}; }
+    | OP_Incremento CONTENIDO_EXPRESION                                                          { $$ = {Nombre:"EXPRESION_G",vector : [{Nombre: $1 , vector : []},$2]}; }
     | OP_Menos  CONTENIDO_EXPRESION     %prec UMINUS                                             { $$ = {Nombre:"EXPRESION_G",vector : [{Nombre: $1 , vector : []},$2]}; }  
     | LOG_Not   CONTENIDO_EXPRESION     %prec UMINUS                                             { $$ = {Nombre:"EXPRESION_G",vector : [{Nombre: $1 , vector : []},$2]}; }  
     | CONTENIDO_EXPRESION                                                                        { $$ = {Nombre:"EXPRESION_G",vector : [$1]}; } 
