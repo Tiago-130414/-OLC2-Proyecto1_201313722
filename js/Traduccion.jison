@@ -210,9 +210,43 @@ function traducir(json){
         }else if(element.tipo == "funcionT"){
             traduccion += tFuncionT(element)
         }else if(element.tipo == "variable_let"){
-            traduccion += decVariable(element);
+            traduccion += decVariable(element, "let ");
         }else if(element.tipo == "variable_const"){
-            traduccion += decVariable(element);
+            traduccion += decVariable(element , "const ");
+        }else if(element.tipo == "asignacion"){
+            traduccion += asignacionV(element);
+        }else if(element.tipo == "type"){
+            traduccion += typesTraduccion(element);
+        }else if(element.tipo == "contenidoGlobal"){
+            traduccion += traducir(element.contenido);
+        }else if(element.tipo == "llamadaF"){
+            traduccion += llamadasFuncion(element);
+        }else if(element.tipo == "graficar"){
+            traduccion += graficarTs();
+        }else if(element.tipo == "imprimir"){
+            traduccion += imprimirConsole(element.contenido) ;
+        }else if(element.tipo == "break"){
+            traduccion += "break;\n"
+        }else if(element.tipo == "continue"){
+            traduccion += "continue;\n"
+        }else if(element.tipo == "return"){
+            traduccion += "return;\n"
+        }else if(element.tipo == "returnE"){
+            traduccion += rConValor(element.contenido);
+        }else if(element.tipo == "while"){
+            traduccion += eWhile(element.contenido);
+        }else if(element.tipo == "doWhile"){
+            traduccion += eDoWhile(element.contenido)
+        }else if(element.tipo == "for"){
+            traduccion += eFor(element.contenido);
+        }else if(element.tipo == "ForOf"){
+            traduccion += eForOf(element.contenido);
+        }else if(element.tipo == "ForIn"){
+            traduccion += eForIn(element.contenido);
+        }else if(element.tipo == "switch"){
+            traduccion += eSwitch(element.contenido);
+        }else if(element.tipo == "condicionalIf"){
+            traduccion += eIf(element.contenido);
         }
     }
     return traduccion;
@@ -224,8 +258,9 @@ function tFuncion(f){
     var par = "";
     var inst ="";
     par = parametros(f.contenido[1].contenido);
+    inst = traducir(f.contenido[2].contenido);
     cad += "function " + f.contenido[0].contenido  + "(" + par +  "){\n";
-    parametros(f.contenido[1].contenido);
+    cad += inst;
     cad += "}\n\n";
     return cad;
 }
@@ -236,7 +271,9 @@ function tFuncionT(f){
     var par = "";
     var inst ="";
     par = parametros(f.contenido[1].contenido);
+    inst = traducir(f.contenido[3].contenido);
     cad += "function " + f.contenido[0].contenido  + "(" + par +  ") : "+ f.contenido[2].contenido +"{\n";
+    cad += inst;
     cad += "}\n\n";
     return cad;
 }
@@ -263,9 +300,254 @@ function parametros(f){
 }
 
 // funcion que retorna declaracion de variables para traduccion
-function decVariable (){
-
+function decVariable (f, tip){
+    var cad = tip;
+    for(var ele of f.contenido){
+        if(ele.tipo == "expresion"){
+            for(var e of ele.contenido){
+                cad+= e.contenido;
+            }
+        }else{
+            cad+= ele.contenido;
+        }
+    }
+    cad+= "\n";
+    return cad;
 }
+
+// funcion que retorna asignacion de valores para la traduccion
+function asignacionV (f){
+    var cad = "";
+    for(var element of f.contenido){
+        cad += element.contenido;
+    }
+    cad += "\n";
+    return cad;
+}
+
+// funcion que retorna declaracion de types para la traduccion
+function typesTraduccion (f){
+    var cad = "";
+    for(var element of f.contenido){
+        cad += element.contenido;
+    }
+    cad += "\n";
+    return cad;
+}
+
+//funcion que retorna las llamadas a funcion para la traduccion
+function llamadasFuncion(f){
+    var cad = "";
+    for(var element of f.contenido){
+        cad += element.contenido;
+    }
+    cad += "\n";
+    return cad;
+}
+
+//funcion que retorna la funcion graficar para la traduccion
+function graficarTs(){
+    var cad = "graficar_ts();\n"
+    return cad;
+}
+
+//funcion que retorna la funcion imprimir para la traduccion
+function imprimirConsole(f){
+    var cad = "console.log(";
+    for(var element of f ){
+        cad += element.contenido;
+    }
+    cad += ");\n";
+    return cad;
+}
+
+//funcion que devuelve el return con valor para traduccion
+function rConValor(f){
+    var cad = "return "
+    for(var element of f){
+        if(element.tipo == "expresion"){
+            for(var ele of element.contenido){
+                cad += ele.contenido;
+            }
+        }
+    }
+    cad += ";\n";
+    return cad;
+}
+
+//funcion que devuelve el while para traduccion
+function eWhile(f){
+    cad ="\nwhile( ";
+    for(var element of f){
+        if(element.tipo == "condicionWhile"){
+            for(var ele of element.contenido){
+                cad += ele.contenido;
+            }
+            cad +=" ){\n";
+        }else if(element.tipo == "estructuras"){
+            cad += traducir(element.contenido);
+        }
+    }
+    cad +="}\n";
+    return cad;
+}
+
+//funcion que devuelve el dowhile para traduccion
+function eDoWhile(f){
+    var cad = "\ndo{\n";
+    for(var element of f){
+        if(element.tipo == "estructuras"){
+            cad += traducir(element.contenido);
+            cad += "}while( "
+        }else if(element.tipo == "condicionDoWhile"){
+            for(var e of element.contenido){
+                cad += e.contenido;
+            }
+        }
+    }
+    cad += " );\n"
+    return cad;
+}
+
+//funcion que devuelve el for para traduccion
+function eFor(f){
+    var cad = "\nfor( ";
+    for(var element of f){
+        if(element.tipo == "inicioFor"){
+            for(var ele of element.contenido){
+                if(ele.tipo == "expresion"){
+                    for(var e of ele.contenido){
+                        cad += e.contenido; 
+                    }
+                }else{
+                    cad+=ele.contenido;
+                }
+            }
+        }else if(element.tipo == "condicionFor"){
+            for(var ele of element.contenido){
+                cad += ele.contenido;
+            }
+            cad += "; ";
+        }else if(element.tipo == "finFor"){
+            for(var ele of element.contenido){
+                cad += ele.contenido;
+            }
+            cad+=" ){\n"
+        }else if(element.tipo == "estructuras"){
+            cad += traducir(element.contenido);
+        }
+    }
+    cad+= "}\n";
+    return cad;
+}
+
+function eForIn(f){
+    var cad = "\nfor( ";
+    for(var element of f){
+        if(element.tipo == "condicionForIn"){
+            for(var ele of element.contenido){
+                cad += ele.contenido;
+            }
+            cad += " ){\n";
+        }else if(element.tipo == "estructuras"){
+            cad += traducir(element.contenido);
+        }
+
+    }
+    cad += "}\n";
+    return cad;
+}
+
+function eForOf(f){
+    var cad = "\nfor( ";
+    for(var element of f){
+        if(element.tipo == "condicionForOf"){
+            for(var ele of element.contenido){
+                cad += ele.contenido;
+            }
+            cad += " ){\n";
+        }else if(element.tipo == "estructuras"){
+            cad += traducir(element.contenido);
+        }
+    }
+    cad += "}\n"
+    return cad;
+}
+
+function eSwitch(f){
+    var cad = "switch( ";
+    for(var element of f){
+        if(element.tipo == "expresion"){
+            for(var e of element.contenido){
+                cad += e.contenido;
+            }
+            cad += " ){\n"
+        }else if(element.tipo == "case"){
+            cad += "case ";
+            for(var ele of element.contenido){
+                if(ele.tipo == "expresion"){
+                    for(var p of ele.contenido){
+                        cad += p.contenido
+                    }
+                }else if(ele.tipo == "concatenar"){
+                    cad += ele.contenido;
+                }else if(ele.tipo == "estructuras"){
+                    cad += traducir(ele.contenido);
+                }
+            }
+        }else if(element.tipo == "default"){
+            cad += "default :\n"
+            for(var ele of element.contenido){
+                if(ele.tipo == "estructuras"){
+                    cad+= traducir(ele.contenido);
+                }
+            }
+        }
+    }
+    cad += "}\n";
+    return cad;
+}
+
+function eIf(f){
+    var cad = "";
+    for(var element of f){
+        if(element.tipo ==  "if"){
+            cad += "if( ";
+            for(var ele of element.contenido){
+                if(ele.tipo == "condicionIf"){
+                    for(var e of ele.contenido){
+                        cad += e.contenido
+                    }
+                    cad += " )\n{\n"
+                }else if(ele.tipo == "estructuras"){
+                    cad += traducir(ele.contenido);
+                }
+            }
+        }else if(element.tipo ==  "elseIf"){
+            cad += "}\nelse if( ";
+            for(var ele of element.contenido){
+                if(ele.tipo == "condicionIf"){
+                    for(var e of ele.contenido){
+                        cad += e.contenido
+                    }
+                    cad += " )\n{\n"
+                }else if(ele.tipo == "estructuras"){
+                    cad += traducir(ele.contenido);
+                }
+            }
+        }else if(element.tipo == "else"){
+            cad += "}\nelse\n{\n";
+            for(var ele of element.contenido){
+                if(ele.tipo == "estructuras"){
+                    cad += traducir(ele.contenido);
+                }
+            }
+        }
+    }
+    cad += "}\n";
+    return cad;
+}
+
 %}
 
 //PRECEDENCIA DE OPERADORES
@@ -336,7 +618,7 @@ FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_
 ;
 /*---------------------------------------------LISTADO DE ESTRUCTURAS DE CONTROL---------------------------------------------------------*/
 EDD:LISTADO_ESTRUCTURAS                 {$$ = {tipo : "estructuras" , contenido : $1};}
-   |                                    {$$ = [];}
+   |                                    {$$ = {tipo : "estructuras" , contenido : []};}
 ;
 
 LISTADO_ESTRUCTURAS : LISTADO_ESTRUCTURAS CONT_ESTRUCTURAS_CONTROL          {$1.push($2);$$ = $1;}
@@ -347,21 +629,20 @@ CONT_ESTRUCTURAS_CONTROL : ESTRUCTURAS_DE_CONTROL
                          | error  {$$ ='';console.log({ Tipo_Error  : ' Error_Sintactico ', Error  : yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
 ;
 
-ESTRUCTURAS_DE_CONTROL: VARIABLES
-                      | ASIGNACION
+ESTRUCTURAS_DE_CONTROL: VARIABLES                       //ya se realizo su traduccion
+                      | ASIGNACION                      //ya se realizo su traduccion
                       | LISTADO_IF ELSE                 {var json = $1; json =  json.concat($2) ;$$ = {tipo : "condicionalIf" , contenido : json };}
-                      | SWITCH
-                      | IMPRIMIR
-                      | WHILE
-                      | DO_WHILE
-                      | FOR
-                      | FOR_OF
-                      | FOR_IN
-                      | SENTENCIAS_TRANSFERENCIA
-                      | FUNCION_GRAFICAR
-                      | LLAMADA_FUNC
-                      | TYPES
-
+                      | SWITCH                          //ya se realizo su traduccion
+                      | IMPRIMIR                        //ya se realizo su traduccion
+                      | WHILE                           //ya se realizo su traduccion
+                      | DO_WHILE                        //ya se realizo su traduccion
+                      | FOR                             // ya se realizo su traduccion
+                      | FOR_OF                          // ya se realizo su traduccion
+                      | FOR_IN                          // ya se realizo su traduccion
+                      | SENTENCIAS_TRANSFERENCIA        //ya se realio su traduccion
+                      | FUNCION_GRAFICAR                //ya se realizo su traduccion
+                      | LLAMADA_FUNC                    //ya se realizo su traduccion
+                      | TYPES                           //ya se realizo su traduccion
 ;
 /*--------------------------------------------- FUNCIONES NATIVAS ---------------------------------------------------------*/
 FUNCION_GRAFICAR : R_Graficar S_ParentesisAbre S_ParentesisCierra S_PuntoComa                 {$$ = {tipo : "graficar" , contenido : []};}
@@ -371,7 +652,7 @@ FUNCION_GRAFICAR : R_Graficar S_ParentesisAbre S_ParentesisCierra S_PuntoComa   
 SENTENCIAS_TRANSFERENCIA : R_Break S_PuntoComa                                                  {$$ = {tipo : "break" , contenido : []};}
                          | R_Continue S_PuntoComa                                               {$$ = {tipo : "continue" , contenido : []};}
                          | R_Return S_PuntoComa                                                 {$$ = {tipo : "return" , contenido : []};}
-                         | R_Return EXPRESION_G S_PuntoComa                                     {var json = [{tipo : "expresion" , contenido : [$2]}];$$ = {tipo : "return" , contenido : json};}
+                         | R_Return EXPRESION_G S_PuntoComa                                     {var json = [{tipo : "expresion" , contenido : $2}];$$ = {tipo : "returnE" , contenido : json};}
 ;
 
 /*--------------------------------------------- LISTADO IF---------------------------------------------------------*/
@@ -387,7 +668,7 @@ ELSE : R_Else S_LlaveAbre EDD S_LlaveCierra                                     
 ;
 
 /*---------------------------------------------SWITCH---------------------------------------------------------*/
-SWITCH : R_Switch S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre CASE DEFINIR_DEFAULT S_LlaveCierra    {var json = [{tipo : "expresion" , contenido : [$3]}]; json = json.concat($6);json = json.concat($7);$$ = {tipo : "switch" , contenido : json};}            
+SWITCH : R_Switch S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre CASE DEFINIR_DEFAULT S_LlaveCierra    {var json = [{tipo : "expresion" , contenido : $3}]; json = json.concat($6);json = json.concat($7);$$ = {tipo : "switch" , contenido : json};}            
 ;
 
 /*---------------------------------------------LISTADO DE CASE---------------------------------------------------------*/
@@ -400,18 +681,18 @@ LISTA_CASE: LISTA_CASE DEFINIR_CASE                                             
           | DEFINIR_CASE                                                            {$$ = [$1];}
 ;
 
-DEFINIR_CASE:R_Case EXPRESION_G S_DosPuntos EDD                                     {var json = [{tipo : "expresion" , contenido : [$2]} , {tipo : "concatenar" , contenido : $3} ,$4]; $$ = {tipo : "case" , contenido : json};}
+DEFINIR_CASE:R_Case EXPRESION_G S_DosPuntos EDD                                     {var json = [{tipo : "expresion" , contenido : [$2]} , {tipo : "concatenar" , contenido : " " + $3 + "\n"} ,$4]; $$ = {tipo : "case" , contenido : json};}
 ;
 /*---------------------------------------------DEFINICION DE DEFAULT---------------------------------------------------------*/
 
-DEFINIR_DEFAULT: R_Default S_DosPuntos EDD                                          {$$ = [{tipo : "default" , contenido : $3}];}
+DEFINIR_DEFAULT: R_Default S_DosPuntos EDD                                          {$$ = [{tipo : "default" , contenido : [$3]}];}
                |                                                                    {$$ = [];}
 ;
 /*---------------------------------------------IMPRIMIR---------------------------------------------------------*/
 IMPRIMIR: R_Console S_Punto R_Log S_ParentesisAbre FUNC S_ParentesisCierra S_PuntoComa {$$ = {tipo : "imprimir" , contenido : $5 };}
 ;
 
-FUNC: EXPRESION_G       {$$ = $1;}
+FUNC: EXPRESION_G       {var json; if(Array.isArray($1)){json = $1;}else{json = [$1];};$$ = json;}
     |                   {$$=[];}
 ;
 /*---------------------------------------------WHILE---------------------------------------------------------*/
@@ -426,10 +707,10 @@ FOR : R_For S_ParentesisAbre CONT_FOR EXPRESION_G S_PuntoComa FIN_FOR S_Parentes
 ;
 
 CONT_FOR
-    : R_Let Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G S_PuntoComa                                     { var json = [{tipo : "variable_let" , contenido : $1},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : $3},{tipo : "tipoDato" , contenido : $4},{tipo : "concatenar" , contenido : $5},{tipo : "expresion" , contenido : [$6]},{tipo : "concatenar" , contenido : $7}];$$=json;}
-    | R_Let Identificador S_Igual EXPRESION_G S_PuntoComa                                                               { var json = [{tipo : "variable_let", contenido : $1},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : $3},{tipo : "expresion" , contenido : [$4]},{tipo : "concatenar" , contenido : $5}]; $$ = json;}
+    : R_Let Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G S_PuntoComa                                     { var json = [{tipo : "variable_let" , contenido : $1},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : $3},{tipo : "tipoDato" , contenido : $4},{tipo : "concatenar" , contenido : " " + $5+ " "},{tipo : "expresion" , contenido : [$6]},{tipo : "concatenar" , contenido : $7 +" "}];$$=json;}
+    | R_Let Identificador S_Igual EXPRESION_G S_PuntoComa                                                               { var json = [{tipo : "variable_let", contenido : $1},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : " "+$3+" "},{tipo : "expresion" , contenido : [$4]},{tipo : "concatenar" , contenido : $5}]; $$ = json;}
     | Identificador S_PuntoComa                                                                                         { var json = [{tipo : "identificador", contenido : $1},{tipo : "concatenar" , contenido : $2}];$$ = json;}
-    | Identificador S_Igual EXPRESION_G S_PuntoComa                                                                     { var json = [{tipo : "identificador", contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "expresion" , contenido : [$3]},{tipo : "concatenar" , contenido : $4}];$$ = json;}
+    | Identificador S_Igual EXPRESION_G S_PuntoComa                                                                     { var json = [{tipo : "identificador", contenido : $1},{tipo : "concatenar" , contenido : " " + $2 + " "},{tipo : "expresion" , contenido : [$3]},{tipo : "concatenar" , contenido : $4}];$$ = json;}
 ;
 
 FIN_FOR
@@ -444,9 +725,9 @@ FIN_FOR
 FOR_IN: R_For S_ParentesisAbre CONT_FOR_IN S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra         {var json = [{tipo : "condicionForIn" , contenido : $3},$6];$$ = {tipo : "ForIn" , contenido : json};}
 ;
 
-CONT_FOR_IN : R_Const Identificador R_In Identificador                                              {var json = [{tipo : "variable_const" , contenido : $1},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : $3},{tipo : "identificador" , contenido : $4}];$$ = json;}
-            | R_Let Identificador R_In Identificador                                                {var json = [{tipo : "variable_let" , contenido : $1},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : $3},{tipo : "identificador" , contenido : $4}];$$ = json;}
-            | Identificador R_In Identificador                                                      {var json = [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "identificador" , contenido : $3}];$$ = json;}
+CONT_FOR_IN : R_Const Identificador R_In Identificador                                              {var json = [{tipo : "variable_const" , contenido : $1 + " "},{tipo : "identificador" , contenido : $2 + " "},{tipo : "concatenar" , contenido : $3 + " "},{tipo : "identificador" , contenido : $4}];$$ = json;}
+            | R_Let Identificador R_In Identificador                                                {var json = [{tipo : "variable_let" , contenido : $1 + " "},{tipo : "identificador" , contenido : $2 + " "},{tipo : "concatenar" , contenido : $3 + " "},{tipo : "identificador" , contenido : $4}];$$ = json;}
+            | Identificador R_In Identificador                                                      {var json = [{tipo : "identificador" , contenido : $1 + " "},{tipo : "concatenar" , contenido : $2 + " "},{tipo : "identificador" , contenido : $3 + " "}];$$ = json;}
 ;
 
 
@@ -454,20 +735,20 @@ CONT_FOR_IN : R_Const Identificador R_In Identificador                          
 FOR_OF: R_For S_ParentesisAbre CONT_FOR_OF S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra         {var json = [{tipo : "condicionForOf" , contenido : $3},$6];$$ = {tipo : "ForOf" , contenido : json};}
 ;
 
-CONT_FOR_OF : R_Const Identificador R_Of Identificador                                              {var json = [{tipo : "variable_const" , contenido : $1},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : $3},{tipo : "identificador" , contenido : $4}];$$ = json;}
-            | R_Let Identificador R_Of Identificador                                                {var json = [{tipo : "variable_let" , contenido : $1},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : $3},{tipo : "identificador" , contenido : $4}];$$ = json;}
-            | Identificador R_Of Identificador                                                      {var json = [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "identificador" , contenido : $3}];$$ = json;}
+CONT_FOR_OF : R_Const Identificador R_Of Identificador                                              {var json = [{tipo : "variable_const" , contenido : $1 + " "},{tipo : "identificador" , contenido : $2 + " "},{tipo : "concatenar" , contenido : $3 + " "},{tipo : "identificador" , contenido : $4}];$$ = json;}
+            | R_Let Identificador R_Of Identificador                                                {var json = [{tipo : "variable_let" , contenido : $1 + " "},{tipo : "identificador" , contenido : $2 + " "},{tipo : "concatenar" , contenido : $3 + " "},{tipo : "identificador" , contenido : $4}];$$ = json;}
+            | Identificador R_Of Identificador                                                      {var json = [{tipo : "identificador" , contenido : $1 + " "},{tipo : "concatenar" , contenido : $2 + " "},{tipo : "identificador" , contenido : $3 + " "}];$$ = json;}
 ;
 
 /*---------------------------------------------ASIGNACION VARIABLES---------------------------------------------------------*/
 
-ASIGNACION : ATRIBUTOS S_Igual LISTA_DE_ASIGNACIONES S_PuntoComa                        {var json = $1; json.push({tipo : "concatenar" , contenido : $2}); json = json.concat($3);json.push({tipo : "concatenar" , contenido : $4});$$ = {tipo : "asignacion" , contenido : json};}
+ASIGNACION : ATRIBUTOS S_Igual LISTA_DE_ASIGNACIONES S_PuntoComa                        {var json = $1; json.push({tipo : "concatenar" , contenido : " " + $2 + " "}); json = json.concat($3);json.push({tipo : "concatenar" , contenido : $4});$$ = {tipo : "asignacion" , contenido : json};}
            //incrementos 
            | ATRIBUTOS OP_Incremento COMPLETAR_ASIGNACION S_PuntoComa                   {var json = $1; json.push({tipo : "concatenar" , contenido : $2}); json = json.concat($3);json.push({tipo : "concatenar" , contenido : $4});$$ = {tipo : "asignacion" , contenido : json};}
            | OP_Incremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa                   {var json = [{tipo : "concatenar", contenido : $1}]; json = json.concat($2);json = json.concat($3);json.push({tipo : "concatenar" , contenido : $4});$$ = {tipo : "asignacion" , contenido : json};}
            | ATRIBUTOS OP_Decremento COMPLETAR_ASIGNACION S_PuntoComa                   {var json = $1; json.push({tipo : "concatenar" , contenido : $2}); json = json.concat($3);json.push({tipo : "concatenar" , contenido : $4});$$ = {tipo : "asignacion" , contenido : json};}
            | OP_Decremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa                   {var json = [{tipo : "concatenar", contenido : $1}]; json = json.concat($2); json = json.concat($3);json.push({tipo : "concatenar" , contenido : $4});$$ = {tipo : "asignacion" , contenido : json};}
-           | ATRIBUTOS S_Punto R_Push S_ParentesisAbre LISTA_DE_ASIGNACIONES S_ParentesisCierra  S_PuntoComa {var json = $1; json.push({tipo : "concatenar" , contenido : $2});json.push({tipo : "concatenar" , contenido : $3});json.push({tipo : "concatenar" , contenido : $4}); json = json.concat($5); json.push({ tipo : "concatenar" , contenido : $6});json.push({ tipo : "concatenar" , contenido : $7}); $$ = {tipo : "asignacion" , contenido : json};}
+           | ATRIBUTOS S_Punto R_Push S_ParentesisAbre LISTA_DE_ASIGNACIONES S_ParentesisCierra COMPLETAR_ASIGNACION S_PuntoComa {var json = $1; json.push({tipo : "concatenar" , contenido : $2});json.push({tipo : "concatenar" , contenido : $3});json.push({tipo : "concatenar" , contenido : $4}); json = json.concat($5); json.push({ tipo : "concatenar" , contenido : $6});json = json.concat($7);json.push({ tipo : "concatenar" , contenido : $8}); $$ = {tipo : "asignacion" , contenido : json};}
 ;
 
 COMPLETAR_ASIGNACION : LISTADO_ASIGNACION
@@ -478,11 +759,12 @@ LISTADO_ASIGNACION: LISTADO_ASIGNACION  CONTENIDO_ASIGNACION                {var
                   | CONTENIDO_ASIGNACION                                    {$$ = $1;}
 ;
 
-CONTENIDO_ASIGNACION: S_Coma Identificador S_Igual EXPRESION_G              { var json = [{tipo : "concatenar" , contenido : $1},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : $3}]; json = json.concat($4);$$ = json;}
-                    | S_Coma Identificador OP_Incremento                    { var json = [{tipo : "concatenar" , contenido : $1},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : $3}];$$ = json;}
-                    | S_Coma OP_Incremento Identificador                    { var json = [{tipo : "concatenar" , contenido : $1},{tipo : "concatenar"    , contenido : $2},{tipo : "identificador" , contenido : $3}]; $$ = json;}
-                    | S_Coma Identificador OP_Decremento                    { var json = [{tipo : "concatenar" , contenido : $1},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : $3}];$$ = json;}
-                    | S_Coma OP_Decremento Identificador                    { var json = [{tipo : "concatenar" , contenido : $1},{tipo : "concatenar"    , contenido : $2},{tipo : "identificador" , contenido : $3}]; $$ = json;}
+CONTENIDO_ASIGNACION: S_Coma Identificador S_Igual EXPRESION_G              { var json = [{tipo : "concatenar" , contenido : $1 + " "},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : " " + $3 + " "}]; json = json.concat($4);$$ = json;}
+                    | S_Coma Identificador OP_Incremento                    { var json = [{tipo : "concatenar" , contenido : $1 + " "},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : $3}];$$ = json;}
+                    | S_Coma OP_Incremento Identificador                    { var json = [{tipo : "concatenar" , contenido : $1 + " "},{tipo : "concatenar"    , contenido : $2},{tipo : "identificador" , contenido : $3}]; $$ = json;}
+                    | S_Coma Identificador OP_Decremento                    { var json = [{tipo : "concatenar" , contenido : $1 + " "},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : $3}];$$ = json;}
+                    | S_Coma OP_Decremento Identificador                    { var json = [{tipo : "concatenar" , contenido : $1 + " "},{tipo : "concatenar"    , contenido : $2},{tipo : "identificador" , contenido : $3}]; $$ = json;}
+                    | S_Coma ATRIBUTOS S_Punto R_Push S_ParentesisAbre LISTA_DE_ASIGNACIONES S_ParentesisCierra {var json = [{tipo : "concatenar" , contenido : $1 + " "}].concat($2); json.push({tipo : "concatenar" , contenido : $3}); json.push({tipo : "concatenar" , contenido : $4}); json.push({tipo : "concatenar" , contenido : $5}); json = json.concat($6) ; json.push({tipo : "concatenar" , contenido : $7});$$ = json;}
 ;
 
 LISTA_DE_ASIGNACIONES : EXPRESION_G                                             {$$ = $1;}
@@ -504,8 +786,8 @@ CONT_ASIG_ARRAY: LISTA_ASIGN_ARRAY
                |                                                            {$$ = [];}
 ;
 
-LISTA_ASIGN_ARRAY: LISTA_ASIGN_ARRAY S_Coma CONT_ARRAY_ASIGN_VV             {var json = [] ; $1.push({tipo : "concatenar" , contenido : $2}); json = $1.concat($3); $$ = json;}
-                 | CONT_ARRAY_ASIGN_VV                                      {$$ = $1;}
+LISTA_ASIGN_ARRAY: LISTA_ASIGN_ARRAY S_Coma CONT_ARRAY_ASIGN_VV             {var json = [] ; $1.push({tipo : "concatenar" , contenido : $2 + " "}); json = $1.concat($3); $$ = json;}
+                 | CONT_ARRAY_ASIGN_VV                                      {var val; if(Array.isArray($1)){val = $1;}else{val = [$1];};$$ = val;}
 ;   
 
 CONT_ARRAY_ASIGN_VV: EXPRESION_G                                            {$$ = $1;}
@@ -522,24 +804,24 @@ VARIABLES : R_Let LISTADO_VAR S_PuntoComa                       {var json = []; 
 
 /*---------------------------------------------LISTADO VARIABLES---------------------------------------------------------*/
 
-LISTADO_VAR : LISTADO_VAR S_Coma CONT_VAR                       {$1.push({tipo : "concatenar" , contenido : $2});var json = $1.concat($3);$$ = json;}
+LISTADO_VAR : LISTADO_VAR S_Coma CONT_VAR                       {$1.push({tipo : "concatenar" , contenido : $2 +" "});var json = $1.concat($3);$$ = json;}
             | CONT_VAR                                          {$$ = $1;}
 ;
 /*--------------------------------------------- DEFINICION DE VARIABLES---------------------------------------------------------*/
 
 CONT_VAR: Identificador /*declaracion de variable solo id*/                                                                         {$$ = [{tipo : "identificador" ,contenido : $1}];}
         | Identificador S_DosPuntos TIPOS_DE_DATO  /*declaracion de variable con tipo de dato*/                                     {var json = [{tipo : "identificador" ,contenido : $1},{tipo : "concatenar" ,contenido : $2},{tipo : "tipoDato" ,contenido : $3}];$$ = json;}
-        | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G   /*declaracion de variable con tipo y asignacion de valor*/  {var json = [{tipo : "identificador" ,contenido : $1},{tipo : "concatenar" ,contenido : $2},{tipo : "tipoDato" ,contenido : $3},{tipo : "tipoDato" ,contenido : $4}];json = json.concat($5);$$ = json;}
-        | Identificador S_Igual EXPRESION_G /*declaracion de variable con asignacion de valor*/                                     {var json = [{tipo : "identificador" ,contenido : $1},{tipo : "concatenar" ,contenido : $2}];json = json.concat($3);$$ = json;}
+        | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G   /*declaracion de variable con tipo y asignacion de valor*/  {var json = [{tipo : "identificador" ,contenido : $1},{tipo : "concatenar" ,contenido : $2},{tipo : "tipoDato" ,contenido : $3},{tipo : "tipoDato" ,contenido : " " + $4 + " "}];json = json.concat($5);$$ = json;}
+        | Identificador S_Igual EXPRESION_G /*declaracion de variable con asignacion de valor*/                                     {var json = [{tipo : "identificador" ,contenido : $1},{tipo : "concatenar" ,contenido : " " + $2 + " "}];json = json.concat($3);$$ = json;}
 
 
-        | Identificador S_Igual S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra /*array*/                                            {var json = [{tipo : "identificador" ,contenido : $1},{tipo : "concatenar" ,contenido : $2},{tipo : "concatenar" ,contenido : $3}]; json = json.concat($4);json.push({tipo : "concatenar" ,contenido : $5});$$ = json;}
+        | Identificador S_Igual S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra /*array*/                                            {var json = [{tipo : "identificador" ,contenido : $1},{tipo : "concatenar" ,contenido : " " + $2 + " "},{tipo : "concatenar" ,contenido : $3}]; json = json.concat($4);json.push({tipo : "concatenar" ,contenido : $5});$$ = json;}
         | Identificador S_DosPuntos TIPOS_DE_DATO LISTA_CORCHETE/*array*/                                                            {var json = [{tipo : "identificador" ,contenido : $1},{tipo : "concatenar" ,contenido : $2},{tipo : "tipoDato" ,contenido : $3},{tipo : "concatenar" ,contenido : $4}];$$ = json;}
-        | Identificador S_DosPuntos TIPOS_DE_DATO LISTA_CORCHETE S_Igual LISTA_AS_MV /*array*/                                       {var json = [{tipo : "identificador" ,contenido : $1},{tipo : "concatenar" ,contenido : $2},{tipo : "tipoDato" ,contenido : $3},{tipo : "concatenar" ,contenido : $4},{tipo : "concatenar" ,contenido : $5},{tipo : "expresion" ,contenido : $6}];$$ = json;}
+        | Identificador S_DosPuntos TIPOS_DE_DATO LISTA_CORCHETE S_Igual LISTA_AS_MV /*array*/                                       {var json = [{tipo : "identificador" ,contenido : $1},{tipo : "concatenar" ,contenido : $2},{tipo : "tipoDato" ,contenido : $3},{tipo : "concatenar" ,contenido : $4},{tipo : "concatenar" ,contenido : " " + $5 + " "},{tipo : "expresion" ,contenido : $6}];$$ = json;}
 
 
-        | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra /*types*/                                 {var json = [{tipo : "identificador" ,contenido : $1},{tipo : "concatenar" ,contenido : $2},{tipo : "tipoDato" ,contenido : $3},{tipo : "concatenar" ,contenido : $4},{tipo : "concatenar" ,contenido : $5}];json = json.concat($6);json.push({tipo : "concatenar" ,contenido : $7});$$ = json;}
-        | Identificador S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra /*types*/                                                           {var json = [{tipo : "identificador" ,contenido : $1},{tipo : "concatenar" ,contenido : $2},{tipo : "concatenar" ,contenido : $3}]; json = json.concat($4);json.push({tipo : "concatenar" ,contenido : $5});$$=json;}
+        | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra /*types*/                                 {var json = [{tipo : "identificador" ,contenido : $1},{tipo : "concatenar" ,contenido : $2},{tipo : "tipoDato" ,contenido : $3},{tipo : "concatenar" ,contenido : " " + $4 + " "},{tipo : "concatenar" ,contenido : $5}];json = json.concat($6);json.push({tipo : "concatenar" ,contenido : $7});$$ = json;}
+        | Identificador S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra /*types*/                                                           {var json = [{tipo : "identificador" ,contenido : $1},{tipo : "concatenar" ,contenido : " " + $2 + " "},{tipo : "concatenar" ,contenido : $3}]; json = json.concat($4);json.push({tipo : "concatenar" ,contenido : $5});$$=json;}
 ;
 
 /*---------------------------------------------LLAMADAS A FUNCION---------------------------------------------------------*/
@@ -550,7 +832,7 @@ LLAMADA_FUNC
 ;
 
 PARAMETROS_FUNC
-    : PARAMETROS_FUNC S_Coma EXPRESION_G                                    {var json = $1; json.push({tipo : "concatenar" , contenido : $2}); json = json.concat($3);$$ = json;}
+    : PARAMETROS_FUNC S_Coma EXPRESION_G                                    {var json = $1; json.push({tipo : "concatenar" , contenido : $2 + " "}); json = json.concat($3);$$ = json;}
     | EXPRESION_G                                                           {var json;if(Array.isArray($1)){json = $1;}else{json = [$1]};$$ = json;}
     |                                                                       {$$ = [];}
 ;
@@ -560,7 +842,7 @@ PARAM: LISTA_PARAMETROS
      |                                                  {$$=[];}
 ;
 
-LISTA_PARAMETROS : LISTA_PARAMETROS S_Coma PARAMETROS  {$1.push({tipo:"concatenar",contenido : $2});$1.push($3); $$ = $1;}
+LISTA_PARAMETROS : LISTA_PARAMETROS S_Coma PARAMETROS  {$1.push({tipo:"concatenar",contenido : $2 + " "});$1.push($3); $$ = $1;}
                  | PARAMETROS {$$=[$1];}              
 ;
 
@@ -571,7 +853,7 @@ PARAMETROS : Identificador S_DosPuntos TIPOS_DE_DATO  {var json = {tipo : "param
 /*---------------------------------------------TYPES---------------------------------------------------------*/
 
 
-TYPES: T_Type Identificador S_Igual S_LlaveAbre LISTA_TYPES FIN_TYPES                                       {var json = [{tipo : "concatenar" , contenido : $1},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : $3},{tipo : "concatenar" , contenido : $4}]; json = json.concat($5);json = json.concat($6); $$ = {tipo : "type" , contenido : json};}
+TYPES: T_Type Identificador S_Igual S_LlaveAbre LISTA_TYPES FIN_TYPES                                       {var json = [{tipo : "concatenar" , contenido : $1 + " "},{tipo : "identificador" , contenido : $2 + " "},{tipo : "concatenar" , contenido : " " + $3 + " "},{tipo : "concatenar" , contenido : $4 + "\n"}]; json = json.concat($5);json = json.concat($6); $$ = {tipo : "type" , contenido : json};}
 ;
 
 LISTA_TYPES: LISTA_TYPES SEPARADOR CONTENIDO_TYPES                                                          {var json = []; $1.push($2);json = $1.concat($3);$$ = json;}
@@ -582,12 +864,12 @@ CONTENIDO_TYPES : Identificador S_DosPuntos TIPOS_DE_DATO                       
                 | Identificador S_DosPuntos Identificador S_CorcheteAbre S_CorcheteCierra                   {var json = [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "identificador" , contenido : $3},{tipo : "concatenar", contenido :$4},{tipo : "concatenar", contenido :$5}];$$ = json;}
 ;
 
-SEPARADOR : S_Coma                                                                                          {$$  = {tipo : "concatenar", contenido : $1};}
-          | S_PuntoComa                                                                                     {$$  = {tipo : "concatenar", contenido : $1};}
+SEPARADOR : S_Coma                                                                                          {$$  = {tipo : "concatenar", contenido : $1 + "\n"};}
+          | S_PuntoComa                                                                                     {$$  = {tipo : "concatenar", contenido : $1 + "\n"};}
 ;
 
-FIN_TYPES: S_LlaveCierra S_PuntoComa                                                                        {var json = [{tipo : "concatenar", contenido : $1},{tipo : "concatenar", contenido : $2}];$$=json;}
-         | S_LlaveCierra                                                                                    {$$ = [{tipo : "concatenar", contenido : $1}];}
+FIN_TYPES: S_LlaveCierra S_PuntoComa                                                                        {var json = [{tipo : "concatenar", contenido : "\n" +  $1},{tipo : "concatenar", contenido : $2 + "\n"}];$$=json;}
+         | S_LlaveCierra                                                                                    {$$ = [{tipo : "concatenar", contenido : "\n" + $1 + "\n"}];}
 ;
 
 /*---------------------------------------------DECLARACION DE TYPES---------------------------------------------------------*/
@@ -616,7 +898,7 @@ TIPAR_FUNCION : S_DosPuntos TIPOS_DE_DATO
 ;
 /*---------------------------------------------ACCEDER A ATRIBUTOS---------------------------------------------------------*/
 
- ATRIBUTOS: ATRIBUTOS S_Punto CONT_ATRIBUTOS                                                    {$1.push({tipo : "concatenar" , contenido : $2});$1.push($3);$$=$1;}
+ ATRIBUTOS: ATRIBUTOS S_Punto CONT_ATRIBUTOS                                                    {var json = $1 ; json.push({tipo : "concatenar" , contenido : $2});json = json.concat($3);$$=json;}
           | CONT_ATRIBUTOS                                                                      {$$ = $1;}
  ;
 
@@ -627,22 +909,22 @@ TIPAR_FUNCION : S_DosPuntos TIPOS_DE_DATO
 
 /*---------------------------------------------EXPRESIONES---------------------------------------------------------*/
 EXPRESION_G 
-    : EXPRESION_G LOG_Concatenar EXPRESION_G                                                     { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
-    | EXPRESION_G LOG_OR EXPRESION_G                                                             { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
-    | EXPRESION_G REL_IgualIgual EXPRESION_G                                                     { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
-    | EXPRESION_G REL_MayorIgualQue EXPRESION_G                                                  { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
-    | EXPRESION_G REL_MayorQue EXPRESION_G                                                       { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
-    | EXPRESION_G REL_MenorIgualQue EXPRESION_G                                                  { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
-    | EXPRESION_G REL_MenorQue EXPRESION_G                                                       { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
-    | EXPRESION_G REL_Distinto EXPRESION_G                                                       { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}     
-    | EXPRESION_G OP_Mas EXPRESION_G                                                             { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
-    | EXPRESION_G OP_Menos EXPRESION_G                                                           { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
-    | EXPRESION_G OP_Multiplicacion EXPRESION_G                                                  { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
-    | EXPRESION_G OP_Division EXPRESION_G                                                        { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
-    | EXPRESION_G OP_Exponenciacion EXPRESION_G                                                  { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
-    | EXPRESION_G OP_Modulo EXPRESION_G                                                          { $$ = expresion($1,{ tipo : "concatenar", contenido : $2},$3);}
-    | CONTENIDO_EXPRESION OP_Decremento %prec PRUEBA                                             { $$ = unaria($1,{ tipo : "concatenar", contenido : $2}); }
-    | CONTENIDO_EXPRESION OP_Incremento %prec PRUEBA                                             { $$ = unaria($1,{ tipo : "concatenar", contenido : $2}); }
+    : EXPRESION_G LOG_Concatenar EXPRESION_G                                                     { $$ = expresion($1,{ tipo : "concatenar", contenido : " " + $2 + " "},$3);}
+    | EXPRESION_G LOG_OR EXPRESION_G                                                             { $$ = expresion($1,{ tipo : "concatenar", contenido : " " + $2 + " "},$3);}
+    | EXPRESION_G REL_IgualIgual EXPRESION_G                                                     { $$ = expresion($1,{ tipo : "concatenar", contenido : " " + $2 + " "},$3);}
+    | EXPRESION_G REL_MayorIgualQue EXPRESION_G                                                  { $$ = expresion($1,{ tipo : "concatenar", contenido : " " + $2 + " "},$3);}
+    | EXPRESION_G REL_MayorQue EXPRESION_G                                                       { $$ = expresion($1,{ tipo : "concatenar", contenido : " " + $2 + " "},$3);}
+    | EXPRESION_G REL_MenorIgualQue EXPRESION_G                                                  { $$ = expresion($1,{ tipo : "concatenar", contenido : " " + $2 + " "},$3);}
+    | EXPRESION_G REL_MenorQue EXPRESION_G                                                       { $$ = expresion($1,{ tipo : "concatenar", contenido : " " + $2 + " "},$3);}
+    | EXPRESION_G REL_Distinto EXPRESION_G                                                       { $$ = expresion($1,{ tipo : "concatenar", contenido : " " + $2 + " "},$3);}     
+    | EXPRESION_G OP_Mas EXPRESION_G                                                             { $$ = expresion($1,{ tipo : "concatenar", contenido : " " + $2 + " "},$3);}
+    | EXPRESION_G OP_Menos EXPRESION_G                                                           { $$ = expresion($1,{ tipo : "concatenar", contenido : " " + $2 + " "},$3);}
+    | EXPRESION_G OP_Multiplicacion EXPRESION_G                                                  { $$ = expresion($1,{ tipo : "concatenar", contenido : " " + $2 + " "},$3);}
+    | EXPRESION_G OP_Division EXPRESION_G                                                        { $$ = expresion($1,{ tipo : "concatenar", contenido : " " + $2 + " "},$3);}
+    | EXPRESION_G OP_Exponenciacion EXPRESION_G                                                  { $$ = expresion($1,{ tipo : "concatenar", contenido : " " + $2 + " "},$3);}
+    | EXPRESION_G OP_Modulo EXPRESION_G                                                          { $$ = expresion($1,{ tipo : "concatenar", contenido : " " + $2 + " "},$3);}
+    | CONTENIDO_EXPRESION OP_Decremento %prec PRUEBA                                             { $$ = unaria($1,{ tipo : "concatenar", contenido : $2 +" "}); }
+    | CONTENIDO_EXPRESION OP_Incremento %prec PRUEBA                                             { $$ = unaria($1,{ tipo : "concatenar", contenido : $2 +" "}); }
     | OP_Decremento CONTENIDO_EXPRESION                                                          { $$ = unaria({ tipo : "concatenar", contenido : $1},$2); }
     | OP_Incremento CONTENIDO_EXPRESION                                                          { $$ = unaria({ tipo : "concatenar", contenido : $1},$2); }
     | OP_Menos  CONTENIDO_EXPRESION     %prec UMINUS                                             { $$ = unaria({ tipo : "concatenar", contenido : $1},$2); }

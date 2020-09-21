@@ -170,11 +170,16 @@ ESTRUCTURAS_DE_CONTROL: VARIABLES
                       | FOR_OF
                       | FOR_IN
                       | SENTENCIAS_TRANSFERENCIA
+                      | FUNCION_GRAFICAR
                       | LLAMADA_FUNC
                       | TYPES
                       
 
 ;
+/*--------------------------------------------- FUNCIONES NATIVAS ---------------------------------------------------------*/
+FUNCION_GRAFICAR : R_Graficar S_ParentesisAbre S_ParentesisCierra S_PuntoComa                
+;
+
 /*--------------------------------------------- SENTENCIAS DE TRANSFERENCIA ---------------------------------------------------------*/
 
 SENTENCIAS_TRANSFERENCIA : R_Break S_PuntoComa
@@ -276,7 +281,7 @@ ASIGNACION : ATRIBUTOS S_Igual LISTA_DE_ASIGNACIONES S_PuntoComa
            | OP_Incremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa
            | ATRIBUTOS OP_Decremento COMPLETAR_ASIGNACION S_PuntoComa
            | OP_Decremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa
-           | ATRIBUTOS S_Punto R_Push S_ParentesisAbre LISTA_DE_ASIGNACIONES S_ParentesisCierra  S_PuntoComa
+           | ATRIBUTOS S_Punto R_Push S_ParentesisAbre LISTA_DE_ASIGNACIONES S_ParentesisCierra COMPLETAR_ASIGNACION S_PuntoComa
 ;
 
 COMPLETAR_ASIGNACION : LISTADO_ASIGNACION
@@ -292,13 +297,23 @@ CONTENIDO_ASIGNACION: S_Coma Identificador S_Igual EXPRESION_G
                     | S_Coma OP_Incremento Identificador
                     | S_Coma Identificador OP_Decremento
                     | S_Coma OP_Decremento Identificador
+                    | S_Coma ATRIBUTOS S_Punto R_Push S_ParentesisAbre LISTA_DE_ASIGNACIONES S_ParentesisCierra 
 ;
 
 LISTA_DE_ASIGNACIONES : EXPRESION_G
                       | S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra 
                       | S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra
 ;
+/*---------------------------------------------LISTA DE CORCHETES PARA MATRIZ Y ARRAY---------------------------------------------------------*/
+/*LISTA PARA DECLARACIONES*/
+LISTA_CORCHETE : S_CorcheteAbre S_CorcheteCierra                                   
+               | S_CorcheteAbre S_CorcheteCierra S_CorcheteAbre S_CorcheteCierra    
+;
 
+/*LISTA PARA ASIGNACIONES MATRIZ Y VECTOR*/
+LISTA_AS_MV: S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra                                                    
+           | S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra    
+;
 /*---------------------------------------------LISTA DE ASIGNACION ARRAY DENTRO DE ARRAY---------------------------------------------------------*/
 CONT_ASIG_ARRAY: LISTA_ASIGN_ARRAY
                |
@@ -334,27 +349,12 @@ CONT_VAR: Identificador //declaracion de variable solo id
 
 
         | Identificador S_Igual S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra //array
-        | Identificador S_DosPuntos TIPOS_DE_DATO S_CorcheteAbre S_CorcheteCierra //array
-        | Identificador S_DosPuntos TIPOS_DE_DATO S_CorcheteAbre S_CorcheteCierra S_Igual S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra //array
+        | Identificador S_DosPuntos TIPOS_DE_DATO LISTA_CORCHETE //array
+        | Identificador S_DosPuntos TIPOS_DE_DATO LISTA_CORCHETE S_Igual LISTA_AS_MV //array
 
 
         | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra //types
         | Identificador S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra //types
-;
-
-
-/*--------------------------------------------- CONTENIDO ARRAY ---------------------------------------------------------*/
-
-CONTENIDO_ARRAY: LISTADO_ARRAY
-                |
-;
-
-LISTADO_ARRAY: LISTADO_ARRAY S_Coma CONT_ARR
-            | CONT_ARR
-;
-
-CONT_ARR: S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra
-        | EXPRESION_G
 ;
 
 /*---------------------------------------------LLAMADAS A FUNCION---------------------------------------------------------*/

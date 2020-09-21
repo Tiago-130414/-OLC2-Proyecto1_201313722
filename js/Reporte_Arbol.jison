@@ -289,13 +289,14 @@ CONT_FOR_OF : R_Const Identificador R_Of Identificador                          
 
 /*---------------------------------------------ASIGNACION VARIABLES---------------------------------------------------------*/
 
-ASIGNACION : ATRIBUTOS S_Igual LISTA_DE_ASIGNACIONES S_PuntoComa                                                        {$$ = {Nombre : "ASIGNACION" , vector :[$1,$3]};}
+ASIGNACION : ATRIBUTOS S_Igual LISTA_DE_ASIGNACIONES S_PuntoComa                                                        {$$ = {Nombre : "ASIGNACION" , vector :[$1,{Nombre : $2 , vector : []},$3]};}
            //incrementos 
            | ATRIBUTOS OP_Incremento COMPLETAR_ASIGNACION S_PuntoComa                                                   {$$ = {Nombre : "ASIGNACION" , vector :[{Nombre : "ASIGNACION", vector : [$1 ,{Nombre : $2 , vector : []}]},$3]};}
            | OP_Incremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa                                                   {$$ = {Nombre : "ASIGNACION" , vector :[{Nombre : "ASIGNACION", vector : [{Nombre : $1 , vector : []} ,$2]},$3]};}   
            | ATRIBUTOS OP_Decremento COMPLETAR_ASIGNACION S_PuntoComa                                                   {$$ = {Nombre : "ASIGNACION" , vector :[{Nombre : "ASIGNACION", vector : [$1 ,{Nombre : $2 , vector : []}]},$3]};}
            | OP_Decremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa                                                   {$$ = {Nombre : "ASIGNACION" , vector :[{Nombre : "ASIGNACION", vector : [{Nombre : $1 , vector : []} ,$2]},$3]};}
-           | ATRIBUTOS S_Punto R_Push S_ParentesisAbre LISTA_DE_ASIGNACIONES S_ParentesisCierra  S_PuntoComa            {$$ = {Nombre : "ASIGNACION" , vector : [$1,{Nombre: $3 , vector : []},$5]};}
+           | ATRIBUTOS S_Punto R_Push S_ParentesisAbre LISTA_DE_ASIGNACIONES S_ParentesisCierra COMPLETAR_ASIGNACION S_PuntoComa  {$$ = {Nombre : "ASIGNACION" , vector : [$1,{Nombre: $3 , vector : []},{Nombre : $4 , vector : []},$5,{Nombre : $6 , vector : []},$7]};}
+            //asignacion push
 ;
 
 COMPLETAR_ASIGNACION : LISTADO_ASIGNACION
@@ -307,10 +308,11 @@ LISTADO_ASIGNACION: LISTADO_ASIGNACION  CONTENIDO_ASIGNACION                    
 ;
 
 CONTENIDO_ASIGNACION: S_Coma Identificador S_Igual EXPRESION_G                                      {$$ = {Nombre : "CONTENIDO_ASIGNACION" , vector : [{Nombre : $2 , vector : []},$4]};}
-                    | S_Coma Identificador OP_Incremento                                            {$$ = {Nombre : "CONTENIDO_ASIGNACION" , vector : [{Nombre : $2 , vector : []},$3]};}
-                    | S_Coma OP_Incremento Identificador                                            {$$ = {Nombre : "CONTENIDO_ASIGNACION" , vector : [$2,{Nombre : $3 , vector : []}]};}
-                    | S_Coma Identificador OP_Decremento                                            {$$ = {Nombre : "CONTENIDO_ASIGNACION" , vector : [{Nombre : $2 , vector : []},$3]};}
-                    | S_Coma OP_Decremento Identificador                                            {$$ = {Nombre : "CONTENIDO_ASIGNACION" , vector : [$2,{Nombre : $3 , vector : []}]};}
+                    | S_Coma Identificador OP_Incremento                                            {$$ = {Nombre : "CONTENIDO_ASIGNACION" , vector : [{Nombre : $2 , vector : []},{Nombre : $3 , vector : []}]};}
+                    | S_Coma OP_Incremento Identificador                                            {$$ = {Nombre : "CONTENIDO_ASIGNACION" , vector : [{Nombre : $2 , vector : []},{Nombre : $3 , vector : []}]};}
+                    | S_Coma Identificador OP_Decremento                                            {$$ = {Nombre : "CONTENIDO_ASIGNACION" , vector : [{Nombre : $2 , vector : []},{Nombre : $3 , vector : []}]};}
+                    | S_Coma OP_Decremento Identificador                                            {$$ = {Nombre : "CONTENIDO_ASIGNACION" , vector : [{Nombre : $2 , vector : []},{Nombre : $3 , vector : []}]};}
+                    | S_Coma ATRIBUTOS S_Punto R_Push S_ParentesisAbre LISTA_DE_ASIGNACIONES S_ParentesisCierra {$$ = {Nombre : "CONTENIDO_ASIGNACION" , vector : [$2 , {Nombre : $4 , vector : []},{Nombre : $5 , vector : []},$6,{Nombre : $7 , vector : []}]};}
 ;
 
 LISTA_DE_ASIGNACIONES : EXPRESION_G                                                                 {$$ = $1;}
@@ -319,13 +321,13 @@ LISTA_DE_ASIGNACIONES : EXPRESION_G                                             
 ;
 /*---------------------------------------------LISTA DE CORCHETES PARA MATRIZ Y ARRAY---------------------------------------------------------*/
 /*LISTA PARA DECLARACIONES*/
-LISTA_CORCHETE : S_CorcheteAbre S_CorcheteCierra                                    
-               | S_CorcheteAbre S_CorcheteCierra S_CorcheteAbre S_CorcheteCierra    
+LISTA_CORCHETE : S_CorcheteAbre S_CorcheteCierra                                                    {var nom = $1+$2; $$ = {Nombre : nom , vector : []};}
+               | S_CorcheteAbre S_CorcheteCierra S_CorcheteAbre S_CorcheteCierra                    {var nom = $1+$2+$3+$4; $$ = {Nombre : nom , vector : []};}
 ;
 
 /*LISTA PARA ASIGNACIONES MATRIZ Y VECTOR*/
-LISTA_AS_MV: S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra                                                    
-           | S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra    
+LISTA_AS_MV: S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra                                                    {$$ = {Nombre : "LISTA_AS_MV" , vector : [{Nombre : $1 , vector : []},$2,{Nombre : $3 , vector : []}]};}
+           | S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra    {$$ = {Nombre : "LISTA_AS_MV" , vector : [{Nombre : $1 , vector : []},$2,{Nombre : $3 , vector : []},{Nombre : $4 , vector : []},$5,{Nombre : $6 , vector : []}]};}
 ;
 
 /*---------------------------------------------LISTA DE ASIGNACION ARRAY DENTRO DE ARRAY---------------------------------------------------------*/
@@ -363,16 +365,14 @@ CONT_VAR: Identificador /*declaracion de variable solo id*/                     
 
 
         | Identificador S_Igual S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra /*array*/                                                           {$$ = {Nombre : "ARRAY" , vector : [{Nombre : $1 , vector : []},$4]};}
-        | Identificador S_DosPuntos TIPOS_DE_DATO S_CorcheteAbre S_CorcheteCierra /*array*/                                                         {$$ = {Nombre : "ARRAY" , vector : [{Nombre : $1 , vector : []},$3]};}
-        | Identificador S_DosPuntos TIPOS_DE_DATO S_CorcheteAbre S_CorcheteCierra S_Igual S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra /*array*/ {$$ = {Nombre : "ARRAY" , vector : [{Nombre : $1 , vector : []},$3,$8]};}
-
+        | Identificador S_DosPuntos TIPOS_DE_DATO LISTA_CORCHETE/*array*/                                                                           {$$ = {Nombre : "ARRAY" , vector : [{Nombre : $1 , vector : []},$3,$4]};}
+        //| Identificador S_DosPuntos TIPOS_DE_DATO S_CorcheteAbre S_CorcheteCierra
+        | Identificador S_DosPuntos TIPOS_DE_DATO LISTA_CORCHETE S_Igual LISTA_AS_MV /*array*/                                                      {$$ = {Nombre : "ARRAY" , vector : [{Nombre : $1 , vector : []},$3,$4,{Nombre : $5 , vector : []},$6]};}
+        //| Identificador S_DosPuntos TIPOS_DE_DATO S_CorcheteAbre S_CorcheteCierra S_Igual S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra
 
         | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra /*types*/                               {$$ = {Nombre : "TYPE" ,vector : [{Nombre : $1 , vector : []},$3,$6]};}
         | Identificador S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra /*types*/                                                         {$$ = {Nombre : "TYPE" ,vector : [{Nombre : $1 , vector : []},$4]};}
 ;   
-
-
-/*--------------------------------------------- CONTENIDO ARRAY ---------------------------------------------------------*/
 
 
 /*---------------------------------------------LLAMADAS A FUNCION---------------------------------------------------------*/
@@ -453,7 +453,7 @@ TIPAR_FUNCION : S_DosPuntos TIPOS_DE_DATO                                       
  ;
 
  CONT_ATRIBUTOS:  Identificador S_CorcheteAbre EXPRESION_G S_CorcheteCierra                       {$$ = {Nombre: "CONT_ATRIBUTOS" , vector : [{Nombre: $1 , vector : []},$3]};}
-               |  Identificador S_CorcheteAbre EXPRESION_G S_CorcheteCierra S_CorcheteAbre EXPRESION_G S_CorcheteCierra  
+               |  Identificador S_CorcheteAbre EXPRESION_G S_CorcheteCierra S_CorcheteAbre EXPRESION_G S_CorcheteCierra  {$$ = {Nombre : "CONT_ATRIBUTOS" , vector : [{Nombre: $1 , vector : []},{Nombre: $2 , vector : []} , $3 ,{Nombre: $4 , vector : []},{Nombre: $5 , vector : []},$6,{Nombre: $7 , vector : []}]};}
                |  Identificador                                                                   {$$ = {Nombre: $1 , vector : []};}
 ;
 
