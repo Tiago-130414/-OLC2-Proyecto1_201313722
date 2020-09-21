@@ -99,8 +99,9 @@
 "]"                                                 {return 'S_CorcheteCierra';}
 
 /*  NUMEROS */
-[0-9]+\b                                            {return 'Entero';}
 [0-9]+("."[0-9]+)?\b                                {return 'Decimal';}
+[0-9]+\b                                            {return 'Entero';}
+
 
 
 /*  IDENTIFICADORES */
@@ -320,15 +321,29 @@ LISTA_DE_ASIGNACIONES : EXPRESION_G                                             
                       | S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra                           {$$ = $2;}
 ;
 /*---------------------------------------------LISTA DE CORCHETES PARA MATRIZ Y ARRAY---------------------------------------------------------*/
+///LISTA CORCHETES SIN VALOR
+L_CORCHETE : L_C                                                            
+;
+
+L_C: L_C LISTA_CORCHETE                                     {$$ = {Nombre : "L_C" , vector : [$1,$2]};}                        
+    |LISTA_CORCHETE                                         {$$ = {Nombre : "L_C" , vector : [$1]};}                                        
+;
+
 /*LISTA PARA DECLARACIONES*/
-LISTA_CORCHETE : S_CorcheteAbre S_CorcheteCierra                                                    {var nom = $1+$2; $$ = {Nombre : nom , vector : []};}
-               | S_CorcheteAbre S_CorcheteCierra S_CorcheteAbre S_CorcheteCierra                    {var nom = $1+$2+$3+$4; $$ = {Nombre : nom , vector : []};}
+LISTA_CORCHETE : S_CorcheteAbre S_CorcheteCierra            {var nom = $1+$2; $$ = {Nombre : nom , vector : []};}                        
+;
+///LISTA CORCHETES CON VALOR
+L_CORCHETE_V : L_C_V
+;
+
+L_C_V : L_C_V LISTA_AS_MV                                       {$$ = {Nombre : "L_C_V" , vector : [$1,$2]};}                          
+      | LISTA_AS_MV                                             {$$ = {Nombre : "L_C_V" , vector : [$1]};}                                          
 ;
 
 /*LISTA PARA ASIGNACIONES MATRIZ Y VECTOR*/
-LISTA_AS_MV: S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra                                                    {$$ = {Nombre : "LISTA_AS_MV" , vector : [{Nombre : $1 , vector : []},$2,{Nombre : $3 , vector : []}]};}
-           | S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra    {$$ = {Nombre : "LISTA_AS_MV" , vector : [{Nombre : $1 , vector : []},$2,{Nombre : $3 , vector : []},{Nombre : $4 , vector : []},$5,{Nombre : $6 , vector : []}]};}
+LISTA_AS_MV: S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra    {$$ = {Nombre : "LISTA_AS_MV" , vector : [{Nombre : $1 , vector : []},$2,{Nombre : $3 , vector : []}]};}
 ;
+
 
 /*---------------------------------------------LISTA DE ASIGNACION ARRAY DENTRO DE ARRAY---------------------------------------------------------*/
 CONT_ASIG_ARRAY: LISTA_ASIGN_ARRAY                                                                                                  
@@ -365,9 +380,9 @@ CONT_VAR: Identificador /*declaracion de variable solo id*/                     
 
 
         | Identificador S_Igual S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra /*array*/                                                           {$$ = {Nombre : "ARRAY" , vector : [{Nombre : $1 , vector : []},$4]};}
-        | Identificador S_DosPuntos TIPOS_DE_DATO LISTA_CORCHETE/*array*/                                                                           {$$ = {Nombre : "ARRAY" , vector : [{Nombre : $1 , vector : []},$3,$4]};}
+        | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE/*array*/                                                                               {$$ = {Nombre : "ARRAY" , vector : [{Nombre : $1 , vector : []},$3,$4]};}
         //| Identificador S_DosPuntos TIPOS_DE_DATO S_CorcheteAbre S_CorcheteCierra
-        | Identificador S_DosPuntos TIPOS_DE_DATO LISTA_CORCHETE S_Igual LISTA_AS_MV /*array*/                                                      {$$ = {Nombre : "ARRAY" , vector : [{Nombre : $1 , vector : []},$3,$4,{Nombre : $5 , vector : []},$6]};}
+        | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE S_Igual L_CORCHETE_V /*array*/                                                         {$$ = {Nombre : "ARRAY" , vector : [{Nombre : $1 , vector : []},$3,$4,{Nombre : $5 , vector : []},$6]};}
         //| Identificador S_DosPuntos TIPOS_DE_DATO S_CorcheteAbre S_CorcheteCierra S_Igual S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra
 
         | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra /*types*/                               {$$ = {Nombre : "TYPE" ,vector : [{Nombre : $1 , vector : []},$3,$6]};}
@@ -398,8 +413,12 @@ LISTA_PARAMETROS : LISTA_PARAMETROS S_Coma PARAMETROS                           
 ;
 
 PARAMETROS : Identificador S_DosPuntos TIPOS_DE_DATO                                                    {$$ = {Nombre : "PARAMETROS" , vector : [{Nombre: $1 , vector : []}, $3]};}
-           | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual LISTA_DE_ASIGNACIONES                      {$$ = {Nombre : "PARAMETROS" , vector : [{Nombre: $1 , vector : []}, $3,$5]};}
+           | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual LISTA_DE_ASIGNACIONES                      {$$ = {Nombre : "PARAMETROS" , vector : [{Nombre: $1 , vector : []}, $3,{Nombre : $4 , vector : []},$5]};}
            | Identificador S_Interrogacion S_DosPuntos TIPOS_DE_DATO                                    {$$ = {Nombre : "PARAMETROS_OPCIONALES" , vector : [{Nombre: $1 , vector : []}, $4]};}
+           | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE                                         {$$ = {Nombre : "PARAMETROS" , vector : [{Nombre: $1 , vector : []}, $3,$4]};}
+           | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE S_Igual LISTA_DE_ASIGNACIONES           {$$ = {Nombre : "PARAMETROS" , vector : [{Nombre: $1 , vector : []}, $3,$4,{Nombre : $5 , vector : []},$6]};}
+           | Identificador S_Interrogacion S_DosPuntos TIPOS_DE_DATO L_CORCHETE                         {$$ = {Nombre : "PARAMETROS_OPCIONALES" , vector : [{Nombre: $1 , vector : []}, $4,$5]};}
+
 ;
 /*---------------------------------------------TYPES---------------------------------------------------------*/
 
@@ -412,7 +431,7 @@ LISTA_TYPES: LISTA_TYPES SEPARADOR CONTENIDO_TYPES                              
 ;
 
 CONTENIDO_TYPES : Identificador S_DosPuntos TIPOS_DE_DATO                                                       {$$ = {Nombre: "CONTENIDO_TYPES", vector : [{Nombre: $1 ,vector:[]},$3] };}
-                | Identificador S_DosPuntos Identificador S_CorcheteAbre S_CorcheteCierra                       {$$ = {Nombre: "CONTENIDO_TYPES", vector : [{Nombre: $1 ,vector:[]},{Nombre: $3 ,vector:[]}] };}
+                | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE                                            {$$ = {Nombre: "CONTENIDO_TYPES", vector : [{Nombre: $1 ,vector:[]},$3,$4] };}
 ;
 
 SEPARADOR : S_Coma
@@ -452,8 +471,7 @@ TIPAR_FUNCION : S_DosPuntos TIPOS_DE_DATO                                       
           | CONT_ATRIBUTOS                                                                        {$$ = {Nombre : "ATRIBUTOS" ,vector:[$1]};}
  ;
 
- CONT_ATRIBUTOS:  Identificador S_CorcheteAbre EXPRESION_G S_CorcheteCierra                       {$$ = {Nombre: "CONT_ATRIBUTOS" , vector : [{Nombre: $1 , vector : []},$3]};}
-               |  Identificador S_CorcheteAbre EXPRESION_G S_CorcheteCierra S_CorcheteAbre EXPRESION_G S_CorcheteCierra  {$$ = {Nombre : "CONT_ATRIBUTOS" , vector : [{Nombre: $1 , vector : []},{Nombre: $2 , vector : []} , $3 ,{Nombre: $4 , vector : []},{Nombre: $5 , vector : []},$6,{Nombre: $7 , vector : []}]};}
+ CONT_ATRIBUTOS:  Identificador L_CORCHETE_V                                                      {$$ = {Nombre: "CONT_ATRIBUTOS" , vector : [{Nombre: $1 , vector : []},$2]};}
                |  Identificador                                                                   {$$ = {Nombre: $1 , vector : []};}
 ;
 
@@ -473,10 +491,12 @@ EXPRESION_G
     | EXPRESION_G OP_Division EXPRESION_G                                                        { $$ = {Nombre:"EXPRESION_G",vector : [$1, {Nombre: $2 , vector : []},$3]}; }                                            
     | EXPRESION_G OP_Exponenciacion EXPRESION_G                                                  { $$ = {Nombre:"EXPRESION_G",vector : [$1, {Nombre: $2 , vector : []},$3]}; }                                                 
     | EXPRESION_G OP_Modulo EXPRESION_G                                                          { $$ = {Nombre:"EXPRESION_G",vector : [$1, {Nombre: $2 , vector : []},$3]}; }                                                                                                              
+    | CONTENIDO_EXPRESION OP_Decremento                                                          { $$ = {Nombre:"EXPRESION_G",vector : [$1,{Nombre: $2 , vector : []}]}; }
+    | CONTENIDO_EXPRESION OP_Incremento                                                          { $$ = {Nombre:"EXPRESION_G",vector : [$1,{Nombre: $2 , vector : []}]}; }
     | OP_Decremento CONTENIDO_EXPRESION                                                          { $$ = {Nombre:"EXPRESION_G",vector : [{Nombre: $1 , vector : []},$2]}; }
     | OP_Incremento CONTENIDO_EXPRESION                                                          { $$ = {Nombre:"EXPRESION_G",vector : [{Nombre: $1 , vector : []},$2]}; }
-    | OP_Menos  CONTENIDO_EXPRESION     %prec UMINUS                                             { $$ = {Nombre:"EXPRESION_G",vector : [{Nombre: $1 , vector : []},$2]}; }  
-    | LOG_Not   CONTENIDO_EXPRESION     %prec UMINUS                                             { $$ = {Nombre:"EXPRESION_G",vector : [{Nombre: $1 , vector : []},$2]}; }  
+    | OP_Menos  EXPRESION_G     %prec UMINUS                                                     { $$ = {Nombre:"EXPRESION_G",vector : [{Nombre: $1 , vector : []},$2]}; }  
+    | LOG_Not   EXPRESION_G     %prec UMINUS                                                     { $$ = {Nombre:"EXPRESION_G",vector : [{Nombre: $1 , vector : []},$2]}; }  
     | CONTENIDO_EXPRESION                                                                        { $$ = {Nombre:"EXPRESION_G",vector : [$1]}; } 
 ;
 

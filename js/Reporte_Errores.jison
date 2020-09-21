@@ -305,14 +305,27 @@ LISTA_DE_ASIGNACIONES : EXPRESION_G
                       | S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra
 ;
 /*---------------------------------------------LISTA DE CORCHETES PARA MATRIZ Y ARRAY---------------------------------------------------------*/
+///LISTA CORCHETES SIN VALOR
+L_CORCHETE : L_C                                                            
+;
+
+L_C: L_C LISTA_CORCHETE                                                             
+    |LISTA_CORCHETE                                                                 
+;
+
 /*LISTA PARA DECLARACIONES*/
-LISTA_CORCHETE : S_CorcheteAbre S_CorcheteCierra                                   
-               | S_CorcheteAbre S_CorcheteCierra S_CorcheteAbre S_CorcheteCierra    
+LISTA_CORCHETE : S_CorcheteAbre S_CorcheteCierra                                    
+;
+///LISTA CORCHETES CON VALOR
+L_CORCHETE_V : L_C_V
+;
+
+L_C_V : L_C_V LISTA_AS_MV                                                           
+      | LISTA_AS_MV                                                                 
 ;
 
 /*LISTA PARA ASIGNACIONES MATRIZ Y VECTOR*/
-LISTA_AS_MV: S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra                                                    
-           | S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra    
+LISTA_AS_MV: S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra
 ;
 /*---------------------------------------------LISTA DE ASIGNACION ARRAY DENTRO DE ARRAY---------------------------------------------------------*/
 CONT_ASIG_ARRAY: LISTA_ASIGN_ARRAY
@@ -349,9 +362,8 @@ CONT_VAR: Identificador //declaracion de variable solo id
 
 
         | Identificador S_Igual S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra //array
-        | Identificador S_DosPuntos TIPOS_DE_DATO LISTA_CORCHETE //array
-        | Identificador S_DosPuntos TIPOS_DE_DATO LISTA_CORCHETE S_Igual LISTA_AS_MV //array
-
+        | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE/*array*/                       
+        | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE S_Igual L_CORCHETE_V /*array*/ 
 
         | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra //types
         | Identificador S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra //types
@@ -382,6 +394,9 @@ LISTA_PARAMETROS : LISTA_PARAMETROS S_Coma PARAMETROS  {$$ = $1 + $2}
 PARAMETROS : Identificador S_DosPuntos TIPOS_DE_DATO {$$ = $1 + $2 +$3}
            | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G {$$ = $1 + $2 +$3 +$4}
            | Identificador S_Interrogacion S_DosPuntos TIPOS_DE_DATO {$$ = $1 + $2 +$3 +$4}
+           | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE                                 
+           | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE S_Igual LISTA_DE_ASIGNACIONES 
+           | Identificador S_Interrogacion S_DosPuntos TIPOS_DE_DATO L_CORCHETE
 ;
 /*---------------------------------------------TYPES---------------------------------------------------------*/
 
@@ -394,7 +409,7 @@ LISTA_TYPES: LISTA_TYPES SEPARADOR CONTENIDO_TYPES
 ;
 
 CONTENIDO_TYPES : Identificador S_DosPuntos TIPOS_DE_DATO
-                | Identificador S_DosPuntos Identificador S_CorcheteAbre S_CorcheteCierra
+                | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE
 ;
 
 SEPARADOR : S_Coma
@@ -434,7 +449,7 @@ TIPAR_FUNCION : S_DosPuntos TIPOS_DE_DATO
           | CONT_ATRIBUTOS
  ;
 
- CONT_ATRIBUTOS:  Identificador S_CorcheteAbre EXPRESION_G S_CorcheteCierra
+ CONT_ATRIBUTOS:  Identificador L_CORCHETE_V                                                    
                |  Identificador
 ;
 
@@ -458,8 +473,8 @@ EXPRESION_G
     | CONTENIDO_EXPRESION OP_Incremento %prec PRUEBA                                             { $$ = $1 + $2; }
     | OP_Decremento CONTENIDO_EXPRESION                                                          { $$ = $1 + $2;}
     | OP_Incremento CONTENIDO_EXPRESION                                                          { $$ = $1 + $2;}
-    | OP_Menos  CONTENIDO_EXPRESION     %prec UMINUS                                             { $$ = $1 + $2; }
-    | LOG_Not   CONTENIDO_EXPRESION     %prec UMINUS                                             { $$ = $1 + $2; }
+    | OP_Menos  EXPRESION_G     %prec UMINUS                                             { $$ = $1 + $2; }
+    | LOG_Not   EXPRESION_G     %prec UMINUS                                             { $$ = $1 + $2; }
     | CONTENIDO_EXPRESION
 ;
 

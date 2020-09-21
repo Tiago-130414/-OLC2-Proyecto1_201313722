@@ -652,7 +652,7 @@ FUNCION_GRAFICAR : R_Graficar S_ParentesisAbre S_ParentesisCierra S_PuntoComa   
 SENTENCIAS_TRANSFERENCIA : R_Break S_PuntoComa                                                  {$$ = {tipo : "break" , contenido : []};}
                          | R_Continue S_PuntoComa                                               {$$ = {tipo : "continue" , contenido : []};}
                          | R_Return S_PuntoComa                                                 {$$ = {tipo : "return" , contenido : []};}
-                         | R_Return EXPRESION_G S_PuntoComa                                     {var json = [{tipo : "expresion" , contenido : $2}];$$ = {tipo : "returnE" , contenido : json};}
+                         | R_Return EXPRESION_G S_PuntoComa                                     {var exp = returnVector($2);var json = [{tipo : "expresion" , contenido : exp}];$$ = {tipo : "returnE" , contenido : json};}
 ;
 
 /*--------------------------------------------- LISTADO IF---------------------------------------------------------*/
@@ -660,7 +660,7 @@ LISTADO_IF : LISTADO_IF R_Else IF                                               
            | IF                                                                                 {$$ = [{ tipo : "if" , contenido : $1}];}
 ;
 
-IF : R_If S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra         {var json = [{tipo : "condicionIf" , contenido : $3},$6];$$ =json;}
+IF : R_If S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra         {var exp ; if(Array.isArray($3)){exp = $3;}else{exp = [$3];} ;var json = [{tipo : "condicionIf" , contenido : exp},$6];$$ =json;}
 ;
 
 ELSE : R_Else S_LlaveAbre EDD S_LlaveCierra                                                     {var json = [{tipo : "else" , contenido : [$3]}];$$ = json;}
@@ -668,7 +668,7 @@ ELSE : R_Else S_LlaveAbre EDD S_LlaveCierra                                     
 ;
 
 /*---------------------------------------------SWITCH---------------------------------------------------------*/
-SWITCH : R_Switch S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre CASE DEFINIR_DEFAULT S_LlaveCierra    {var json = [{tipo : "expresion" , contenido : $3}]; json = json.concat($6);json = json.concat($7);$$ = {tipo : "switch" , contenido : json};}            
+SWITCH : R_Switch S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre CASE DEFINIR_DEFAULT S_LlaveCierra    {var exp ; if(Array.isArray($3)){exp = $3;}else{exp = [$3];} ;var json = [{tipo : "expresion" , contenido : exp}]; json = json.concat($6);json = json.concat($7);$$ = {tipo : "switch" , contenido : json};}            
 ;
 
 /*---------------------------------------------LISTADO DE CASE---------------------------------------------------------*/
@@ -681,7 +681,7 @@ LISTA_CASE: LISTA_CASE DEFINIR_CASE                                             
           | DEFINIR_CASE                                                            {$$ = [$1];}
 ;
 
-DEFINIR_CASE:R_Case EXPRESION_G S_DosPuntos EDD                                     {var json = [{tipo : "expresion" , contenido : [$2]} , {tipo : "concatenar" , contenido : " " + $3 + "\n"} ,$4]; $$ = {tipo : "case" , contenido : json};}
+DEFINIR_CASE:R_Case EXPRESION_G S_DosPuntos EDD                                     {var exp ; if(Array.isArray($2)){exp = $2;}else{exp = [$2];} ;var json = [{tipo : "expresion" , contenido : exp} , {tipo : "concatenar" , contenido : " " + $3 + "\n"} ,$4]; $$ = {tipo : "case" , contenido : json};}
 ;
 /*---------------------------------------------DEFINICION DE DEFAULT---------------------------------------------------------*/
 
@@ -696,25 +696,25 @@ FUNC: EXPRESION_G       {var json; if(Array.isArray($1)){json = $1;}else{json = 
     |                   {$$=[];}
 ;
 /*---------------------------------------------WHILE---------------------------------------------------------*/
-WHILE: R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra                            { var json = [{ tipo : "condicionWhile" , contenido : $3} , $6 ]; $$ = {tipo : "while" , contenido : json}; }
+WHILE: R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra                            { var exp = returnVector($3) ; var json = [{ tipo : "condicionWhile" , contenido : exp} , $6 ]; $$ = {tipo : "while" , contenido : json}; }
 ;
 /*---------------------------------------------DO-WHILE---------------------------------------------------------*/
-DO_WHILE: R_Do S_LlaveAbre EDD S_LlaveCierra R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_PuntoComa        {var json = [$3 , { tipo : "condicionDoWhile" , contenido : $7}]; $$ = {tipo : "doWhile" , contenido : json};}
+DO_WHILE: R_Do S_LlaveAbre EDD S_LlaveCierra R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_PuntoComa        {var exp ; if(Array.isArray($7)){exp = $7;}else{exp = [$7];} ;var json = [$3 , { tipo : "condicionDoWhile" , contenido : exp}]; $$ = {tipo : "doWhile" , contenido : json};}
 ;
 
 /*---------------------------------------------FOR---------------------------------------------------------*/
-FOR : R_For S_ParentesisAbre CONT_FOR EXPRESION_G S_PuntoComa FIN_FOR S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra { var json = [{tipo : "inicioFor" , contenido : $3},{tipo : "condicionFor" , contenido : $4},{tipo : "finFor" , contenido : $6},$9]; $$ = {tipo : "for" , contenido : json}; } 
+FOR : R_For S_ParentesisAbre CONT_FOR EXPRESION_G S_PuntoComa FIN_FOR S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra {var exp ; if(Array.isArray($4)){exp = $4;}else{exp = [$4];} ; var json = [{tipo : "inicioFor" , contenido : $3},{tipo : "condicionFor" , contenido : exp},{tipo : "finFor" , contenido : $6},$9]; $$ = {tipo : "for" , contenido : json}; } 
 ;
 
 CONT_FOR
-    : R_Let Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G S_PuntoComa                                     { var json = [{tipo : "variable_let" , contenido : $1},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : $3},{tipo : "tipoDato" , contenido : $4},{tipo : "concatenar" , contenido : " " + $5+ " "},{tipo : "expresion" , contenido : [$6]},{tipo : "concatenar" , contenido : $7 +" "}];$$=json;}
-    | R_Let Identificador S_Igual EXPRESION_G S_PuntoComa                                                               { var json = [{tipo : "variable_let", contenido : $1},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : " "+$3+" "},{tipo : "expresion" , contenido : [$4]},{tipo : "concatenar" , contenido : $5}]; $$ = json;}
+    : R_Let Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G S_PuntoComa                                     {var exp = returnVector($6); var json = [{tipo : "variable_let" , contenido : $1},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : $3},{tipo : "tipoDato" , contenido : $4},{tipo : "concatenar" , contenido : " " + $5+ " "},{tipo : "expresion" , contenido : exp},{tipo : "concatenar" , contenido : $7 +" "}];$$=json;}
+    | R_Let Identificador S_Igual EXPRESION_G S_PuntoComa                                                               {var exp = returnVector($4);var json = [{tipo : "variable_let", contenido : $1},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : " "+$3+" "},{tipo : "expresion" , contenido : exp},{tipo : "concatenar" , contenido : $5}]; $$ = json;}
     | Identificador S_PuntoComa                                                                                         { var json = [{tipo : "identificador", contenido : $1},{tipo : "concatenar" , contenido : $2}];$$ = json;}
-    | Identificador S_Igual EXPRESION_G S_PuntoComa                                                                     { var json = [{tipo : "identificador", contenido : $1},{tipo : "concatenar" , contenido : " " + $2 + " "},{tipo : "expresion" , contenido : [$3]},{tipo : "concatenar" , contenido : $4}];$$ = json;}
+    | Identificador S_Igual EXPRESION_G S_PuntoComa                                                                     {var exp = returnVector($3);var json = [{tipo : "identificador", contenido : $1},{tipo : "concatenar" , contenido : " " + $2 + " "},{tipo : "expresion" , contenido : exp},{tipo : "concatenar" , contenido : $4}];$$ = json;}
 ;
 
 FIN_FOR
-    : Identificador S_Igual EXPRESION_G                                                { var  json = [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "expresion" , contenido : [$3]}]; $$ = json;}
+    : Identificador S_Igual EXPRESION_G                                                { var exp = returnVector($3);var  json = [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "expresion" , contenido : exp}]; $$ = json;}
     | Identificador OP_Incremento                                                      { var  json = [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2}]; $$ = json;}
     | OP_Incremento Identificador                                                      { var  json = [{tipo : "concatenar" , contenido : $1},{tipo : "identificador" , contenido : $2}]; $$ = json;} 
     | Identificador OP_Decremento                                                      { var  json = [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2}]; $$ = json;}
@@ -772,14 +772,27 @@ LISTA_DE_ASIGNACIONES : EXPRESION_G                                             
                       | S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra       {var json = []; json.push({tipo : "concatenar" , contenido : $1});json = json.concat($2);json.push({tipo : "concatenar" , contenido : $3}); $$ = json;}
 ;
 /*---------------------------------------------LISTA DE CORCHETES PARA MATRIZ Y ARRAY---------------------------------------------------------*/
+///LISTA CORCHETES SIN VALOR
+L_CORCHETE : L_C                                                            
+;
+
+L_C: L_C LISTA_CORCHETE                                                             {var json = $1; json = json.concat($2);$$ = json;}
+    |LISTA_CORCHETE                                                                 {$$ = $1;}
+;
+
 /*LISTA PARA DECLARACIONES*/
-LISTA_CORCHETE : S_CorcheteAbre S_CorcheteCierra                                    {$$ = $1+$2;}
-               | S_CorcheteAbre S_CorcheteCierra S_CorcheteAbre S_CorcheteCierra    {$$ = $1+$2+$3+$4;}
+LISTA_CORCHETE : S_CorcheteAbre S_CorcheteCierra                                    {$$ = [{tipo : "concatenar" , contenido : "[]" }];}
+;
+///LISTA CORCHETES CON VALOR
+L_CORCHETE_V : L_C_V
+;
+
+L_C_V : L_C_V LISTA_AS_MV                                                           {var json = $1; json = json.concat($2);$$ = json;}
+      | LISTA_AS_MV                                                                 {$$ = $1;}
 ;
 
 /*LISTA PARA ASIGNACIONES MATRIZ Y VECTOR*/
-LISTA_AS_MV: S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra                                                    {var json = [{tipo : "concatenar" , contenido : $1}].concat($2); json.push({tipo : "concatenar" , contenido : $3});$$ = json;}
-           | S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra    {var json = [{tipo : "concatenar" , contenido : $1}].concat($2); json.push({tipo : "concatenar" , contenido : $3}); json.push({tipo : "concatenar" , contenido : $4}); json = json.concat($5);json.push({tipo : "concatenar" , contenido : $6}); $$ = json;}
+LISTA_AS_MV: S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra                        {var json = [{tipo : "concatenar" , contenido : $1}].concat($2); json.push({tipo : "concatenar" , contenido : $3});$$ = json;}
 ;
 /*---------------------------------------------LISTA DE ASIGNACION ARRAY DENTRO DE ARRAY---------------------------------------------------------*/
 CONT_ASIG_ARRAY: LISTA_ASIGN_ARRAY
@@ -816,8 +829,8 @@ CONT_VAR: Identificador /*declaracion de variable solo id*/                     
 
 
         | Identificador S_Igual S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra /*array*/                                            {var json = [{tipo : "identificador" ,contenido : $1},{tipo : "concatenar" ,contenido : " " + $2 + " "},{tipo : "concatenar" ,contenido : $3}]; json = json.concat($4);json.push({tipo : "concatenar" ,contenido : $5});$$ = json;}
-        | Identificador S_DosPuntos TIPOS_DE_DATO LISTA_CORCHETE/*array*/                                                            {var json = [{tipo : "identificador" ,contenido : $1},{tipo : "concatenar" ,contenido : $2},{tipo : "tipoDato" ,contenido : $3},{tipo : "concatenar" ,contenido : $4}];$$ = json;}
-        | Identificador S_DosPuntos TIPOS_DE_DATO LISTA_CORCHETE S_Igual LISTA_AS_MV /*array*/                                       {var json = [{tipo : "identificador" ,contenido : $1},{tipo : "concatenar" ,contenido : $2},{tipo : "tipoDato" ,contenido : $3},{tipo : "concatenar" ,contenido : $4},{tipo : "concatenar" ,contenido : " " + $5 + " "},{tipo : "expresion" ,contenido : $6}];$$ = json;}
+        | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE/*array*/                                                            {var json = [{tipo : "identificador" ,contenido : $1},{tipo : "concatenar" ,contenido : $2},{tipo : "tipoDato" ,contenido : $3},{tipo : "concatenar" ,contenido : $4}];$$ = json;}
+        | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE S_Igual L_CORCHETE_V /*array*/                                       {var json = [{tipo : "identificador" ,contenido : $1},{tipo : "concatenar" ,contenido : $2},{tipo : "tipoDato" ,contenido : $3},{tipo : "concatenar" ,contenido : $4},{tipo : "concatenar" ,contenido : " " + $5 + " "},{tipo : "expresion" ,contenido : $6}];$$ = json;}
 
 
         | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra /*types*/                                 {var json = [{tipo : "identificador" ,contenido : $1},{tipo : "concatenar" ,contenido : $2},{tipo : "tipoDato" ,contenido : $3},{tipo : "concatenar" ,contenido : " " + $4 + " "},{tipo : "concatenar" ,contenido : $5}];json = json.concat($6);json.push({tipo : "concatenar" ,contenido : $7});$$ = json;}
@@ -846,9 +859,12 @@ LISTA_PARAMETROS : LISTA_PARAMETROS S_Coma PARAMETROS  {$1.push({tipo:"concatena
                  | PARAMETROS {$$=[$1];}              
 ;
 
-PARAMETROS : Identificador S_DosPuntos TIPOS_DE_DATO  {var json = {tipo : "parametro" , contenido : [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "tipoDato" , contenido : $3}]} ; $$ = json;}
-           | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual LISTA_DE_ASIGNACIONES {var json = {tipo : "parametro" , contenido : [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "tipoDato" , contenido : $3},{tipo : "concatenar" , contenido : $4},{tipo : "expresion" , contenido : $5}]} ; $$ = json;}
-           | Identificador S_Interrogacion S_DosPuntos TIPOS_DE_DATO {var json = {tipo : "parametro" , contenido : [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "concatenar" , contenido : $3},{tipo : "tipoDato" , contenido : $4}]} ; $$ = json;}
+PARAMETROS : Identificador S_DosPuntos TIPOS_DE_DATO                                            {var json = {tipo : "parametro" , contenido : [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "tipoDato" , contenido : $3}]} ; $$ = json;}
+           | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual LISTA_DE_ASIGNACIONES              {var json = {tipo : "parametro" , contenido : [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "tipoDato" , contenido : $3},{tipo : "concatenar" , contenido : $4},{tipo : "expresion" , contenido : $5}]} ; $$ = json;}
+           | Identificador S_Interrogacion S_DosPuntos TIPOS_DE_DATO                            {var json = {tipo : "parametro" , contenido : [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "concatenar" , contenido : $3},{tipo : "tipoDato" , contenido : $4}]} ; $$ = json;}
+           | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE                                 {var json = {tipo : "parametro" , contenido : [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "tipoDato" , contenido : $3}].concat($4)} ; $$ = json;}
+           | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE S_Igual LISTA_DE_ASIGNACIONES   {var json = {tipo : "parametro" , contenido : [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "tipoDato" , contenido : $3}].concat($4)} ;json.push({tipo : "concatenar" , contenido : $5}); json.push({tipo : "expresion" , contenido : $6});$$ = json;}
+           | Identificador S_Interrogacion S_DosPuntos TIPOS_DE_DATO L_CORCHETE                 {var json = {tipo : "parametro" , contenido : [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "concatenar" , contenido : $3},{tipo : "tipoDato" , contenido : $4}].concat($5)} ; $$ = json;}
 ;
 /*---------------------------------------------TYPES---------------------------------------------------------*/
 
@@ -860,8 +876,8 @@ LISTA_TYPES: LISTA_TYPES SEPARADOR CONTENIDO_TYPES                              
            | CONTENIDO_TYPES                                                                                {$$=$1;}
 ;
 
-CONTENIDO_TYPES : Identificador S_DosPuntos TIPOS_DE_DATO                                                   {var json = [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "tipoDato" , contenido : $3}];$$ = json;}
-                | Identificador S_DosPuntos Identificador S_CorcheteAbre S_CorcheteCierra                   {var json = [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "identificador" , contenido : $3},{tipo : "concatenar", contenido :$4},{tipo : "concatenar", contenido :$5}];$$ = json;}
+CONTENIDO_TYPES : Identificador S_DosPuntos TIPOS_DE_DATO                                                   {var json = [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "tipoDato" , contenido : $3}];$$ = json;}       
+                | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE                                        {var json = [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "tipoDato" , contenido : $3}].concat($4);$$ = json;}
 ;
 
 SEPARADOR : S_Coma                                                                                          {$$  = {tipo : "concatenar", contenido : $1 + "\n"};}
@@ -902,9 +918,8 @@ TIPAR_FUNCION : S_DosPuntos TIPOS_DE_DATO
           | CONT_ATRIBUTOS                                                                      {$$ = $1;}
  ;
 
- CONT_ATRIBUTOS:  Identificador S_CorcheteAbre EXPRESION_G S_CorcheteCierra                                                 { var json = [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2}]; var temp = json.concat($3); temp.push({tipo : "concatenar" , contenido : $4}); $$ = temp;}
-               |  Identificador S_CorcheteAbre EXPRESION_G S_CorcheteCierra S_CorcheteAbre EXPRESION_G S_CorcheteCierra     { var json = [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2}]; json = json.concat($3); json.push({tipo : "concatenar" , contenido : $4});json.push({tipo : "concatenar" , contenido : $5});json = json.concat($6);json.push({tipo : "concatenar" , contenido : $7});$$ = json;}
-               |  Identificador                                                                                             {var json  = [{tipo : "identificador" , contenido : $1}]; $$ = json;}
+ CONT_ATRIBUTOS:  Identificador L_CORCHETE_V                                                    { var json = [{tipo : "identificador" , contenido : $1}].concat($2); $$ = json;}
+               |  Identificador                                                                 {var json  = [{tipo : "identificador" , contenido : $1}]; $$ = json;}
 ;
 
 /*---------------------------------------------EXPRESIONES---------------------------------------------------------*/
@@ -947,6 +962,6 @@ EXPRESION_G
 ; /*ATRIBUTOS CONTIENE ID Y VECTOR */
 
 OPCIONAL 
-    : OPCIONAL S_Coma EXPRESION_G                                                               {$1.push({tipo : "concatenar" , contenido : $2}); $1.push($3);$$ = $1;}                                                              
-    | EXPRESION_G                                                                               {$$ = [$1];}
+    : OPCIONAL S_Coma EXPRESION_G                                                               {var json = $1 ;json.push({tipo : "concatenar" , contenido : $2 + " "}); json = json.concat($3);$$ = json;}                                                              
+    | EXPRESION_G                                                                               {var json ; if(Array.isArray($1)){json = $1;}else{json = [$1];} ;$$ = json;}
 ; 
