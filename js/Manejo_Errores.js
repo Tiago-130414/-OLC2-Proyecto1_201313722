@@ -1,9 +1,19 @@
 function errores() {
   var texto = Codigo.getValue();
   var vector = Reporte_Errores.parse(texto);
-  Reporte_Errores.tablaErrores = [];
-  removeTableBody();
-  LlenarVariables(vector);
+  var texto = Consola.getValue();
+  if (vector.length > 0) {
+    removeTableBody();
+    LlenarVariables(vector);
+    Consola.setValue(
+      texto +
+        "Reporte De Errores :Errores Encontrados Verificar Pestaña de Errores \n"
+    );
+  } else {
+    Consola.setValue(
+      texto + "Reporte De Errores : No se encontraron errores \n"
+    );
+  }
   alert("Revisar Tabla Errores");
 }
 
@@ -43,7 +53,7 @@ function LlenarVariables(vector) {
       columna +
       "</td>" +
       "</tr>";
-    console.log(htmlTags);
+    //console.log(htmlTags);
     $("#Tabla_Errores tbody").append(htmlTags);
     contarVar++;
   });

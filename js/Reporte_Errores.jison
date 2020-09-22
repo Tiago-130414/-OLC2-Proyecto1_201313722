@@ -1,7 +1,7 @@
 /* descripcion: ANALIZADOR DEL LENGUAJE JAVA */
 // segmento de codigo, importaciones y todo dentro de 
 %{
-    let tablaErrores = [];
+    var tablaErrores = [];
 %}
 /*  Directivas lexicas, expresiones regulares ,Analisis Lexico */
 %lex
@@ -107,9 +107,14 @@
 /*  IDENTIFICADORES */
 ([a-zA-Z_])[a-zA-Z0-9_]*                            {return 'Identificador';}
 <<EOF>>                                             {  return 'EOF'; }
-.                                                   {tablaErrores.push({Tipo_Error: 'Error_Lexico',Error : yytext , Fila  : yylloc.first_line , Columna  :  yylloc.first_column })}
+.                                                   {tablaErrores.push({Tipo_Error: 'Error_Lexico',Error : 'Simbolo desconocido: ' + yytext , Fila  : yylloc.first_line , Columna  :  yylloc.first_column })}
 /lex
 //PRECEDENCIA DE OPERADORES
+%{
+    function limpiarErrores(){
+        tablaErrores = [];
+    }
+%}
 //prescedencia operadores logicos
 %left 'LOG_Concatenar' 'LOG_OR'
 //prescedencia operadores relcionales
@@ -122,7 +127,7 @@
 %start INICIO
 
 %%
-INICIO : CONT EOF{return tablaErrores;}
+INICIO : CONT EOF{var temp = tablaErrores; limpiarErrores(); return temp;}
 ;
 /*---------------------------------------------LISTA DE CONTENIDO GLOBAL---------------------------------------------------------*/
 CONT: LISTA_CONTENIDO
@@ -136,7 +141,7 @@ LISTA_CONTENIDO : LISTA_CONTENIDO CONTENIDO {$$ = $1 + $2}
 //CONTENIDO GLOBAL
 CONTENIDO : FUNCIONES
           | ESTRUCTURAS_DE_CONTROL
-          |  error  {$$ ='';tablaErrores.push({ Tipo_Error  : ' Error_Sintactico ', Error  : yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
+          |  error  {$$ ='';tablaErrores.push({ Tipo_Error  : ' Error_Sintactico ', Error  : 'Simbolo inesperado: ' + yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
 ;
 /*---------------------------------------------DEFINICION DE FUNCIONES---------------------------------------------------------*/
 
@@ -156,7 +161,7 @@ LISTADO_ESTRUCTURAS : LISTADO_ESTRUCTURAS CONT_ESTRUCTURAS_CONTROL
 ;
 
 CONT_ESTRUCTURAS_CONTROL : ESTRUCTURAS_DE_CONTROL
-                         |error  {$$ ='';tablaErrores.push({ Tipo_Error  : ' Error_Sintactico ', Error  : yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
+                         |error  {$$ ='';tablaErrores.push({ Tipo_Error  : ' Error_Sintactico ', Error  : 'Simbolo inesperado: ' + yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
 ;
 
 ESTRUCTURAS_DE_CONTROL: VARIABLES
@@ -473,7 +478,7 @@ EXPRESION_G
     | CONTENIDO_EXPRESION OP_Incremento %prec PRUEBA                                             { $$ = $1 + $2; }
     | OP_Decremento CONTENIDO_EXPRESION                                                          { $$ = $1 + $2;}
     | OP_Incremento CONTENIDO_EXPRESION                                                          { $$ = $1 + $2;}
-    | OP_Menos  EXPRESION_G     %prec UMINUS                                             { $$ = $1 + $2; }
+    | OP_Menos  CONTENIDO_EXPRESION     %prec UMINUS                                             { $$ = $1 + $2; }
     | LOG_Not   EXPRESION_G     %prec UMINUS                                             { $$ = $1 + $2; }
     | CONTENIDO_EXPRESION
 ;

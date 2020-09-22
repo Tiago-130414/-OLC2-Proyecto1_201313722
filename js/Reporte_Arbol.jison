@@ -12,7 +12,7 @@
 [/][*][^*]*[*]+([^/*][^*]*[*]+)*[/] {/*comentario multilinea*/}
 
 /*  CADENAS  */
-[\"][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\"]            {  return 'Cadena'; }
+[\"][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\"]            {  yytext = yytext.substr(1,yyleng-2);return 'Cadena'; }
 [\'][^\\\']*([\\][\\\'ntr][^\\\']*)*[\']            {  return 'Cadena'; }
 [\`][^\\\`]*([\\][\\\`ntr][^\\\`]*)*[\`]            {  return 'Cadena'; }
 
@@ -141,7 +141,7 @@ function graficar(arbol){
 %start INICIO
 
 %%
-INICIO : CONT EOF{console.log(graficar($1));return graficar($1);}
+INICIO : CONT EOF{console.log($1);console.log(graficar($1));return graficar($1);}
 ;
 /*---------------------------------------------LISTA DE CONTENIDO GLOBAL---------------------------------------------------------*/
 CONT: LISTA_CONTENIDO                                       {$$ = {Nombre:"CONT",vector:[$1]};}
@@ -495,7 +495,7 @@ EXPRESION_G
     | CONTENIDO_EXPRESION OP_Incremento                                                          { $$ = {Nombre:"EXPRESION_G",vector : [$1,{Nombre: $2 , vector : []}]}; }
     | OP_Decremento CONTENIDO_EXPRESION                                                          { $$ = {Nombre:"EXPRESION_G",vector : [{Nombre: $1 , vector : []},$2]}; }
     | OP_Incremento CONTENIDO_EXPRESION                                                          { $$ = {Nombre:"EXPRESION_G",vector : [{Nombre: $1 , vector : []},$2]}; }
-    | OP_Menos  EXPRESION_G     %prec UMINUS                                                     { $$ = {Nombre:"EXPRESION_G",vector : [{Nombre: $1 , vector : []},$2]}; }  
+    | OP_Menos  CONTENIDO_EXPRESION     %prec UMINUS                                                     { $$ = {Nombre:"EXPRESION_G",vector : [{Nombre: $1 , vector : []},$2]}; }  
     | LOG_Not   EXPRESION_G     %prec UMINUS                                                     { $$ = {Nombre:"EXPRESION_G",vector : [{Nombre: $1 , vector : []},$2]}; }  
     | CONTENIDO_EXPRESION                                                                        { $$ = {Nombre:"EXPRESION_G",vector : [$1]}; } 
 ;

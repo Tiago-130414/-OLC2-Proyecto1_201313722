@@ -1,6 +1,11 @@
 function reporteAST() {
   var texto = Codigo.getValue();
   var arbol = Reporte_Arbol.parse(texto);
+  var texto = Consola.getValue();
+  Consola.setValue(
+    texto +
+      "*---------------------------Reporte AST Generado!---------------------------*\n"
+  );
   d3.select("#ArbolAST1")
     .graphviz()
     .renderDot(
