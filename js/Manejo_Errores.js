@@ -1,10 +1,11 @@
 function errores() {
   var texto = Codigo.getValue();
   var vector = Reporte_Errores.parse(texto);
+  console.log(vector);
   var texto = Consola.getValue();
-  if (vector.length > 0) {
+  if (vector.Errores.length > 0) {
     removeTableBody();
-    LlenarVariables(vector);
+    LlenarVariables(vector.Errores);
     Consola.setValue(
       texto +
         "Reporte De Errores :Errores Encontrados Verificar Pestaña de Errores \n"
@@ -14,7 +15,7 @@ function errores() {
       texto + "Reporte De Errores : No se encontraron errores \n"
     );
   }
-  alert("Revisar Tabla Errores");
+  //alert("Revisar Tabla Errores");
 }
 
 function removeTableBody() {
