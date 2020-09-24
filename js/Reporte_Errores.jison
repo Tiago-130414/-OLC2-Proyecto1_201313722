@@ -123,15 +123,17 @@
 
     function operacionU(operador, tipo) {
         return {
-            op: operador,
-            tipo: tipo,
+            opIzq: operador,
+            opDer: {tipo : "UNDEFINED",valor : undefined , fila : 0},
+            tipo: tipo
         };
     }
 
-    function valor(tipo,valor){
+    function valor(tipo,valor ,fil){
         return { 
             tipo : tipo, 
-            valor : valor
+            valor : valor,
+            fila : fil
         };
     }
 
@@ -148,7 +150,7 @@
 %start INICIO
 
 %%
-INICIO : CONT EOF{console.log([$1]);var temp = tablaErrores; limpiarErrores(); return {Arbol : $1 , Errores : temp};}
+INICIO : CONT EOF{console.log($1);var temp = tablaErrores; limpiarErrores(); return {Arbol : $1 , Errores : temp};}
 ;
 /*---------------------------------------------LISTA DE CONTENIDO GLOBAL---------------------------------------------------------*/
 CONT: LISTA_CONTENIDO
@@ -476,7 +478,7 @@ TIPAR_FUNCION : S_DosPuntos TIPOS_DE_DATO
  ;
 
  CONT_ATRIBUTOS:  Identificador L_CORCHETE_V                                                    
-               |  Identificador                                                                 {$$ = valor("IDENTIFICADOR" , $1);}
+               |  Identificador                                                                 {$$ = valor("IDENTIFICADOR" , $1, this._$.first_line);}
 ;
 
 /*---------------------------------------------EXPRESIONES---------------------------------------------------------*/
@@ -505,14 +507,15 @@ EXPRESION_G
 ;
 
  CONTENIDO_EXPRESION
-    :Decimal                                                                                     {$$ = valor("NUMERO", Number($1));} 
-    |Entero                                                                                      {$$ = valor("NUMERO", Number($1));}
-    | R_True                                                                                     {$$ = valor("BOOLEAN", true);}
-    | R_False                                                                                    {$$ = valor("BOOLEAN", false);}
+    : Decimal                                                                                     {$$ = valor("NUMERO", Number($1),this._$.first_line);} 
+    | Entero                                                                                      {$$ = valor("NUMERO", Number($1),this._$.first_line);}
+    | R_True                                                                                      {$$ = valor("BOOLEAN", true,this._$.first_line);}
+    | R_False                                                                                     {$$ = valor("BOOLEAN", false,this._$.first_line);}
+    | R_Undefined                                                                                 {$$ = valor("UNDEFINED", undefined,this._$.first_line);}  
+    | Cadena                                                                                      {$$ = valor("CADENA" , String($1), this._$.first_line);}
     | Identificador S_ParentesisAbre S_ParentesisCierra                                          
     | Identificador S_ParentesisAbre OPCIONAL S_ParentesisCierra                                 
-    | S_ParentesisAbre EXPRESION_G S_ParentesisCierra                                           {$$ = $2;}
-    | Cadena                                                                                    {$$ = valor("CADENA" , $1);}
+    | S_ParentesisAbre EXPRESION_G S_ParentesisCierra                                             {$$ = $2;}
     | ATRIBUTOS
     | ATRIBUTOS S_Punto R_Length
     | ATRIBUTOS S_Punto R_Pop S_ParentesisAbre S_ParentesisCierra
