@@ -1,28 +1,152 @@
+var errorSemantico = [];
+var ambitos = [];
+var log = [];
+
 function ejJson() {
+  Consola.setValue("");
   var texto = Codigo.getValue();
   var vector = Reporte_Errores.parse(texto);
   if (vector.Arbol.length > 0) {
+    ambitos.push([]);
     ejecutarArchivo(vector.Arbol);
+    if (errorSemantico.length != 0) {
+      if (vector.Errores.length != 0) {
+        errorSemantico = vector.Errores.concat(errorSemantico);
+        LlenarVariables(errorSemantico);
+      } else {
+        LlenarVariables(errorSemantico);
+      }
+    } else {
+      if (vector.Errores.length != 0) {
+        LlenarVariables(vector.Errores);
+      }
+    }
   } else {
-    var txt = Consola.getValue();
     Consola.setValue("!Problema al ejecutar codigo!");
   }
+  console.log(ambitos);
+  ambitos = [];
 }
 
 function ejecutarArchivo(json) {
   for (var element of json) {
     if (element.tipoInstruccion == "CONSOLE") {
-      setter(element.tipoInstruccion);
       ejecutarImprimir(element.contenido);
+    } else if (element.tipoInstruccion == "DECLARACION") {
+      ejecutarDeclaracion(element);
     }
   }
 }
-
+//////////////////////////////////////////////////INSTRUCCION IMPRIMIR
 function ejecutarImprimir(elemento) {
   var result = leerExp(elemento);
-  console.log(result);
+  if (result.tipo == "Error Semantico") {
+    errorSemantico.push({
+      Tipo_Error: result.tipo,
+      Error: result.desc,
+      Fila: result.fila,
+      Columna: result.fila,
+    });
+  } else {
+    setter(result.valor);
+  }
 }
-
+/////////////////////////////////////////////////INSTRUCCION DECLARACION DE VARIABLE
+function ejecutarDeclaracion(elemento) {
+  var mod = elemento.modificador;
+  for (var ele of elemento.contenido) {
+    var val;
+    //console.log(ele.identificador + " " + buscarVariable(ele.identificador));
+    if (ele.valor != undefined) {
+      val = leerExp(ele.valor);
+      //verifica si el valor obtenido no es un error
+      if (val.tipo != "Error Semantico") {
+        // si la variable no tiene tipo de dato
+        if (ele.tipoDato == undefined) {
+          //este if compara si la variable ya fue declarada
+          if (!buscarVariable(ele.identificador)) {
+            insertarAmbito({
+              tipo: ele.tipo,
+              modificador: mod,
+              identificador: ele.identificador,
+              tipoDato: val.tipo,
+              valor: val.valor,
+              fila: ele.fila,
+            });
+          } else {
+            errorSemantico.push({
+              Tipo_Error: "Error Semantico",
+              Error: "variable ya declarada" + ele.identificador,
+              Fila: ele.fila,
+              Columna: 0,
+            });
+          }
+        }
+        //si la variable tiene tipo de dato y un valor asignado
+        else if (compararTipo(ele.tipoDato, val.tipo)) {
+          //este if compara si la variable ya fue declarada
+          if (!buscarVariable(ele.identificador)) {
+            insertarAmbito({
+              tipo: ele.tipo,
+              modificador: mod,
+              identificador: ele.identificador,
+              tipoDato: ele.tipo,
+              valor: val.valor,
+              fila: ele.fila,
+            });
+          } else {
+            errorSemantico.push({
+              Tipo_Error: "Error Semantico",
+              Error: "variable ya declarada" + ele.identificador,
+              Fila: ele.fila,
+              Columna: 0,
+            });
+          }
+        }
+        //si los tipos no coinciden
+        else {
+          errorSemantico.push({
+            Tipo_Error: "Error Semantico",
+            Error: "valor asignado incompatible con el declarado",
+            Fila: ele.fila,
+            Columna: 0,
+          });
+        }
+      }
+      //se reporta el error en cualquier excepcion devuelta por la evaluacion de operacion
+      else {
+        errorSemantico.push({
+          Tipo_Error: val.tipo,
+          Error: val.desc,
+          Fila: val.fila,
+          Columna: 0,
+        });
+      }
+    } else {
+      //este if compara si la variable ya fue declarada
+      if (!buscarVariable(ele.identificador)) {
+        insertarAmbito({
+          tipo: ele.tipo,
+          modificador: mod,
+          identificador: ele.identificador,
+          tipoDato: ele.tipoDato,
+          valor: ele.valor,
+          fila: ele.fila,
+        });
+      }
+      //se reporta el error de variable que ya existe
+      else {
+        errorSemantico.push({
+          Tipo_Error: "Error Semantico",
+          Error: "variable ya declarada" + ele.identificador,
+          Fila: ele.fila,
+          Columna: 0,
+        });
+      }
+    }
+  }
+}
+//////////////////////////////////////////////// REALIZAR OPERACION
 function leerExp(exp) {
   if (
     exp.tipo == "OPERACION_SUMA" ||
@@ -51,15 +175,15 @@ function leerExp(exp) {
   } else if (exp.tipo == "OPERACION_NEGATIVO") {
     return ejecutarNegativo(exp);
   } else if (exp.tipo == "NUMERO") {
-    return { tipo: exp.tipo, valor: exp.valor, fila: exp.fila };
+    return { tipo: exp.tipo, opR: 0, valor: exp.valor, fila: exp.fila };
   } else if (exp.tipo == "CADENA") {
-    return { tipo: exp.tipo, valor: exp.valor, fila: exp.fila };
+    return { tipo: exp.tipo, opR: 0, valor: exp.valor, fila: exp.fila };
   } else if (exp.tipo == "BOOLEAN") {
-    return { tipo: exp.tipo, valor: exp.valor, fila: exp.fila };
+    return { tipo: exp.tipo, opR: 0, valor: exp.valor, fila: exp.fila };
   } else if (exp.tipo == "UNDEFINED") {
-    return { tipo: exp.tipo, valor: exp.valor, fila: exp.fila };
+    return { tipo: exp.tipo, opR: 0, valor: exp.valor, fila: exp.fila };
   } else if (exp.tipo == "IDENTIFICADOR") {
-    return { tipo: exp.tipo, valor: exp.valor, fila: exp.fila };
+    return { tipo: exp.tipo, opR: 0, valor: exp.valor, fila: exp.fila };
   }
 }
 /////////////////////////////////////////////////OPERACIONES ARITMETICAS
@@ -86,7 +210,7 @@ function validarTipoS(opIzq, opDer) {
     if (opIzq.tipo == "NUMERO" || opIzq.tipo == "CADENA") {
       var op = opIzq.valor + opDer.valor;
       var tip = asignarTipo(typeof op);
-      return { tipo: tip, valor: op };
+      return { tipo: tip, opR: 1, valor: op };
     }
   } else if (opDer.tipo == "CADENA") {
     if (
@@ -97,25 +221,26 @@ function validarTipoS(opIzq, opDer) {
     ) {
       var op = opIzq.valor + opDer.valor;
       var tip = asignarTipo(typeof op);
-      return { tipo: tip, valor: op };
+      return { tipo: tip, opR: 1, valor: op };
     }
   } else if (opDer.tipo == "BOOLEAN") {
     if (opIzq.tipo == "CADENA") {
       var op = opIzq.valor + opDer.valor;
       var tip = asignarTipo(typeof op);
-      return { tipo: tip, valor: op };
+      return { tipo: tip, opR: 1, valor: op };
     }
   } else if (opDer.tipo == "UNDEFINED") {
     if (opIzq.tipo == "CADENA") {
       var op = opIzq.valor + opDer.valor;
       var tip = asignarTipo(typeof op);
-      return { tipo: tip, valor: op };
+      return { tipo: tip, opR: 1, valor: op };
     }
   }
   return {
-    tipo: "Error Semantico",
-    desc: "valor incompatible con operacion aritmetica, en la fila: ",
-    fila: opDer.fila,
+    Tipo_Error: "Error Semantico",
+    Error: "valor incompatible con operacion aritmetica",
+    Fila: opDer.fila,
+    Columna: 0,
   };
 }
 
@@ -124,29 +249,30 @@ function validarTiposOP(opIzq, opDer, tipOp) {
     if (tipOp == "RES") {
       var op = opIzq.valor - opDer.valor;
       var tip = asignarTipo(typeof op);
-      return { tipo: tip, valor: op };
+      return { tipo: tip, opR: 1, valor: op };
     } else if (tipOp == "MULT") {
       var op = opIzq.valor * opDer.valor;
       var tip = asignarTipo(typeof op);
-      return { tipo: tip, valor: op };
+      return { tipo: tip, opR: 1, valor: op };
     } else if (tipOp == "DIV") {
       var op = opIzq.valor / opDer.valor;
       var tip = asignarTipo(typeof op);
-      return { tipo: tip, valor: op };
+      return { tipo: tip, opR: 1, valor: op };
     } else if (tipOp == "POT") {
       var op = opIzq.valor ** opDer.valor;
       var tip = asignarTipo(typeof op);
-      return { tipo: tip, valor: op };
+      return { tipo: tip, opR: 1, valor: op };
     } else if (tipOp == "MOD") {
       var op = opIzq.valor % opDer.valor;
       var tip = asignarTipo(typeof op);
-      return { tipo: tip, valor: op };
+      return { tipo: tip, opR: 1, valor: op };
     }
   }
   return {
-    tipo: "Error Semantico",
-    desc: "valor incompatible con operacion aritmetica, en la fila: ",
-    fila: opDer.fila,
+    Tipo_Error: "Error Semantico",
+    Error: "valor incompatible con operacion aritmetica",
+    Fila: opDer.fila,
+    Columna: 0,
   };
 }
 /////////////////////////////////////////////////OPERACIONES RELACIONALES
@@ -189,9 +315,10 @@ function validarTipoMM(opIzq, opDer, tipoOp) {
     }
   }
   return {
-    tipo: "Error Semantico",
-    desc: "valor incompatible con operacion relacional, en la fila: ",
-    fila: opDer.fila,
+    Tipo_Error: "Error Semantico",
+    Error: "valor incompatible con operacion relacional",
+    Fila: opDer.fila,
+    Columna: 0,
   };
 }
 
@@ -202,7 +329,11 @@ function validarTipoIgIg(opIzq, opDer) {
     opDer.tipo != "IDENTIFICADOR" &&
     opDer.tipo != "UNDEFINED"
   ) {
-    if (opIzq.valor == opDer.valor) {
+    if (opIzq.opR == 1) {
+      var op = opIzq.valor == opDer.valor;
+      var tip = asignarTipo(typeof op);
+      return { tipo: tip, valor: op };
+    } else if (opIzq.valor == opDer.valor) {
       var op = opIzq.valor == opDer.valor;
       var tip = asignarTipo(typeof op);
       return { tipo: tip, valor: op };
@@ -218,9 +349,10 @@ function validarTipoIgIg(opIzq, opDer) {
     return { tipo: tip, valor: op };
   }
   return {
-    tipo: "Error Semantico",
-    desc: "valor incompatible con operacion relacional, en la fila: ",
-    fila: opDer.fila,
+    Tipo_Error: "Error Semantico",
+    Error: "valor incompatible con operacion relacional",
+    Fila: opDer.fila,
+    Columna: 0,
   };
 }
 
@@ -247,9 +379,10 @@ function validarTipoDist(opIzq, opDer) {
     return { tipo: tip, valor: op };
   }
   return {
-    tipo: "Error Semantico",
-    desc: "valor incompatible con operacion relacional, en la fila: ",
-    fila: opDer.fila,
+    Tipo_Error: "Error Semantico",
+    Error: "valor incompatible con operacion relacional",
+    Fila: opDer.fila,
+    Columna: 0,
   };
 }
 /////////////////////////////////////////////////OPERACIONES LOGICAS
@@ -291,9 +424,10 @@ function ejecutarNegativo(exp) {
     return { tipo: tip, valor: op };
   }
   return {
-    tipo: "Error Semantico",
-    desc: "valor incompatible con operacion negacion, en la fila: ",
-    fila: opI.fila,
+    Tipo_Error: "Error Semantico",
+    Error: "valor incompatible con operacion negacion",
+    Fila: opI.fila,
+    Columna: 0,
   };
 }
 /////////////////////////////////////////////////COLOCA RESULTADO EN CONSOLA
@@ -312,4 +446,28 @@ function asignarTipo(tipo) {
   } else if (tipo == "undefined") {
     return "UNDEFINED";
   }
+}
+////////////////////////////////////////////////FUNCION QUE INSERTA EN EL ULTIMO AMBITO DISPONIBLE
+function insertarAmbito(val) {
+  ambitos[ambitos.length - 1].push(val);
+}
+////////////////////////////////////////////////FUNCION QUE COMPRUEBA TIPOS DE DATO CON VALOR ASIGNADO
+function compararTipo(tAsig, tVal) {
+  if (tAsig == tVal) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function buscarVariable(idV) {
+  console.log(ambitos.length - 1);
+  for (var i = ambitos.length - 1; i >= 0; i--) {
+    for (var element of ambitos[i]) {
+      if (element.identificador == idV) {
+        return true;
+      }
+    }
+  }
+  return false;
 }

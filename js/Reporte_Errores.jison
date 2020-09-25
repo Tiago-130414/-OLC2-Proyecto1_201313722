@@ -105,7 +105,7 @@
 /*  IDENTIFICADORES */
 ([a-zA-Z_])[a-zA-Z0-9_]*                            {return 'Identificador';}
 <<EOF>>                                             {  return 'EOF'; }
-.                                                   {tablaErrores.push({Tipo_Error: 'Error_Lexico',Error : 'Simbolo desconocido: ' + yytext , Fila  : yylloc.first_line , Columna  :  yylloc.first_column })}
+.                                                   {tablaErrores.push({Tipo_Error: 'Error_Lexico',Error : 'Simbolo desconocido: ' + yytext , Fila  : yylloc.first_line , Columna  :  yylloc.first_column });}
 /lex
 //PRECEDENCIA DE OPERADORES
 %{
@@ -150,7 +150,7 @@
 %start INICIO
 
 %%
-INICIO : CONT EOF{console.log($1);var temp = tablaErrores; limpiarErrores(); return {Arbol : $1 , Errores : temp};}
+INICIO : CONT EOF{var temp = tablaErrores; limpiarErrores(); return {Arbol : $1 , Errores : temp};}
 ;
 /*---------------------------------------------LISTA DE CONTENIDO GLOBAL---------------------------------------------------------*/
 CONT: LISTA_CONTENIDO
@@ -303,7 +303,7 @@ CONT_FOR_OF : R_Const Identificador R_Of Identificador
 
 /*---------------------------------------------ASIGNACION VARIABLES---------------------------------------------------------*/
 
-ASIGNACION : ATRIBUTOS S_Igual LISTA_DE_ASIGNACIONES S_PuntoComa
+ASIGNACION : ATRIBUTOS S_Igual LISTA_DE_ASIGNACIONES S_PuntoComa                {}
            //incrementos 
            | ATRIBUTOS OP_Incremento COMPLETAR_ASIGNACION S_PuntoComa
            | OP_Incremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa
@@ -372,29 +372,29 @@ CONT_ARRAY_ASIGN_VV: EXPRESION_G
 
 /*---------------------------------------------VARIABLES---------------------------------------------------------*/
 
-VARIABLES : R_Let LISTADO_VAR S_PuntoComa
-          | R_Const LISTADO_VAR S_PuntoComa
+VARIABLES : R_Let LISTADO_VAR S_PuntoComa   {$$ = {tipoInstruccion :"DECLARACION" , modificador : $1, contenido : $2};}
+          | R_Const LISTADO_VAR S_PuntoComa {$$ = {tipoInstruccion :"DECLARACION" , modificador : $1, contenido : $2};}
 ;
 
 /*---------------------------------------------LISTADO VARIABLES---------------------------------------------------------*/
 
-LISTADO_VAR : LISTADO_VAR S_Coma CONT_VAR
-            | CONT_VAR
+LISTADO_VAR : LISTADO_VAR S_Coma CONT_VAR       {$1.push($3);$$ = $1;}
+            | CONT_VAR                          {$$ = [$1];}
 ;
 /*--------------------------------------------- DEFINICION DE VARIABLES---------------------------------------------------------*/
 
-CONT_VAR: Identificador //declaracion de variable solo id
-        | Identificador S_DosPuntos TIPOS_DE_DATO  //declaracion de variable con tipo de dato
-        | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G   //declaracion de variable con tipo y asignacion de valor
-        | Identificador S_Igual EXPRESION_G //declaracion de variable con asignacion de valor
+CONT_VAR: Identificador /*declaracion de variable solo id*/                                                                         { $$ = {tipo : "VARIABLE" , identificador : $1 , tipoDato : undefined , valor : undefined , fila : this._$.first_line};}
+        | Identificador S_DosPuntos TIPOS_DE_DATO  /*declaracion de variable con tipo de dato*/                                     { $$ = {tipo : "VARIABLE" , identificador : $1 , tipoDato : $3 , valor : undefined , fila : this._$.first_line};}
+        | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G   /*declaracion de variable con tipo y asignacion de valor*/  { $$ = {tipo : "VARIABLE" , identificador : $1 , tipoDato : $3 , valor : $5 , fila : this._$.first_line };}
+        | Identificador S_Igual EXPRESION_G /*declaracion de variable con asignacion de valor*/                                     { $$ = {tipo : "VARIABLE" , identificador : $1 , tipoDato : undefined , valor : $3 , fila : this._$.first_line};}
 
 
-        | Identificador S_Igual S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra //array
-        | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE/*array*/                       
-        | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE S_Igual L_CORCHETE_V /*array*/ 
+        | Identificador S_Igual S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra /*array                                           { $$ = {tipo : "ARRAY" , identificador : $1 , tipoDato : undefined , valor : $4 , fila : this._$.first_line};}          */                  
+        | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE/*array                                                               { $$ = {tipo : "ARRAY" , identificador : $1 , tipoDato : $3 , valor : undefined , fila : this._$.first_line};}*/
+        | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE S_Igual L_CORCHETE_V /*array                                         { $$ = {tipo : "ARRAY" , identificador : $1 , tipoDato : $3 , valor : $6 , fila : this._$.first_line};}*/
 
-        | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra //types
-        | Identificador S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra //types
+        | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra /*types*/
+        | Identificador S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra /*types*/
 ;
 
 /*---------------------------------------------LLAMADAS A FUNCION---------------------------------------------------------*/
@@ -461,11 +461,11 @@ SEPARADOR_DECLARACION_TYPES : S_Coma
 ;
 
 /*---------------------------------------------TIPOS DE DATO---------------------------------------------------------*/
-TIPOS_DE_DATO : T_Number
-              | T_Boolean
-              | T_String
-              | T_Void
-              | Identificador
+TIPOS_DE_DATO : T_Number                        {$$ = "NUMERO";}
+              | T_Boolean                       {$$ = "BOOLEAN";}
+              | T_String                        {$$ = "CADENA";}
+              | T_Void                          {$$ = "VOID";}
+              | Identificador                   {$$ = "IDENTIFICADOR";}
 ;
 //agrega tipos de dato a funciones anonimas
 TIPAR_FUNCION : S_DosPuntos TIPOS_DE_DATO

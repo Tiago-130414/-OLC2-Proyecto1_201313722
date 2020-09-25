@@ -84,12 +84,12 @@ performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* actio
 var $0 = $$.length - 1;
 switch (yystate) {
 case 1:
-console.log($$[$0-1]);var temp = tablaErrores; limpiarErrores(); return {Arbol : $$[$0-1] , Errores : temp};
+var temp = tablaErrores; limpiarErrores(); return {Arbol : $$[$0-1] , Errores : temp};
 break;
 case 4:
 $$[$0-1].push($$[$0]);this.$=$$[$0-1];
 break;
-case 5: case 16:
+case 5: case 16: case 111:
 this.$ = [$$[$0]];
 break;
 case 8: case 18:
@@ -112,6 +112,39 @@ this.$ = {tipoInstruccion : "CONSOLE" , contenido : $$[$0-2]};
 break;
 case 52:
 this.$ = $$[$0];
+break;
+case 108: case 109:
+this.$ = {tipoInstruccion :"DECLARACION" , modificador : $$[$0-2], contenido : $$[$0-1]};
+break;
+case 110:
+$$[$0-2].push($$[$0]);this.$ = $$[$0-2];
+break;
+case 112:
+ this.$ = {tipo : "VARIABLE" , identificador : $$[$0] , tipoDato : undefined , valor : undefined , fila : this._$.first_line};
+break;
+case 113:
+ this.$ = {tipo : "VARIABLE" , identificador : $$[$0-2] , tipoDato : $$[$0] , valor : undefined , fila : this._$.first_line};
+break;
+case 114:
+ this.$ = {tipo : "VARIABLE" , identificador : $$[$0-4] , tipoDato : $$[$0-2] , valor : $$[$0] , fila : this._$.first_line };
+break;
+case 115:
+ this.$ = {tipo : "VARIABLE" , identificador : $$[$0-2] , tipoDato : undefined , valor : $$[$0] , fila : this._$.first_line};
+break;
+case 150:
+this.$ = "NUMERO";
+break;
+case 151:
+this.$ = "BOOLEAN";
+break;
+case 152:
+this.$ = "CADENA";
+break;
+case 153:
+this.$ = "VOID";
+break;
+case 154:
+this.$ = "IDENTIFICADOR";
 break;
 case 160:
 this.$ = valor("IDENTIFICADOR" , $$[$0], this._$.first_line);
@@ -949,7 +982,7 @@ case 69:return 11;
 break;
 case 70:  return 5; 
 break;
-case 71:tablaErrores.push({Tipo_Error: 'Error_Lexico',Error : 'Simbolo desconocido: ' + yy_.yytext , Fila  : yy_.yylloc.first_line , Columna  :  yy_.yylloc.first_column })
+case 71:tablaErrores.push({Tipo_Error: 'Error_Lexico',Error : 'Simbolo desconocido: ' + yy_.yytext , Fila  : yy_.yylloc.first_line , Columna  :  yy_.yylloc.first_column });
 break;
 }
 },
