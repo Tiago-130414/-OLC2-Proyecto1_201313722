@@ -36,6 +36,7 @@
 "pop"                                               {  return 'R_Pop';   }
 "length"                                            {  return 'R_Length';}
 "function"                                          {  return 'R_Funcion';}
+"graficar_ts"                                       {  return 'R_Graficar';}
 
 /*ESTRUCTURAS DE CONTROL*/
 "if"                                                {return 'R_If';}
@@ -105,7 +106,7 @@
 /*  IDENTIFICADORES */
 ([a-zA-Z_])[a-zA-Z0-9_]*                            {return 'Identificador';}
 <<EOF>>                                             {  return 'EOF'; }
-.                                                   {tablaErrores.push({Tipo_Error: 'Error_Lexico',Error : 'Simbolo desconocido: ' + yytext , Fila  : yylloc.first_line , Columna  :  yylloc.first_column });}
+.                                                   {tablaErrores.push({tipo: 'Error_Lexico',Error : 'Simbolo desconocido: ' + yytext , Fila  : yylloc.first_line , Columna  :  yylloc.first_column });}
 /lex
 //PRECEDENCIA DE OPERADORES
 %{
@@ -124,7 +125,7 @@
     function operacionU(operador, tipo) {
         return {
             opIzq: operador,
-            opDer: {tipo : "UNDEFINED",valor : undefined , fila : 0},
+            opDer: {tipo : "UNDEFINED",valor : undefined},
             tipo: tipo
         };
     }
@@ -150,7 +151,7 @@
 %start INICIO
 
 %%
-INICIO : CONT EOF{var temp = tablaErrores; limpiarErrores(); return {Arbol : $1 , Errores : temp};}
+INICIO : CONT EOF{console.log($1);var temp = tablaErrores; limpiarErrores(); return {Arbol : $1 , Errores : temp};}
 ;
 /*---------------------------------------------LISTA DE CONTENIDO GLOBAL---------------------------------------------------------*/
 CONT: LISTA_CONTENIDO
@@ -164,7 +165,7 @@ LISTA_CONTENIDO : LISTA_CONTENIDO CONTENIDO                         {$1.push($2)
 //CONTENIDO GLOBAL
 CONTENIDO : FUNCIONES
           | ESTRUCTURAS_DE_CONTROL
-          |  error  {$$ ='';tablaErrores.push({ Tipo_Error  : ' Error_Sintactico ', Error  : 'Simbolo inesperado: ' + yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
+          |  error  {$$ ='';tablaErrores.push({ tipo  : ' Error_Sintactico ', Error  : 'Simbolo inesperado: ' + yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
 ;
 /*---------------------------------------------DEFINICION DE FUNCIONES---------------------------------------------------------*/
 
@@ -184,7 +185,7 @@ LISTADO_ESTRUCTURAS : LISTADO_ESTRUCTURAS CONT_ESTRUCTURAS_CONTROL          {$1.
 ;
 
 CONT_ESTRUCTURAS_CONTROL : ESTRUCTURAS_DE_CONTROL
-                         |error  {$$ ='';tablaErrores.push({ Tipo_Error  : ' Error_Sintactico ', Error  : 'Simbolo inesperado: ' + yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
+                         |error  {$$ ='';tablaErrores.push({ tipo  : ' Error_Sintactico ', Error  : 'Simbolo inesperado: ' + yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
 ;
 
 ESTRUCTURAS_DE_CONTROL: VARIABLES
@@ -205,7 +206,7 @@ ESTRUCTURAS_DE_CONTROL: VARIABLES
 
 ;
 /*--------------------------------------------- FUNCIONES NATIVAS ---------------------------------------------------------*/
-FUNCION_GRAFICAR : R_Graficar S_ParentesisAbre S_ParentesisCierra S_PuntoComa                
+FUNCION_GRAFICAR : R_Graficar S_ParentesisAbre S_ParentesisCierra S_PuntoComa                {$$ = {tipoInstruccion : "GRAFICARTS" , contenido : []};}
 ;
 
 /*--------------------------------------------- SENTENCIAS DE TRANSFERENCIA ---------------------------------------------------------*/
@@ -303,32 +304,32 @@ CONT_FOR_OF : R_Const Identificador R_Of Identificador
 
 /*---------------------------------------------ASIGNACION VARIABLES---------------------------------------------------------*/
 
-ASIGNACION : ATRIBUTOS S_Igual LISTA_DE_ASIGNACIONES S_PuntoComa                {}
+ASIGNACION : ATRIBUTOS S_Igual LISTA_DE_ASIGNACIONES COMPLETAR_ASIGNACION S_PuntoComa                {$$ = {tipoInstruccion : "ASIGNACION", identificador :$1 ,valor : $3 , listadoA : $4};}
            //incrementos 
-           | ATRIBUTOS OP_Incremento COMPLETAR_ASIGNACION S_PuntoComa
-           | OP_Incremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa
-           | ATRIBUTOS OP_Decremento COMPLETAR_ASIGNACION S_PuntoComa
-           | OP_Decremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa
+           | ATRIBUTOS OP_Incremento COMPLETAR_ASIGNACION S_PuntoComa                                {$$ = {tipoInstruccion : "ASIGNACION_INC_D", identificador :$1 ,valor : undefined , listadoA : $3};}   
+           | OP_Incremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa                                {$$ = {tipoInstruccion : "ASIGNACION_INC_A", identificador :$1 ,valor : undefined , listadoA : $3};}
+           | ATRIBUTOS OP_Decremento COMPLETAR_ASIGNACION S_PuntoComa                                {$$ = {tipoInstruccion : "ASIGNACION_DEC_D", identificador :$1 ,valor : undefined , listadoA : $3};}
+           | OP_Decremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa                                {$$ = {tipoInstruccion : "ASIGNACION_DEC_A", identificador :$1 ,valor : undefined , listadoA : $3};}
            | ATRIBUTOS S_Punto R_Push S_ParentesisAbre LISTA_DE_ASIGNACIONES S_ParentesisCierra COMPLETAR_ASIGNACION S_PuntoComa
 ;
 
 COMPLETAR_ASIGNACION : LISTADO_ASIGNACION
-                      |
+                      |                                                                 {$$ = [];}
 ;
 
-LISTADO_ASIGNACION: LISTADO_ASIGNACION  CONTENIDO_ASIGNACION
-                  | CONTENIDO_ASIGNACION
+LISTADO_ASIGNACION: LISTADO_ASIGNACION  CONTENIDO_ASIGNACION                            {$1.push($2);$$=$1;}
+                  | CONTENIDO_ASIGNACION                                                {$$ = [$1];}
 ;
 
-CONTENIDO_ASIGNACION: S_Coma Identificador S_Igual EXPRESION_G
-                    | S_Coma Identificador OP_Incremento
-                    | S_Coma OP_Incremento Identificador
-                    | S_Coma Identificador OP_Decremento
-                    | S_Coma OP_Decremento Identificador
+CONTENIDO_ASIGNACION: S_Coma Identificador S_Igual EXPRESION_G                          {$$ = {tipoInstruccion : "ASIGNACION", identificador :$2 ,valor : $4 , listadoA : undefined};}
+                    | S_Coma Identificador OP_Incremento                                {$$ = {tipoInstruccion : "ASIGNACION_INC_D", identificador :$1 ,valor : undefined , listadoA : $3};}
+                    | S_Coma OP_Incremento Identificador                                {$$ = {tipoInstruccion : "ASIGNACION_INC_A", identificador :$1 ,valor : undefined , listadoA : $3};}
+                    | S_Coma Identificador OP_Decremento                                {$$ = {tipoInstruccion : "ASIGNACION_DEC_D", identificador :$1 ,valor : undefined , listadoA : $3};}
+                    | S_Coma OP_Decremento Identificador                                {$$ = {tipoInstruccion : "ASIGNACION_DEC_A", identificador :$1 ,valor : undefined , listadoA : $3};}
                     | S_Coma ATRIBUTOS S_Punto R_Push S_ParentesisAbre LISTA_DE_ASIGNACIONES S_ParentesisCierra 
 ;
 
-LISTA_DE_ASIGNACIONES : EXPRESION_G
+LISTA_DE_ASIGNACIONES : EXPRESION_G                                                     {$$ = [$1];}
                       | S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra 
                       | S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra
 ;
@@ -473,8 +474,8 @@ TIPAR_FUNCION : S_DosPuntos TIPOS_DE_DATO
 ;
 /*---------------------------------------------ACCEDER A ATRIBUTOS---------------------------------------------------------*/
 
- ATRIBUTOS: ATRIBUTOS S_Punto CONT_ATRIBUTOS
-          | CONT_ATRIBUTOS
+ ATRIBUTOS: ATRIBUTOS S_Punto CONT_ATRIBUTOS                                                    {$1.push($3);$$ = $1;}
+          | CONT_ATRIBUTOS                                                                      {$$ = [$1];}
  ;
 
  CONT_ATRIBUTOS:  Identificador L_CORCHETE_V                                                    
@@ -497,10 +498,10 @@ EXPRESION_G
     | EXPRESION_G OP_Division EXPRESION_G                                                        { $$ = operacionB($1,$3,"OPERACION_DIVISION");}   
     | EXPRESION_G OP_Exponenciacion EXPRESION_G                                                  { $$ = operacionB($1,$3,"OPERACION_EXPONENCIACION");}
     | EXPRESION_G OP_Modulo EXPRESION_G                                                          { $$ = operacionB($1,$3,"OPERACION_MODULO");}
-    | CONTENIDO_EXPRESION OP_Decremento %prec PRUEBA                                             { $$ = operacionU($1,"OPERACION_DECREMENTO"); }
-    | CONTENIDO_EXPRESION OP_Incremento %prec PRUEBA                                             { $$ = operacionU($1,"OPERACION_INCREMENTO"); }
-    | OP_Decremento CONTENIDO_EXPRESION                                                          { $$ = operacionU($2,"OPERACION_DECREMENTO"); }
-    | OP_Incremento CONTENIDO_EXPRESION                                                          { $$ = operacionU($2,"OPERACION_INCREMENTO"); }
+    | CONTENIDO_EXPRESION OP_Decremento %prec PRUEBA                                             { $$ = operacionU($1,"OPERACION_DECREMENTO_D"); }
+    | CONTENIDO_EXPRESION OP_Incremento %prec PRUEBA                                             { $$ = operacionU($1,"OPERACION_INCREMENTO_D"); }
+    | OP_Decremento CONTENIDO_EXPRESION                                                          { $$ = operacionU($2,"OPERACION_DECREMENTO_A"); }
+    | OP_Incremento CONTENIDO_EXPRESION                                                          { $$ = operacionU($2,"OPERACION_INCREMENTO_A"); }
     | OP_Menos  CONTENIDO_EXPRESION     %prec UMINUS                                             { $$ = operacionU($2,"OPERACION_NEGATIVO"); }
     | LOG_Not   EXPRESION_G             %prec UMINUS                                             { $$ = operacionU($2,"OPERACION_NOT"); }
     | CONTENIDO_EXPRESION                                                                        { $$ = $1;}
@@ -523,5 +524,5 @@ EXPRESION_G
 
 OPCIONAL 
     : OPCIONAL S_Coma EXPRESION_G                                                                
-    |EXPRESION_G    
+    | EXPRESION_G    
 ; 

@@ -15,7 +15,6 @@ function errores() {
       texto + "Reporte De Errores : No se encontraron errores \n"
     );
   }
-  //alert("Revisar Tabla Errores");
 }
 
 function removeTableBody() {
@@ -32,7 +31,7 @@ function LlenarVariables(vector) {
   removeTableBody();
 
   vector.forEach(function (elemento) {
-    tError = elemento.Tipo_Error;
+    tError = elemento.tipo;
     error = elemento.Error;
     fila = elemento.Fila;
     columna = elemento.Columna;

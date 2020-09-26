@@ -33,100 +33,91 @@ function ejecutarArchivo(json) {
     if (element.tipoInstruccion == "CONSOLE") {
       ejecutarImprimir(element.contenido);
     } else if (element.tipoInstruccion == "DECLARACION") {
-      ejecutarDeclaracion(element);
+      ejecutarDeclaracion(element, "global");
+    } else if (element.tipoInstruccion == "GRAFICARTS") {
+      graficar();
+    } else if (element.tipoInstruccion == "ASIGNACION") {
+      ejecutarAsignacion(element);
     }
   }
 }
 //////////////////////////////////////////////////INSTRUCCION IMPRIMIR
 function ejecutarImprimir(elemento) {
-  var result = leerExp(elemento);
+  var id;
+  if (Array.isArray(elemento)) {
+    id = elemento[0];
+  } else {
+    id = elemento;
+  }
+  var result = leerExp(id);
+  console.log(result);
   if (result.tipo == "Error Semantico") {
-    errorSemantico.push({
-      Tipo_Error: result.tipo,
-      Error: result.desc,
-      Fila: result.fila,
-      Columna: result.fila,
-    });
+    errorSemantico.push(result);
   } else {
     setter(result.valor);
   }
 }
 /////////////////////////////////////////////////INSTRUCCION DECLARACION DE VARIABLE
-function ejecutarDeclaracion(elemento) {
+function ejecutarDeclaracion(elemento, ambi) {
   var mod = elemento.modificador;
   for (var ele of elemento.contenido) {
     var val;
-    //console.log(ele.identificador + " " + buscarVariable(ele.identificador));
-    if (ele.valor != undefined) {
-      val = leerExp(ele.valor);
-      //verifica si el valor obtenido no es un error
-      if (val.tipo != "Error Semantico") {
-        // si la variable no tiene tipo de dato
-        if (ele.tipoDato == undefined) {
-          //este if compara si la variable ya fue declarada
-          if (!buscarVariable(ele.identificador)) {
-            insertarAmbito({
-              tipo: ele.tipo,
-              modificador: mod,
-              identificador: ele.identificador,
-              tipoDato: val.tipo,
-              valor: val.valor,
-              fila: ele.fila,
-            });
+    //BUSCAR SI NO EXISTE LA VARIABLE EN LOS AMBITOS DISPONIBLES
+    if (!buscarVariable(ele.identificador)) {
+      //VERIFICO SI TIENE VALOR
+      if (ele.valor != undefined) {
+        //SI TIENE VALOR
+        val = leerExp(ele.valor);
+        //VEIRIFICO SI TIENE TIPO
+        if (ele.tipoDato != undefined) {
+          // SI TIENE TIPO Y ES IGUAL AL QUE SERA ASIGNADO
+          if (compararTipo(ele.tipoDato, val.tipo) == true) {
+            //SE VERIFICA SI EL VALOR DEVUELTO NO TIENE ERROR
+            if (val.tipo != "Error Semantico") {
+              insertarAmbito({
+                tipo: ele.tipo,
+                ambito: ambi,
+                modificador: mod,
+                identificador: ele.identificador,
+                tipoDato: ele.tipoDato,
+                valor: val.valor,
+                fila: ele.fila,
+              });
+            } else {
+              //SI EL VALOR INGRESADO TENIA ERROR
+              errorSemantico.push({
+                tipo: val.tipo,
+                Error: val.desc,
+                Fila: val.fila,
+                Columna: 0,
+              });
+            }
           } else {
+            //ERROR SI NO SE ASIGNA EL MISMO TIPO
             errorSemantico.push({
-              Tipo_Error: "Error Semantico",
-              Error: "variable ya declarada" + ele.identificador,
+              tipo: "Error Semantico",
+              Error: "valor asignado incompatible con el declarado",
               Fila: ele.fila,
               Columna: 0,
             });
           }
-        }
-        //si la variable tiene tipo de dato y un valor asignado
-        else if (compararTipo(ele.tipoDato, val.tipo)) {
-          //este if compara si la variable ya fue declarada
-          if (!buscarVariable(ele.identificador)) {
-            insertarAmbito({
-              tipo: ele.tipo,
-              modificador: mod,
-              identificador: ele.identificador,
-              tipoDato: ele.tipo,
-              valor: val.valor,
-              fila: ele.fila,
-            });
-          } else {
-            errorSemantico.push({
-              Tipo_Error: "Error Semantico",
-              Error: "variable ya declarada" + ele.identificador,
-              Fila: ele.fila,
-              Columna: 0,
-            });
-          }
-        }
-        //si los tipos no coinciden
-        else {
-          errorSemantico.push({
-            Tipo_Error: "Error Semantico",
-            Error: "valor asignado incompatible con el declarado",
-            Fila: ele.fila,
-            Columna: 0,
+        } else {
+          // SI NO TIENE TIPO SE AGREGA EL MISMO TIPO QUE EL VALOR ASIGNADO
+          insertarAmbito({
+            tipo: ele.tipo,
+            ambito: ambi,
+            modificador: mod,
+            identificador: ele.identificador,
+            tipoDato: val.tipo,
+            valor: val.valor,
+            fila: ele.fila,
           });
         }
-      }
-      //se reporta el error en cualquier excepcion devuelta por la evaluacion de operacion
-      else {
-        errorSemantico.push({
-          Tipo_Error: val.tipo,
-          Error: val.desc,
-          Fila: val.fila,
-          Columna: 0,
-        });
-      }
-    } else {
-      //este if compara si la variable ya fue declarada
-      if (!buscarVariable(ele.identificador)) {
+      } else {
+        //SI NO TIENE VALOR SE ASIGNA LO MISMO QUE CUANDO SE DECLARO
         insertarAmbito({
           tipo: ele.tipo,
+          ambito: ambi,
           modificador: mod,
           identificador: ele.identificador,
           tipoDato: ele.tipoDato,
@@ -134,17 +125,22 @@ function ejecutarDeclaracion(elemento) {
           fila: ele.fila,
         });
       }
-      //se reporta el error de variable que ya existe
-      else {
-        errorSemantico.push({
-          Tipo_Error: "Error Semantico",
-          Error: "variable ya declarada" + ele.identificador,
-          Fila: ele.fila,
-          Columna: 0,
-        });
-      }
+    } else {
+      //ERROR SI EXISTE UNA VARIABLE CON EL MISMO ID EN LOS AMBITOS
+      errorSemantico.push({
+        tipo: "Error Semantico",
+        Error: "variable ya declarada ->" + ele.identificador,
+        Fila: ele.fila,
+        Columna: 0,
+      });
     }
   }
+}
+/////////////////////////////////////////////////INSTRUCCION ASIGNACION DE VARIABLE
+function ejecutarAsignacion(elemento) {}
+////////////////////////////////////////////////INSTRUCCION GRAFICAR TS
+function graficar() {
+  generarTablas(ambitos);
 }
 //////////////////////////////////////////////// REALIZAR OPERACION
 function leerExp(exp) {
@@ -174,6 +170,14 @@ function leerExp(exp) {
     return ejecutarLogicas(exp);
   } else if (exp.tipo == "OPERACION_NEGATIVO") {
     return ejecutarNegativo(exp);
+  } else if (exp.tipo == "OPERACION_INCREMENTO_D") {
+    return ejecutarIncrementoD(exp);
+  } else if (exp.tipo == "OPERACION_INCREMENTO_A") {
+    return ejecutarIncrementoA(exp);
+  } else if (exp.tipo == "OPERACION_DECREMENTO_D") {
+    return ejecutarDecrementoD(exp);
+  } else if (exp.tipo == "OPERACION_DECREMENTO_A") {
+    return ejecutarDecrementoA(exp);
   } else if (exp.tipo == "NUMERO") {
     return { tipo: exp.tipo, opR: 0, valor: exp.valor, fila: exp.fila };
   } else if (exp.tipo == "CADENA") {
@@ -183,7 +187,35 @@ function leerExp(exp) {
   } else if (exp.tipo == "UNDEFINED") {
     return { tipo: exp.tipo, opR: 0, valor: exp.valor, fila: exp.fila };
   } else if (exp.tipo == "IDENTIFICADOR") {
-    return { tipo: exp.tipo, opR: 0, valor: exp.valor, fila: exp.fila };
+    return recuperarId(exp);
+  } else if (Array.isArray(exp)) {
+    var id = lAcceso(exp);
+    var vla = buscarAmbId(exp, id.valor);
+    var tipoVar = typeof vla.valor;
+    if (vla.tipo == "Error Semantico") {
+      return vla;
+    } else {
+      return {
+        tipo: asignarTipo(tipoVar),
+        opR: 0,
+        valor: vla.valor,
+        fila: vla.fila,
+      };
+    }
+  }
+}
+
+function recuperarId(exp) {
+  var ele = buscarAmbId(exp, exp.valor);
+  if (ele.tipo == "Error Semantico") {
+    return {
+      tipo: "Error Semantico",
+      Error: "Necesita declarar variable  " + exp.valor,
+      Fila: exp.fila,
+      Columna: 0,
+    };
+  } else {
+    return { tipo: ele.tipo, opR: 0, valor: ele.valor, fila: ele.fila };
   }
 }
 /////////////////////////////////////////////////OPERACIONES ARITMETICAS
@@ -237,7 +269,7 @@ function validarTipoS(opIzq, opDer) {
     }
   }
   return {
-    Tipo_Error: "Error Semantico",
+    tipo: "Error Semantico",
     Error: "valor incompatible con operacion aritmetica",
     Fila: opDer.fila,
     Columna: 0,
@@ -269,7 +301,7 @@ function validarTiposOP(opIzq, opDer, tipOp) {
     }
   }
   return {
-    Tipo_Error: "Error Semantico",
+    tipo: "Error Semantico",
     Error: "valor incompatible con operacion aritmetica",
     Fila: opDer.fila,
     Columna: 0,
@@ -315,7 +347,7 @@ function validarTipoMM(opIzq, opDer, tipoOp) {
     }
   }
   return {
-    Tipo_Error: "Error Semantico",
+    tipo: "Error Semantico",
     Error: "valor incompatible con operacion relacional",
     Fila: opDer.fila,
     Columna: 0,
@@ -349,7 +381,7 @@ function validarTipoIgIg(opIzq, opDer) {
     return { tipo: tip, valor: op };
   }
   return {
-    Tipo_Error: "Error Semantico",
+    tipo: "Error Semantico",
     Error: "valor incompatible con operacion relacional",
     Fila: opDer.fila,
     Columna: 0,
@@ -379,7 +411,7 @@ function validarTipoDist(opIzq, opDer) {
     return { tipo: tip, valor: op };
   }
   return {
-    Tipo_Error: "Error Semantico",
+    tipo: "Error Semantico",
     Error: "valor incompatible con operacion relacional",
     Fila: opDer.fila,
     Columna: 0,
@@ -424,11 +456,95 @@ function ejecutarNegativo(exp) {
     return { tipo: tip, valor: op };
   }
   return {
-    Tipo_Error: "Error Semantico",
+    tipo: "Error Semantico",
     Error: "valor incompatible con operacion negacion",
     Fila: opI.fila,
     Columna: 0,
   };
+}
+/////////////////////////////////////////////////OPERACIONES INCREMENTO
+function ejecutarIncrementoD(exp) {
+  var id = lAcceso(exp.opIzq).valor;
+  var el = buscarAmbId(exp, id);
+  if (el.tipo != "Error Semantico") {
+    if (el.modificador != "const") {
+      var f = el.valor++;
+      var tip = typeof el.valor;
+      return { tipo: tip, valor: f, fila: el.fila };
+    } else {
+      return {
+        tipo: "Error Semantico",
+        Error: "No se puede modificar el valor de una constante",
+        Fila: el.fila,
+        Columna: 0,
+      };
+    }
+  } else {
+    return el;
+  }
+}
+
+function ejecutarIncrementoA(exp) {
+  var id = lAcceso(exp.opIzq).valor;
+  var el = buscarAmbId(exp, id);
+  if (el.tipo != "Error Semantico") {
+    if (el.modificador != "const") {
+      var f = ++el.valor;
+      var tip = typeof el.valor;
+      return { tipo: tip, valor: f, fila: el.fila };
+    } else {
+      return {
+        tipo: "Error Semantico",
+        Error: "No se puede modificar el valor de una constante",
+        Fila: el.fila,
+        Columna: 0,
+      };
+    }
+  } else {
+    return el;
+  }
+}
+
+function ejecutarDecrementoD(exp) {
+  var id = lAcceso(exp.opIzq).valor;
+  var el = buscarAmbId(exp, id);
+  if (el.tipo != "Error Semantico") {
+    if (el.modificador != "const") {
+      var f = el.valor--;
+      var tip = typeof el.valor;
+      return { tipo: tip, valor: f, fila: el.fila };
+    } else {
+      return {
+        tipo: "Error Semantico",
+        Error: "No se puede modificar el valor de una constante",
+        Fila: el.fila,
+        Columna: 0,
+      };
+    }
+  } else {
+    return el;
+  }
+}
+
+function ejecutarDecrementoA(exp) {
+  var id = lAcceso(exp.opIzq).valor;
+  var el = buscarAmbId(exp, id);
+  if (el.tipo != "Error Semantico") {
+    if (el.modificador != "const") {
+      var f = --el.valor;
+      var tip = typeof el.valor;
+      return { tipo: tip, valor: f, fila: el.fila };
+    } else {
+      return {
+        tipo: "Error Semantico",
+        Error: "No se puede modificar el valor de una constante",
+        Fila: el.fila,
+        Columna: 0,
+      };
+    }
+  } else {
+    return el;
+  }
 }
 /////////////////////////////////////////////////COLOCA RESULTADO EN CONSOLA
 function setter(val) {
@@ -459,9 +575,8 @@ function compararTipo(tAsig, tVal) {
     return false;
   }
 }
-
+///////////////////////////////////////////////FUNCION QUE BUSCAN ID EN AMBITOS Y RETORNA TRUE O FALSE
 function buscarVariable(idV) {
-  console.log(ambitos.length - 1);
   for (var i = ambitos.length - 1; i >= 0; i--) {
     for (var element of ambitos[i]) {
       if (element.identificador == idV) {
@@ -470,4 +585,49 @@ function buscarVariable(idV) {
     }
   }
   return false;
+}
+//////////////////////////////////////////////FUNCION QUE BUSCA UN ID Y RETORNA ESE ELEMENTO PARA SER MODIFICADO
+function buscarVModificar(ele, idV) {
+  for (var i = ambitos.length - 1; i >= 0; i--) {
+    for (var element of ambitos[i]) {
+      if (element.identificador == idV) {
+        return element;
+      }
+    }
+  }
+  return {
+    tipo: "Error Semantico",
+    Error: "Necesita declarar variable para asignar valor " + ele.identificador,
+    Fila: ele.fila,
+    Columna: 0,
+  };
+}
+
+function buscarAmbId(ele, idV) {
+  for (var i = ambitos.length - 1; i >= 0; i--) {
+    for (var element of ambitos[i]) {
+      if (element.identificador == idV) {
+        return element;
+      }
+    }
+  }
+  return {
+    tipo: "Error Semantico",
+    Error: "Necesita declarar variable  " + idV,
+    Fila: ele.fila,
+    Columna: 0,
+  };
+}
+//////////////////////////////////////////////FUNCION QUE RETORNA ID PARA OPERACIONES
+function separar(opIzq, opDer) {
+  if (opIzq.tipo == "IDENTIFICADOR") {
+    var opIzq = buscarAmbId(opI);
+  } else if (opDer == "IDENTIFICADOR") {
+  }
+}
+//////////////////////////////////////////////LISTA DE ACCESO
+function lAcceso(op) {
+  if (op.length == 1) {
+    return op[0];
+  }
 }

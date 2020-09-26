@@ -34,6 +34,7 @@
 "pop"                                               {  return 'R_Pop';   }
 "length"                                            {  return 'R_Length';}
 "function"                                          {  return 'R_Funcion';}
+"graficar_ts"                                       { return 'R_Graficar';}
 
 /*ESTRUCTURAS DE CONTROL*/
 "if"                                                {return 'R_If';}
