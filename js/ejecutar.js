@@ -137,7 +137,10 @@ function ejecutarDeclaracion(elemento, ambi) {
   }
 }
 /////////////////////////////////////////////////INSTRUCCION ASIGNACION DE VARIABLE
-function ejecutarAsignacion(elemento) {}
+function ejecutarAsignacion(elemento) {
+  console.log("aqui estoy");
+  console.log(elemento.identificador);
+}
 ////////////////////////////////////////////////INSTRUCCION GRAFICAR TS
 function graficar() {
   generarTablas(ambitos);
