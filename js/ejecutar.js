@@ -37,7 +37,7 @@ function ejecutarArchivo(json) {
     if (element.tipoInstruccion == "CONSOLE") {
       ejecutarImprimir(element.contenido);
     } else if (element.tipoInstruccion == "DECLARACION") {
-      ejecutarDeclaracion(element, "global");
+      verificarDeclaracion(element);
     } else if (element.tipoInstruccion == "GRAFICARTS") {
       graficar();
     } else if (element.tipoInstruccion == "ASIGNACION") {
@@ -74,83 +74,272 @@ function ejecutarImprimir(elemento) {
     setter(result.valor);
   }
 }
+//////////////////////////////////////////////////DECLARACIONES
+function verificarDeclaracion(elemento) {
+  for (var element of elemento.contenido) {
+    if (element.tipo == "VARIABLE") {
+      ejecutarDeclaracion(element, elemento.modificador, rNomAmbito());
+    } else if (element.tipo == "ARRAY_ST") {
+      //console.log(element.tipo);
+      declaracionArrayST(element, elemento.modificador, rNomAmbito());
+    } else if (element.tipo == "ARRAY_CT") {
+      //console.log(element.tipo);
+      declaracionArrayCT(element, elemento.modificador, rNomAmbito());
+    } else if (element.tipo == "ARRAY_CTV") {
+      //console.log(element.tipo);
+      declaracionArrayCTV(element, elemento.modificador, rNomAmbito());
+    }
+  }
+}
 /////////////////////////////////////////////////INSTRUCCION DECLARACION DE VARIABLE
-function ejecutarDeclaracion(elemento, ambi) {
-  var mod = elemento.modificador;
-  for (var ele of elemento.contenido) {
-    var val;
-    //BUSCAR SI NO EXISTE LA VARIABLE EN LOS AMBITOS DISPONIBLES
-    if (!buscarVariable(ele.identificador)) {
-      //VERIFICO SI TIENE VALOR
-      if (ele.valor != undefined) {
-        //SI TIENE VALOR
-        val = leerExp(ele.valor);
-        //VEIRIFICO SI TIENE TIPO
-        if (ele.tipoDato != undefined) {
-          // SI TIENE TIPO Y ES IGUAL AL QUE SERA ASIGNADO
-          if (compararTipo(ele.tipoDato, val.tipo) == true) {
-            //SE VERIFICA SI EL VALOR DEVUELTO NO TIENE ERROR
-            if (val.tipo != "Error Semantico") {
-              insertarAmbito({
-                tipo: ele.tipo,
-                ambito: rNomAmbito(),
-                modificador: mod,
-                identificador: ele.identificador,
-                tipoDato: val.tipo,
-                valor: val.valor,
-                fila: ele.fila,
-              });
-            } else {
-              //SI EL VALOR INGRESADO TENIA ERROR
-              errorSemantico.push({
-                tipo: val.tipo,
-                Error: val.desc,
-                Fila: val.fila,
-                Columna: 0,
-              });
-            }
+function ejecutarDeclaracion(ele, mod, ambi) {
+  //var mod = elemento.modificador;
+  //for (var ele of elemento.contenido) {
+  var val;
+  //BUSCAR SI NO EXISTE LA VARIABLE EN LOS AMBITOS DISPONIBLES
+  if (!buscarVariable(ele.identificador)) {
+    //VERIFICO SI TIENE VALOR
+    if (ele.valor != undefined) {
+      //SI TIENE VALOR
+      val = leerExp(ele.valor);
+      //VEIRIFICO SI TIENE TIPO
+      if (ele.tipoDato != undefined) {
+        // SI TIENE TIPO Y ES IGUAL AL QUE SERA ASIGNADO
+        if (compararTipo(ele.tipoDato, val.tipo) == true) {
+          //SE VERIFICA SI EL VALOR DEVUELTO NO TIENE ERROR
+          if (val.tipo != "Error Semantico") {
+            insertarAmbito({
+              tipo: ele.tipo,
+              ambito: rNomAmbito(),
+              modificador: mod,
+              identificador: ele.identificador,
+              tipoDato: val.tipo,
+              valor: val.valor,
+              fila: ele.fila,
+            });
           } else {
-            //ERROR SI NO SE ASIGNA EL MISMO TIPO
+            //SI EL VALOR INGRESADO TENIA ERROR
             errorSemantico.push({
-              tipo: "Error Semantico",
-              Error: "valor asignado incompatible con el declarado",
-              Fila: ele.fila,
+              tipo: val.tipo,
+              Error: val.desc,
+              Fila: val.fila,
               Columna: 0,
             });
           }
         } else {
-          // SI NO TIENE TIPO SE AGREGA EL MISMO TIPO QUE EL VALOR ASIGNADO
-          insertarAmbito({
-            tipo: ele.tipo,
-            ambito: ambi,
-            modificador: mod,
-            identificador: ele.identificador,
-            tipoDato: val.tipo,
-            valor: val.valor,
-            fila: ele.fila,
+          //ERROR SI NO SE ASIGNA EL MISMO TIPO
+          errorSemantico.push({
+            tipo: "Error Semantico",
+            Error: "valor asignado incompatible con el declarado",
+            Fila: ele.fila,
+            Columna: 0,
           });
         }
       } else {
-        //SI NO TIENE VALOR SE ASIGNA LO MISMO QUE CUANDO SE DECLARO
+        // SI NO TIENE TIPO SE AGREGA EL MISMO TIPO QUE EL VALOR ASIGNADO
         insertarAmbito({
           tipo: ele.tipo,
           ambito: rNomAmbito(),
           modificador: mod,
           identificador: ele.identificador,
-          tipoDato: ele.tipoDato,
-          valor: ele.valor,
+          tipoDato: val.tipo,
+          valor: val.valor,
           fila: ele.fila,
         });
       }
     } else {
-      //ERROR SI EXISTE UNA VARIABLE CON EL MISMO ID EN LOS AMBITOS
-      errorSemantico.push({
-        tipo: "Error Semantico",
-        Error: "variable ya declarada ->" + ele.identificador,
-        Fila: ele.fila,
-        Columna: 0,
+      //SI NO TIENE VALOR SE ASIGNA LO MISMO QUE CUANDO SE DECLARO
+      insertarAmbito({
+        tipo: ele.tipo,
+        ambito: rNomAmbito(),
+        modificador: mod,
+        identificador: ele.identificador,
+        tipoDato: ele.tipoDato,
+        valor: ele.valor,
+        fila: ele.fila,
       });
     }
+  } else {
+    //ERROR SI EXISTE UNA VARIABLE CON EL MISMO ID EN LOS AMBITOS
+    errorSemantico.push({
+      tipo: "Error Semantico",
+      Error: "variable ya declarada -> " + ele.identificador,
+      Fila: ele.fila,
+      Columna: 0,
+    });
+  }
+  //}
+}
+
+/////////////////////////////////////////////////INSTRUCCION DECLARACION DE VECTOR SIN TIPO CON VALOR
+function declaracionArrayST(ele, mod, ambi) {
+  //console.log(ele);
+  var encontreError = false;
+  //BUSCANDO VECTOR EN LOS AMBITOS SI NO ESTA SE REALIZA DECLARACION
+  if (!buscarVariable(ele.identificador)) {
+    //VERIFICAR EXPRESIONES
+    var v = [];
+    //console.log(ele.valor.length);
+    //VERIFICANDO TAMAñO DE VECTOR DE VALORES PARA SABER SI ES NECESARIO ASIGNAR VALORES
+    if (ele.valor.length > 0) {
+      //console.log("traigo valores");
+      //AGREGANDO VALORES
+      for (var e of ele.valor) {
+        var exp = leerExp(e);
+        if (e.tipo != "Error Semantico") {
+          v.push(exp.valor);
+        } else {
+          encontreError = true;
+          errorSemantico.push(exp);
+          break;
+        }
+      }
+      //SI NO SE ENCONTRO UN ERROR SE HACE LA CREACION DE LA VARIABLE
+      if (encontreError == false) {
+        insertarAmbito({
+          tipo: ele.tipo,
+          ambito: rNomAmbito(),
+          modificador: mod,
+          identificador: ele.identificador,
+          tipoDato: undefined,
+          valor: v,
+          fila: ele.fila,
+        });
+      } else {
+        errorSemantico.push({
+          tipo: "Error Semantico",
+          Error:
+            "Problema al declarar vector con valores no validos -> " +
+            ele.identificador,
+          Fila: ele.fila,
+          Columna: 0,
+        });
+      }
+    } else {
+      //SI NO ES NECESARIO AGREGAR VALORES
+      //console.log("no traigo valores");
+      insertarAmbito({
+        tipo: ele.tipo,
+        ambito: rNomAmbito(),
+        modificador: mod,
+        identificador: ele.identificador,
+        tipoDato: undefined,
+        valor: v,
+        fila: ele.fila,
+      });
+    }
+  } else {
+    //SI HAY UNA VARIABLE DECLARADA CON EL MISMO NOMBRE SE REPORTA ERROR
+    errorSemantico.push({
+      tipo: "Error Semantico",
+      Error: "variable ya declarada -> " + ele.identificador,
+      Fila: ele.fila,
+      Columna: 0,
+    });
+  }
+}
+/////////////////////////////////////////////////INSTRUCCION DECLARACION DE VECTOR CON TIPO
+function declaracionArrayCT(ele, mod, ambi) {
+  //BUSCANDO VARIABLE PARA SABER SI YA ESTA DECLARADA
+  if (!buscarVariable(ele.identificador)) {
+    console.log("me puedo declarar");
+    insertarAmbito({
+      tipo: ele.tipo,
+      ambito: rNomAmbito(),
+      modificador: mod,
+      identificador: ele.identificador,
+      tipoDato: ele.tipoDato,
+      valor: undefined,
+      fila: ele.fila,
+    });
+  } else {
+    //ERROR QUE NO ESTA DECLARADA LA VARIABLE
+    //console.log("estoy declarado");
+    errorSemantico.push({
+      tipo: "Error Semantico",
+      Error: "variable ya declarada -> " + ele.identificador,
+      Fila: ele.fila,
+      Columna: 0,
+    });
+  }
+}
+/////////////////////////////////////////////////INSTRUCCION DECLARACION DE VECTOR CON TIPO Y VALOR
+function declaracionArrayCTV(ele, mod, ambi) {
+  var encontreError = false;
+  //BUSCANDO VECTOR EN LOS AMBITOS SI NO ESTA SE REALIZA DECLARACION
+  if (!buscarVariable(ele.identificador)) {
+    //VERIFICAR EXPRESIONES
+    var v = [];
+    //console.log(ele.valor.length);
+    //VERIFICANDO TAMAñO DE VECTOR DE VALORES PARA SABER SI ES NECESARIO ASIGNAR VALORES
+    if (ele.valor.length > 0) {
+      //console.log("traigo valores");
+      //AGREGANDO VALORES
+      for (var e of ele.valor) {
+        var exp = leerExp(e);
+        if (e.tipo != "Error Semantico") {
+          if (ele.tipoDato == exp.tipo) {
+            v.push(exp.valor);
+          } else {
+            encontreError = true;
+            errorSemantico.push({
+              tipo: "Error Semantico",
+              Error:
+                "Problema al insertar valores que no coinciden con tipo de vector " +
+                exp.valor,
+              Fila: ele.fila,
+              Columna: 0,
+            });
+            break;
+          }
+        } else {
+          encontreError = true;
+          errorSemantico.push(exp);
+          break;
+        }
+      }
+      //SI NO SE ENCONTRO UN ERROR SE HACE LA CREACION DE LA VARIABLE
+      if (encontreError == false) {
+        insertarAmbito({
+          tipo: ele.tipo,
+          ambito: rNomAmbito(),
+          modificador: mod,
+          identificador: ele.identificador,
+          tipoDato: undefined,
+          valor: v,
+          fila: ele.fila,
+        });
+      } else {
+        errorSemantico.push({
+          tipo: "Error Semantico",
+          Error:
+            "Problema al declarar vector con valores no validos -> " +
+            ele.identificador,
+          Fila: ele.fila,
+          Columna: 0,
+        });
+      }
+    } else {
+      //SI NO ES NECESARIO AGREGAR VALORES
+      //console.log("no traigo valores");
+      insertarAmbito({
+        tipo: ele.tipo,
+        ambito: rNomAmbito(),
+        modificador: mod,
+        identificador: ele.identificador,
+        tipoDato: undefined,
+        valor: v,
+        fila: ele.fila,
+      });
+    }
+  } else {
+    //SI HAY UNA VARIABLE DECLARADA CON EL MISMO NOMBRE SE REPORTA ERROR
+    errorSemantico.push({
+      tipo: "Error Semantico",
+      Error: "variable ya declarada -> " + ele.identificador,
+      Fila: ele.fila,
+      Columna: 0,
+    });
   }
 }
 /////////////////////////////////////////////////INSTRUCCION ASIGNACION DE VARIABLE
@@ -475,6 +664,8 @@ function ejecutarDoWhile(ele) {
     errorSemantico.push(exp);
   }
 }
+////////////////////////////////////////////////INSTRUCCION SWITCH
+function ejecutarSwitch(ele) {}
 
 //////////////////////////////////////////////// REALIZAR OPERACION
 function leerExp(exp) {

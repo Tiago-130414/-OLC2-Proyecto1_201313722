@@ -335,39 +335,39 @@ LISTA_DE_ASIGNACIONES : EXPRESION_G                                             
 ;
 /*---------------------------------------------LISTA DE CORCHETES PARA MATRIZ Y ARRAY---------------------------------------------------------*/
 ///LISTA CORCHETES SIN VALOR
-L_CORCHETE : L_C                                                            
+L_CORCHETE : LISTA_CORCHETE                                                            
 ;
 
-L_C: L_C LISTA_CORCHETE                                                             
+/*L_C: L_C LISTA_CORCHETE                                                             
     |LISTA_CORCHETE                                                                 
-;
+;*/
 
 /*LISTA PARA DECLARACIONES*/
 LISTA_CORCHETE : S_CorcheteAbre S_CorcheteCierra                                    
 ;
 ///LISTA CORCHETES CON VALOR
-L_CORCHETE_V : L_C_V
+L_CORCHETE_V : LISTA_AS_MV
 ;
-
+/*
 L_C_V : L_C_V LISTA_AS_MV                                                           
       | LISTA_AS_MV                                                                 
 ;
-
+*/
 /*LISTA PARA ASIGNACIONES MATRIZ Y VECTOR*/
-LISTA_AS_MV: S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra
+LISTA_AS_MV: S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra {$$ = $2;}
 ;
 /*---------------------------------------------LISTA DE ASIGNACION ARRAY DENTRO DE ARRAY---------------------------------------------------------*/
 CONT_ASIG_ARRAY: LISTA_ASIGN_ARRAY
-               |
+               |                                                                {$$ =[];}
 ;
 
-LISTA_ASIGN_ARRAY: LISTA_ASIGN_ARRAY S_Coma CONT_ARRAY_ASIGN_VV
-                 | CONT_ARRAY_ASIGN_VV
+LISTA_ASIGN_ARRAY: LISTA_ASIGN_ARRAY S_Coma CONT_ARRAY_ASIGN_VV                 {$1.push($3);$$ = $1;}
+                 | CONT_ARRAY_ASIGN_VV                                          {$$ = [$1];}
 ;   
 
-CONT_ARRAY_ASIGN_VV: EXPRESION_G 
-                   | S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra
-                   | S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra
+CONT_ARRAY_ASIGN_VV: EXPRESION_G                                                {$$ = $1;}
+                   //| S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra
+                   //| S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra
 ;
 
 
@@ -390,9 +390,9 @@ CONT_VAR: Identificador /*declaracion de variable solo id*/                     
         | Identificador S_Igual EXPRESION_G /*declaracion de variable con asignacion de valor*/                                     { $$ = {tipo : "VARIABLE" , identificador : $1 , tipoDato : undefined , valor : $3 , fila : this._$.first_line};}
 
 
-        | Identificador S_Igual S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra /*array                                           { $$ = {tipo : "ARRAY" , identificador : $1 , tipoDato : undefined , valor : $4 , fila : this._$.first_line};}          */                  
-        | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE/*array                                                               { $$ = {tipo : "ARRAY" , identificador : $1 , tipoDato : $3 , valor : undefined , fila : this._$.first_line};}*/
-        | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE S_Igual L_CORCHETE_V /*array                                         { $$ = {tipo : "ARRAY" , identificador : $1 , tipoDato : $3 , valor : $6 , fila : this._$.first_line};}*/
+        | Identificador S_Igual S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra /*array */                                          { $$ = {tipo : "ARRAY_ST" , identificador : $1 , tipoDato : undefined , valor : $4 , fila : this._$.first_line};}                 
+        | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE/*array */                                                              { $$ = {tipo : "ARRAY_CT" , identificador : $1 , tipoDato : $3 , valor : undefined , fila : this._$.first_line};}
+        | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE S_Igual L_CORCHETE_V /*array*/                                         { $$ = {tipo : "ARRAY_CTV", identificador : $1 , tipoDato : $3 , valor : $6 , fila : this._$.first_line};}
 
         | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra /*types*/
         | Identificador S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra /*types*/
