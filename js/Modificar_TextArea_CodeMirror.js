@@ -7,7 +7,7 @@ var Consola = CodeMirror.fromTextArea(document.getElementById("salidaTxt"), {
   continueComments: "Enter",
   hint: true,
 });
-Consola.setSize("1000", "440");
+Consola.setSize("1100", "400");
 
 var TraduccionTP = CodeMirror.fromTextArea(
   document.getElementById("traduccion"),

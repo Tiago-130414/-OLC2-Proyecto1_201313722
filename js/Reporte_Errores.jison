@@ -177,7 +177,7 @@ FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_
 ;
 /*---------------------------------------------LISTADO DE ESTRUCTURAS DE CONTROL---------------------------------------------------------*/
 EDD:LISTADO_ESTRUCTURAS
-   |
+   |                                                                        {$$ = [];}
 ;
 
 LISTADO_ESTRUCTURAS : LISTADO_ESTRUCTURAS CONT_ESTRUCTURAS_CONTROL          {$1.push($2);$$ = $1;}
@@ -185,12 +185,12 @@ LISTADO_ESTRUCTURAS : LISTADO_ESTRUCTURAS CONT_ESTRUCTURAS_CONTROL          {$1.
 ;
 
 CONT_ESTRUCTURAS_CONTROL : ESTRUCTURAS_DE_CONTROL
-                         |error  {$$ ='';tablaErrores.push({ tipo  : ' Error_Sintactico ', Error  : 'Simbolo inesperado: ' + yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
+                         | error  {$$ ='';tablaErrores.push({ tipo  : ' Error_Sintactico ', Error  : 'Simbolo inesperado: ' + yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
 ;
 
 ESTRUCTURAS_DE_CONTROL: VARIABLES
                       | ASIGNACION
-                      | LISTADO_IF ELSE
+                      | LISTADO_IF ELSE                                 {var vec = $1.concat($2);$$ = {tipoInstruccion : "LISTADO_IF" , contenido : vec};}
                       | SWITCH
                       | IMPRIMIR
                       | WHILE
@@ -218,15 +218,15 @@ SENTENCIAS_TRANSFERENCIA : R_Break S_PuntoComa
 ;
 
 /*--------------------------------------------- LISTADO IF---------------------------------------------------------*/
-LISTADO_IF : LISTADO_IF R_Else IF
-           | IF
+LISTADO_IF : LISTADO_IF R_Else IF                                                                   {$1.push($3);$$ = $1;}
+           | IF                                                                                     {$$ = [$1];}
 ;
 
-IF : R_If S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra
+IF : R_If S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra             {var exp;if(Array.isArray($3)){exp = $3;}else{exp = [$3];};$$ = {tipoInstruccion : "IF" ,condicion : exp, instrucciones : $6};}
 ;
 
-ELSE : R_Else S_LlaveAbre EDD S_LlaveCierra
-     |
+ELSE : R_Else S_LlaveAbre EDD S_LlaveCierra                                                         {$$ = [{tipoInstruccion : "ELSE" , instrucciones : $3 }];}
+     |                                                                                              {$$ = [];}
 ;
 
 /*---------------------------------------------SWITCH---------------------------------------------------------*/
@@ -258,10 +258,10 @@ FUNC: EXPRESION_G                                                               
     |                                                                                                               
 ;   
 /*---------------------------------------------WHILE---------------------------------------------------------*/
-WHILE: R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra
+WHILE: R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra                        {var exp;if(Array.isArray($3)){exp = $3;}else{exp = [$3];}; $$ = {tipoInstruccion : "WHILE" , condicion : exp , instrucciones : $6};}
 ;
 /*---------------------------------------------DO-WHILE---------------------------------------------------------*/
-DO_WHILE: R_Do S_LlaveAbre EDD S_LlaveCierra R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_PuntoComa
+DO_WHILE: R_Do S_LlaveAbre EDD S_LlaveCierra R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_PuntoComa    {var exp;if(Array.isArray($7)){exp = $7;}else{exp = [$7];}; $$ = {tipoInstruccion : "DOWHILE" , condicion : exp , instrucciones : $3};}
 ;
 
 /*---------------------------------------------FOR---------------------------------------------------------*/
@@ -304,32 +304,32 @@ CONT_FOR_OF : R_Const Identificador R_Of Identificador
 
 /*---------------------------------------------ASIGNACION VARIABLES---------------------------------------------------------*/
 
-ASIGNACION : ATRIBUTOS S_Igual LISTA_DE_ASIGNACIONES COMPLETAR_ASIGNACION S_PuntoComa                {$$ = {tipoInstruccion : "ASIGNACION", identificador :$1 ,valor : $3 , listadoA : $4};}
+ASIGNACION : ATRIBUTOS S_Igual LISTA_DE_ASIGNACIONES COMPLETAR_ASIGNACION S_PuntoComa                {var v ;if(Array.isArray($3)){v = $3;}else{v = [$3];};$$ = {tipoInstruccion : "ASIGNACION" , contenido : [{tipoInstruccion : "ASIGNACION", identificador :$1 ,valor : v }].concat($4)} ;}
            //incrementos 
-           | ATRIBUTOS OP_Incremento COMPLETAR_ASIGNACION S_PuntoComa                                {$$ = {tipoInstruccion : "ASIGNACION_INC_D", identificador :$1 ,valor : undefined , listadoA : $3};}   
-           | OP_Incremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa                                {$$ = {tipoInstruccion : "ASIGNACION_INC_A", identificador :$1 ,valor : undefined , listadoA : $3};}
-           | ATRIBUTOS OP_Decremento COMPLETAR_ASIGNACION S_PuntoComa                                {$$ = {tipoInstruccion : "ASIGNACION_DEC_D", identificador :$1 ,valor : undefined , listadoA : $3};}
-           | OP_Decremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa                                {$$ = {tipoInstruccion : "ASIGNACION_DEC_A", identificador :$1 ,valor : undefined , listadoA : $3};}
+           | ATRIBUTOS OP_Incremento COMPLETAR_ASIGNACION S_PuntoComa                                {$$ = {tipoInstruccion : "ASIGNACION_INC_D", contenido : [{tipoInstruccion : "ASIGNACION_INC_D", identificador :$1 ,valor : undefined}].concat($3)};}   
+           | OP_Incremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa                                {$$ = {tipoInstruccion : "ASIGNACION_INC_A", contenido : [{tipoInstruccion : "ASIGNACION_INC_A", identificador :$2 ,valor : undefined}].concat($3)};}
+           | ATRIBUTOS OP_Decremento COMPLETAR_ASIGNACION S_PuntoComa                                {$$ = {tipoInstruccion : "ASIGNACION_DEC_D", contenido : [{tipoInstruccion : "ASIGNACION_DEC_D", identificador :$1 ,valor : undefined}].concat($3)};}
+           | OP_Decremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa                                {$$ = {tipoInstruccion : "ASIGNACION_DEC_A", contenido : [{tipoInstruccion : "ASIGNACION_DEC_A", identificador :$2 ,valor : undefined}].concat($3)};}
            | ATRIBUTOS S_Punto R_Push S_ParentesisAbre LISTA_DE_ASIGNACIONES S_ParentesisCierra COMPLETAR_ASIGNACION S_PuntoComa
 ;
 
 COMPLETAR_ASIGNACION : LISTADO_ASIGNACION
-                      |                                                                 {$$ = [];}
+                     |                                                                 {$$ = [];}
 ;
 
 LISTADO_ASIGNACION: LISTADO_ASIGNACION  CONTENIDO_ASIGNACION                            {$1.push($2);$$=$1;}
                   | CONTENIDO_ASIGNACION                                                {$$ = [$1];}
 ;
 
-CONTENIDO_ASIGNACION: S_Coma Identificador S_Igual EXPRESION_G                          {$$ = {tipoInstruccion : "ASIGNACION", identificador :$2 ,valor : $4 , listadoA : undefined};}
-                    | S_Coma Identificador OP_Incremento                                {$$ = {tipoInstruccion : "ASIGNACION_INC_D", identificador :$1 ,valor : undefined , listadoA : $3};}
-                    | S_Coma OP_Incremento Identificador                                {$$ = {tipoInstruccion : "ASIGNACION_INC_A", identificador :$1 ,valor : undefined , listadoA : $3};}
-                    | S_Coma Identificador OP_Decremento                                {$$ = {tipoInstruccion : "ASIGNACION_DEC_D", identificador :$1 ,valor : undefined , listadoA : $3};}
-                    | S_Coma OP_Decremento Identificador                                {$$ = {tipoInstruccion : "ASIGNACION_DEC_A", identificador :$1 ,valor : undefined , listadoA : $3};}
+CONTENIDO_ASIGNACION: S_Coma Identificador S_Igual EXPRESION_G                          {$$ = {tipoInstruccion : "ASIGNACION", identificador :[valor("IDENTIFICADOR" ,$2,this._$.first_line)] ,valor : $4};}
+                    | S_Coma Identificador OP_Incremento                                {$$ = {tipoInstruccion : "ASIGNACION_INC_D", identificador :[valor("IDENTIFICADOR" ,$2,this._$.first_line)] ,valor : undefined };}
+                    | S_Coma OP_Incremento Identificador                                {$$ = {tipoInstruccion : "ASIGNACION_INC_A", identificador :[valor("IDENTIFICADOR" ,$3,this._$.first_line)] ,valor : undefined };}
+                    | S_Coma Identificador OP_Decremento                                {$$ = {tipoInstruccion : "ASIGNACION_DEC_D", identificador :[valor("IDENTIFICADOR" ,$2,this._$.first_line)] ,valor : undefined };}
+                    | S_Coma OP_Decremento Identificador                                {$$ = {tipoInstruccion : "ASIGNACION_DEC_A", identificador :[valor("IDENTIFICADOR" ,$3,this._$.first_line)] ,valor : undefined };}
                     | S_Coma ATRIBUTOS S_Punto R_Push S_ParentesisAbre LISTA_DE_ASIGNACIONES S_ParentesisCierra 
 ;
 
-LISTA_DE_ASIGNACIONES : EXPRESION_G                                                     {$$ = [$1];}
+LISTA_DE_ASIGNACIONES : EXPRESION_G                                                     {$$ = $1;}
                       | S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra 
                       | S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra
 ;
@@ -517,7 +517,7 @@ EXPRESION_G
     | Identificador S_ParentesisAbre S_ParentesisCierra                                          
     | Identificador S_ParentesisAbre OPCIONAL S_ParentesisCierra                                 
     | S_ParentesisAbre EXPRESION_G S_ParentesisCierra                                             {$$ = $2;}
-    | ATRIBUTOS
+    | ATRIBUTOS                                                                                   {$$ = $1;}
     | ATRIBUTOS S_Punto R_Length
     | ATRIBUTOS S_Punto R_Pop S_ParentesisAbre S_ParentesisCierra
 ; /*ATRIBUTOS CONTIENE ID Y VECTOR */

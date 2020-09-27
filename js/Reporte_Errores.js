@@ -89,7 +89,7 @@ break;
 case 4: case 82:
 $$[$0-1].push($$[$0]);this.$=$$[$0-1];
 break;
-case 5: case 16: case 83: case 90: case 111: case 158:
+case 5: case 16: case 39: case 83: case 111: case 158:
 this.$ = [$$[$0]];
 break;
 case 8: case 18:
@@ -104,56 +104,71 @@ break;
 case 11:
 this.$ = $$[$0-11] + $$[$0-10] +$$[$0-9] +$$[$0-8] +$$[$0-7] +$$[$0-6] +$$[$0-5]+$$[$0-4]+$$[$0-3]
 break;
+case 14: case 42: case 81:
+this.$ = [];
+break;
 case 15:
 $$[$0-1].push($$[$0]);this.$ = $$[$0-1];
+break;
+case 21:
+var vec = $$[$0-1].concat($$[$0]);this.$ = {tipoInstruccion : "LISTADO_IF" , contenido : vec};
 break;
 case 33:
 this.$ = {tipoInstruccion : "GRAFICARTS" , contenido : []};
 break;
+case 38: case 110: case 157:
+$$[$0-2].push($$[$0]);this.$ = $$[$0-2];
+break;
+case 40:
+var exp;if(Array.isArray($$[$0-4])){exp = $$[$0-4];}else{exp = [$$[$0-4]];};this.$ = {tipoInstruccion : "IF" ,condicion : exp, instrucciones : $$[$0-1]};
+break;
+case 41:
+this.$ = [{tipoInstruccion : "ELSE" , instrucciones : $$[$0-1] }];
+break;
 case 51:
 this.$ = {tipoInstruccion : "CONSOLE" , contenido : $$[$0-2]};
 break;
-case 52:
+case 52: case 90: case 191:
 this.$ = $$[$0];
 break;
+case 54:
+var exp;if(Array.isArray($$[$0-4])){exp = $$[$0-4];}else{exp = [$$[$0-4]];}; this.$ = {tipoInstruccion : "WHILE" , condicion : exp , instrucciones : $$[$0-1]};
+break;
+case 55:
+var exp;if(Array.isArray($$[$0-2])){exp = $$[$0-2];}else{exp = [$$[$0-2]];}; this.$ = {tipoInstruccion : "DOWHILE" , condicion : exp , instrucciones : $$[$0-6]};
+break;
 case 74:
-this.$ = {tipoInstruccion : "ASIGNACION", identificador :$$[$0-4] ,valor : $$[$0-2] , listadoA : $$[$0-1]};
+var v ;if(Array.isArray($$[$0-2])){v = $$[$0-2];}else{v = [$$[$0-2]];};this.$ = {tipoInstruccion : "ASIGNACION" , contenido : [{tipoInstruccion : "ASIGNACION", identificador :$$[$0-4] ,valor : v }].concat($$[$0-1])} ;
 break;
 case 75:
-this.$ = {tipoInstruccion : "ASIGNACION_INC_D", identificador :$$[$0-3] ,valor : undefined , listadoA : $$[$0-1]};
+this.$ = {tipoInstruccion : "ASIGNACION_INC_D", contenido : [{tipoInstruccion : "ASIGNACION_INC_D", identificador :$$[$0-3] ,valor : undefined}].concat($$[$0-1])};
 break;
 case 76:
-this.$ = {tipoInstruccion : "ASIGNACION_INC_A", identificador :$$[$0-3] ,valor : undefined , listadoA : $$[$0-1]};
+this.$ = {tipoInstruccion : "ASIGNACION_INC_A", contenido : [{tipoInstruccion : "ASIGNACION_INC_A", identificador :$$[$0-2] ,valor : undefined}].concat($$[$0-1])};
 break;
 case 77:
-this.$ = {tipoInstruccion : "ASIGNACION_DEC_D", identificador :$$[$0-3] ,valor : undefined , listadoA : $$[$0-1]};
+this.$ = {tipoInstruccion : "ASIGNACION_DEC_D", contenido : [{tipoInstruccion : "ASIGNACION_DEC_D", identificador :$$[$0-3] ,valor : undefined}].concat($$[$0-1])};
 break;
 case 78:
-this.$ = {tipoInstruccion : "ASIGNACION_DEC_A", identificador :$$[$0-3] ,valor : undefined , listadoA : $$[$0-1]};
-break;
-case 81:
-this.$ = [];
+this.$ = {tipoInstruccion : "ASIGNACION_DEC_A", contenido : [{tipoInstruccion : "ASIGNACION_DEC_A", identificador :$$[$0-2] ,valor : undefined}].concat($$[$0-1])};
 break;
 case 84:
-this.$ = {tipoInstruccion : "ASIGNACION", identificador :$$[$0-2] ,valor : $$[$0] , listadoA : undefined};
+this.$ = {tipoInstruccion : "ASIGNACION", identificador :[valor("IDENTIFICADOR" ,$$[$0-2],this._$.first_line)] ,valor : $$[$0]};
 break;
 case 85:
-this.$ = {tipoInstruccion : "ASIGNACION_INC_D", identificador :$$[$0-2] ,valor : undefined , listadoA : $$[$0]};
+this.$ = {tipoInstruccion : "ASIGNACION_INC_D", identificador :[valor("IDENTIFICADOR" ,$$[$0-1],this._$.first_line)] ,valor : undefined };
 break;
 case 86:
-this.$ = {tipoInstruccion : "ASIGNACION_INC_A", identificador :$$[$0-2] ,valor : undefined , listadoA : $$[$0]};
+this.$ = {tipoInstruccion : "ASIGNACION_INC_A", identificador :[valor("IDENTIFICADOR" ,$$[$0],this._$.first_line)] ,valor : undefined };
 break;
 case 87:
-this.$ = {tipoInstruccion : "ASIGNACION_DEC_D", identificador :$$[$0-2] ,valor : undefined , listadoA : $$[$0]};
+this.$ = {tipoInstruccion : "ASIGNACION_DEC_D", identificador :[valor("IDENTIFICADOR" ,$$[$0-1],this._$.first_line)] ,valor : undefined };
 break;
 case 88:
-this.$ = {tipoInstruccion : "ASIGNACION_DEC_A", identificador :$$[$0-2] ,valor : undefined , listadoA : $$[$0]};
+this.$ = {tipoInstruccion : "ASIGNACION_DEC_A", identificador :[valor("IDENTIFICADOR" ,$$[$0],this._$.first_line)] ,valor : undefined };
 break;
 case 108: case 109:
 this.$ = {tipoInstruccion :"DECLARACION" , modificador : $$[$0-2], contenido : $$[$0-1]};
-break;
-case 110: case 157:
-$$[$0-2].push($$[$0]);this.$ = $$[$0-2];
 break;
 case 112:
  this.$ = {tipo : "VARIABLE" , identificador : $$[$0] , tipoDato : undefined , valor : undefined , fila : this._$.first_line};

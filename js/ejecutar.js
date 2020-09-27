@@ -1,5 +1,6 @@
 var errorSemantico = [];
 var ambitos = [];
+var nAmbitos = [];
 var log = [];
 
 function ejJson() {
@@ -7,7 +8,7 @@ function ejJson() {
   var texto = Codigo.getValue();
   var vector = Reporte_Errores.parse(texto);
   if (vector.Arbol.length > 0) {
-    ambitos.push([]);
+    agregarAmbito("global");
     ejecutarArchivo(vector.Arbol);
     if (errorSemantico.length != 0) {
       if (vector.Errores.length != 0) {
@@ -24,7 +25,10 @@ function ejJson() {
   } else {
     Consola.setValue("!Problema al ejecutar codigo!");
   }
-  console.log(ambitos);
+  //IMPRIMIENDO LOS AMBITOS
+  //console.log(ambitos);
+  eliminarA();
+  console.log(log);
   ambitos = [];
 }
 
@@ -38,6 +42,20 @@ function ejecutarArchivo(json) {
       graficar();
     } else if (element.tipoInstruccion == "ASIGNACION") {
       ejecutarAsignacion(element);
+    } else if (element.tipoInstruccion == "ASIGNACION_INC_D") {
+      ejecutarAsignacion(element);
+    } else if (element.tipoInstruccion == "ASIGNACION_INC_A") {
+      ejecutarAsignacion(element);
+    } else if (element.tipoInstruccion == "ASIGNACION_DEC_D") {
+      ejecutarAsignacion(element);
+    } else if (element.tipoInstruccion == "ASIGNACION_DEC_A") {
+      ejecutarAsignacion(element);
+    } else if (element.tipoInstruccion == "LISTADO_IF") {
+      ejecutarIF(element.contenido);
+    } else if (element.tipoInstruccion == "WHILE") {
+      ejecutarWhile(element);
+    } else if (element.tipoInstruccion == "DOWHILE") {
+      ejecutarDoWhile(element);
     }
   }
 }
@@ -50,7 +68,6 @@ function ejecutarImprimir(elemento) {
     id = elemento;
   }
   var result = leerExp(id);
-  console.log(result);
   if (result.tipo == "Error Semantico") {
     errorSemantico.push(result);
   } else {
@@ -76,10 +93,10 @@ function ejecutarDeclaracion(elemento, ambi) {
             if (val.tipo != "Error Semantico") {
               insertarAmbito({
                 tipo: ele.tipo,
-                ambito: ambi,
+                ambito: rNomAmbito(),
                 modificador: mod,
                 identificador: ele.identificador,
-                tipoDato: ele.tipoDato,
+                tipoDato: val.tipo,
                 valor: val.valor,
                 fila: ele.fila,
               });
@@ -117,7 +134,7 @@ function ejecutarDeclaracion(elemento, ambi) {
         //SI NO TIENE VALOR SE ASIGNA LO MISMO QUE CUANDO SE DECLARO
         insertarAmbito({
           tipo: ele.tipo,
-          ambito: ambi,
+          ambito: rNomAmbito(),
           modificador: mod,
           identificador: ele.identificador,
           tipoDato: ele.tipoDato,
@@ -138,13 +155,327 @@ function ejecutarDeclaracion(elemento, ambi) {
 }
 /////////////////////////////////////////////////INSTRUCCION ASIGNACION DE VARIABLE
 function ejecutarAsignacion(elemento) {
-  console.log("aqui estoy");
-  console.log(elemento.identificador);
+  for (var ele of elemento.contenido) {
+    if (ele.tipoInstruccion == "ASIGNACION") {
+      asigVar(ele);
+    } else if (ele.tipoInstruccion == "ASIGNACION_INC_D") {
+      incVarD(ele);
+    } else if (ele.tipoInstruccion == "ASIGNACION_INC_A") {
+      incVarA(ele);
+    } else if (ele.tipoInstruccion == "ASIGNACION_DEC_D") {
+      decVarD(ele);
+    } else if (ele.tipoInstruccion == "ASIGNACION_DEC_A") {
+      decVarA(ele);
+    }
+  }
+}
+/////////////////////////////////////////////////INSTRUCCION ASIGNACION DE VARIABLE
+function asigVar(ele) {
+  //SI EXISTE SE PUEDE ASIGNAR VALOR
+  var idAs = lAcceso(ele.identificador);
+  //BUSCANDO LA TABLA DE SIMBOLOS EN LOS AMBITOS
+  if (buscarVariable(idAs.valor)) {
+    //OBTENIENDO EL ELEMENTO DE LOS AMBITOS
+    var variable = buscarVModificar(ele, idAs.valor);
+    //VERIFICAR SI LA VARIABLE NO ES CONSTANTE
+    if (variable.modificador != "const") {
+      //SE OBTIENE EL VALOR QUE SE VA A ASIGNAR
+      var lee = leerExp(ele.valor);
+      //SI LA EXPRESION NO RETORNO ERROR
+      if (lee.tipo != "Error Semantico") {
+        //SE COMPARAN LOS TIPOS ANTES DE ASIGNAR EL VALOR
+        if (variable.tipoDato == lee.tipo) {
+          variable.valor = lee.valor;
+        } else if (variable.tipoDato == undefined) {
+          var tipV = typeof lee.valor;
+          variable.valor = lee.valor;
+          variable.tipoDato = asignarTipo(tipV);
+          console.log(variable);
+        } else {
+          //SI LOS TIPOS NO SON IGUALES SE REPORTA ERROR
+          errorSemantico.push({
+            tipo: "Error Semantico",
+            Error:
+              "El valor a asignar no es compatible al definido por la variable " +
+              variable.identificador,
+            Fila: variable.fila,
+            Columna: variable.fila,
+          });
+        }
+      } else {
+        //SI LA EXPRESION RETORNO UN ERROR SEMANTICO SE REPORTA Y NO SE REALIZ AASGINACION
+        errorSemantico.push({
+          tipo: "Error Semantico",
+          Error: lee.Error,
+          Fila: lee.fila,
+          Columna: lee.fila,
+        });
+      }
+    } else {
+      //SI LA VARIABLE ES CONSTANTE SE REPORTA ERROR
+      errorSemantico.push({
+        tipo: "Error Semantico",
+        Error:
+          "No se puede reasignar valor a variable constante  " + idAs.valor,
+        Fila: idAs.fila,
+        Columna: 0,
+      });
+    }
+  } else {
+    //SI NO EXISTE ES ERROR
+    errorSemantico.push({
+      tipo: "Error Semantico",
+      Error: "Necesita declarar variable  " + idAs.valor,
+      Fila: idAs.fila,
+      Columna: 0,
+    });
+  }
+}
+/////////////////////////////////////////////////INSTRUCCION ASIGNACION INCREMENTO DESPUES
+function incVarD(ele) {
+  var idAs = lAcceso(ele.identificador);
+  //SABER SI EXISTE VARIABLE
+  if (buscarVariable(idAs.valor)) {
+    //OBTENIENDO VARIABLE DE AMBITOS
+    var variable = buscarVModificar(ele, idAs.valor);
+    if (variable.modificador != "const") {
+      //SE VERIFICA SI ES NUMERO PARA QUE SE PUEDA AUMENTAR EL VALOR
+      if (variable.tipoDato == "NUMERO") {
+        variable.valor++;
+      } else {
+        //NO SE PUEDE AUMENTAR EL VALOR DE VARIABLE
+        errorSemantico.push({
+          tipo: "Error Semantico",
+          Error: "Tipo de dato incompatible con el incremento  " + idAs.valor,
+          Fila: idAs.fila,
+          Columna: 0,
+        });
+      }
+    } else {
+      //SI ES CONSTANTE SE REPORTA ERROR
+      errorSemantico.push({
+        tipo: "Error Semantico",
+        Error:
+          "No se puede reasignar valor a variable constante  " + idAs.valor,
+        Fila: idAs.fila,
+        Columna: 0,
+      });
+    }
+  } else {
+    //SI NO EXISTE VARIABLE
+    errorSemantico.push({
+      tipo: "Error Semantico",
+      Error: "Necesita declarar variable  " + idAs.valor,
+      Fila: idAs.fila,
+      Columna: 0,
+    });
+  }
+}
+/////////////////////////////////////////////////INSTRUCCION ASIGNACION INCREMENTO ANTES
+function incVarA(ele) {
+  var idAs = lAcceso(ele.identificador);
+  //SABER SI EXISTE VARIABLE
+  if (buscarVariable(idAs.valor)) {
+    //OBTENIENDO VARIABLE DE AMBITOS
+    var variable = buscarVModificar(ele, idAs.valor);
+    if (variable.modificador != "const") {
+      //SE VERIFICA SI ES NUMERO PARA QUE SE PUEDA AUMENTAR EL VALOR
+      if (variable.tipoDato == "NUMERO") {
+        ++variable.valor;
+      } else {
+        //NO SE PUEDE AUMENTAR EL VALOR DE VARIABLE
+        errorSemantico.push({
+          tipo: "Error Semantico",
+          Error: "Tipo de dato incompatible con el incremento  " + idAs.valor,
+          Fila: idAs.fila,
+          Columna: 0,
+        });
+      }
+    } else {
+      //SI ES CONSTANTE SE REPORTA ERROR
+      errorSemantico.push({
+        tipo: "Error Semantico",
+        Error:
+          "No se puede reasignar valor a variable constante  " + idAs.valor,
+        Fila: idAs.fila,
+        Columna: 0,
+      });
+    }
+  } else {
+    //SI NO EXISTE VARIABLE
+    errorSemantico.push({
+      tipo: "Error Semantico",
+      Error: "Necesita declarar variable  " + idAs.valor,
+      Fila: idAs.fila,
+      Columna: 0,
+    });
+  }
+}
+/////////////////////////////////////////////////INSTRUCCION ASIGNACION DECREMENTO DESPUES
+function decVarD(ele) {
+  var idAs = lAcceso(ele.identificador);
+  //SABER SI EXISTE VARIABLE
+  if (buscarVariable(idAs.valor)) {
+    //OBTENIENDO VARIABLE DE AMBITOS
+    var variable = buscarVModificar(ele, idAs.valor);
+    if (variable.modificador != "const") {
+      //SE VERIFICA SI ES NUMERO PARA QUE SE PUEDA AUMENTAR EL VALOR
+      if (variable.tipoDato == "NUMERO") {
+        variable.valor--;
+      } else {
+        //NO SE PUEDE AUMENTAR EL VALOR DE VARIABLE
+        errorSemantico.push({
+          tipo: "Error Semantico",
+          Error: "Tipo de dato incompatible con el incremento  " + idAs.valor,
+          Fila: idAs.fila,
+          Columna: 0,
+        });
+      }
+    } else {
+      //SI ES CONSTANTE SE REPORTA ERROR
+      errorSemantico.push({
+        tipo: "Error Semantico",
+        Error:
+          "No se puede reasignar valor a variable constante  " + idAs.valor,
+        Fila: idAs.fila,
+        Columna: 0,
+      });
+    }
+  } else {
+    //SI NO EXISTE VARIABLE
+    errorSemantico.push({
+      tipo: "Error Semantico",
+      Error: "Necesita declarar variable  " + idAs.valor,
+      Fila: idAs.fila,
+      Columna: 0,
+    });
+  }
+}
+/////////////////////////////////////////////////INSTRUCCION ASIGNACION DECREMENTO ANTES
+function decVarA(ele) {
+  var idAs = lAcceso(ele.identificador);
+  //SABER SI EXISTE VARIABLE
+  if (buscarVariable(idAs.valor)) {
+    //OBTENIENDO VARIABLE DE AMBITOS
+    var variable = buscarVModificar(ele, idAs.valor);
+    if (variable.modificador != "const") {
+      //SE VERIFICA SI ES NUMERO PARA QUE SE PUEDA AUMENTAR EL VALOR
+      if (variable.tipoDato == "NUMERO") {
+        --variable.valor;
+      } else {
+        //NO SE PUEDE AUMENTAR EL VALOR DE VARIABLE
+        errorSemantico.push({
+          tipo: "Error Semantico",
+          Error: "Tipo de dato incompatible con el incremento  " + idAs.valor,
+          Fila: idAs.fila,
+          Columna: 0,
+        });
+      }
+    } else {
+      //SI ES CONSTANTE SE REPORTA ERROR
+      errorSemantico.push({
+        tipo: "Error Semantico",
+        Error:
+          "No se puede reasignar valor a variable constante  " + idAs.valor,
+        Fila: idAs.fila,
+        Columna: 0,
+      });
+    }
+  } else {
+    //SI NO EXISTE VARIABLE
+    errorSemantico.push({
+      tipo: "Error Semantico",
+      Error: "Necesita declarar variable  " + idAs.valor,
+      Fila: idAs.fila,
+      Columna: 0,
+    });
+  }
 }
 ////////////////////////////////////////////////INSTRUCCION GRAFICAR TS
 function graficar() {
   generarTablas(ambitos);
 }
+////////////////////////////////////////////////INSTRUCCION IF
+function ejecutarIF(ele) {
+  //console.log(ele);
+  var ejecuteIf = false;
+  for (var element of ele) {
+    //console.log(element);
+    if (element.tipoInstruccion == "IF") {
+      //console.log(element.condicion);
+      var exp = leerExp(element.condicion);
+      //console.log(exp);
+      //VERIFICO QUE LA EXPRESION SEA VALIDA
+      if (exp.tipo != "Error Semantico") {
+        if (exp.tipo != "BOOLEAN" || exp.valor != false || exp.opR != 0) {
+          if (exp.valor == true) {
+            //console.log("instrucciones del if");
+            //aqui se agrega el ambito
+            agregarAmbito("IF");
+            ejecutarArchivo(element.instrucciones);
+            //aqui se elimina el ambito
+            eliminarA();
+            //ejecuteIf = true;
+            break;
+          }
+        }
+      } else {
+        //SI LA EXPRESION NO ES VALIDA
+        errorSemantico.push(exp);
+        //ejecuteIf = true;
+      }
+    }
+    //&& ejecuteIf == false
+    if (element.tipoInstruccion == "ELSE") {
+      //console.log("hijole");
+      agregarAmbito("ELSE");
+      ejecutarArchivo(element.instrucciones);
+      eliminarA();
+    }
+    //var exp = leerExp();
+  }
+}
+////////////////////////////////////////////////INSTRUCCION WHILE
+function ejecutarWhile(ele) {
+  //OBTENIENDO EL VALOR DE LA CONDICION
+  var exp = leerExp(ele.condicion);
+  //console.log(exp);
+  //VERIFICANDO QUE SEA UNA EXPRESION VALIDA
+  if (exp.tipo != "Error Semantico") {
+    console.log(exp);
+    console.log(ele.instrucciones);
+    while (exp.valor) {
+      console.log(exp);
+      agregarAmbito("WHILE");
+      ejecutarArchivo(ele.instrucciones);
+      eliminarA();
+      exp = leerExp(ele.condicion);
+    }
+  } else {
+    //REPORTANDO ERROR SI LA EXPRESION NO ES VALIDA
+    errorSemantico.push(exp);
+  }
+}
+////////////////////////////////////////////////INSTRUCCION DO WHILE
+function ejecutarDoWhile(ele) {
+  //console.log(ele);
+  var exp = leerExp(ele.condicion);
+  //console.log(exp);
+  //SE COMPRUEBA QUE SEA UNA EXPRESION VALIDA
+  if (exp.tipo != "Error Semantico") {
+    console.log(ele.instrucciones);
+    do {
+      agregarAmbito("DOWHILE");
+      ejecutarArchivo(ele.instrucciones);
+      eliminarA();
+      exp = leerExp(ele.condicion);
+    } while (exp.valor);
+  } else {
+    //SI ES UNA EXPRESION NO VALIDA SE HACE UN ERROR
+    errorSemantico.push(exp);
+  }
+}
+
 //////////////////////////////////////////////// REALIZAR OPERACION
 function leerExp(exp) {
   if (
@@ -193,17 +524,21 @@ function leerExp(exp) {
     return recuperarId(exp);
   } else if (Array.isArray(exp)) {
     var id = lAcceso(exp);
-    var vla = buscarAmbId(exp, id.valor);
-    var tipoVar = typeof vla.valor;
-    if (vla.tipo == "Error Semantico") {
-      return vla;
+    if (id.tipo != "IDENTIFICADOR") {
+      return leerExp(id);
     } else {
-      return {
-        tipo: asignarTipo(tipoVar),
-        opR: 0,
-        valor: vla.valor,
-        fila: vla.fila,
-      };
+      var vla = buscarAmbId(exp, id.valor);
+      var tipoVar = typeof vla.valor;
+      if (vla.tipo == "Error Semantico") {
+        return vla;
+      } else {
+        return {
+          tipo: asignarTipo(tipoVar),
+          opR: 0,
+          valor: vla.valor,
+          fila: vla.fila,
+        };
+      }
     }
   }
 }
@@ -225,18 +560,26 @@ function recuperarId(exp) {
 function ejecutarAritmetica(exp) {
   var opI = leerExp(exp.opIzq);
   var opD = leerExp(exp.opDer);
-  if (exp.tipo == "OPERACION_SUMA") {
-    return validarTipoS(opI, opD);
-  } else if (exp.tipo == "OPERACION_RESTA") {
-    return validarTiposOP(opI, opD, "RES");
-  } else if (exp.tipo == "OPERACION_MULTIPLICACION") {
-    return validarTiposOP(opI, opD, "MULT");
-  } else if (exp.tipo == "OPERACION_DIVISION") {
-    return validarTiposOP(opI, opD, "DIV");
-  } else if (exp.tipo == "OPERACION_EXPONENCIACION") {
-    return validarTiposOP(opI, opD, "POT");
-  } else if (exp.tipo == "OPERACION_MODULO") {
-    return validarTiposOP(opI, opD, "MOD");
+  if (opI.tipo != "Error Semantico" && opD.tipo != "Error Semantico") {
+    if (exp.tipo == "OPERACION_SUMA") {
+      return validarTipoS(opI, opD);
+    } else if (exp.tipo == "OPERACION_RESTA") {
+      return validarTiposOP(opI, opD, "RES");
+    } else if (exp.tipo == "OPERACION_MULTIPLICACION") {
+      return validarTiposOP(opI, opD, "MULT");
+    } else if (exp.tipo == "OPERACION_DIVISION") {
+      return validarTiposOP(opI, opD, "DIV");
+    } else if (exp.tipo == "OPERACION_EXPONENCIACION") {
+      return validarTiposOP(opI, opD, "POT");
+    } else if (exp.tipo == "OPERACION_MODULO") {
+      return validarTiposOP(opI, opD, "MOD");
+    }
+  } else {
+    if (opI.tipo == "Error Semantico") {
+      return opI;
+    } else if (opD.tipo == "Error Semantico") {
+      return opD;
+    }
   }
 }
 /////////////////////////////////////////////////VALIDANDO LOS TIPOS DE LAS OPERACIONES ARITMETICAS
@@ -314,18 +657,26 @@ function validarTiposOP(opIzq, opDer, tipOp) {
 function ejecutarRelacional(exp) {
   var opI = leerExp(exp.opIzq);
   var opD = leerExp(exp.opDer);
-  if (exp.tipo == "OPERACION_MAYORIGUALQUE") {
-    return validarTipoMM(opI, opD, "MAIQ");
-  } else if (exp.tipo == "OPERACION_MAYORQUE") {
-    return validarTipoMM(opI, opD, "MAQ");
-  } else if (exp.tipo == "OPERACION_MENORIGUALQUE") {
-    return validarTipoMM(opI, opD, "MEIQ");
-  } else if (exp.tipo == "OPERACION_MENORQUE") {
-    return validarTipoMM(opI, opD, "MEQ");
-  } else if (exp.tipo == "OPERACION_DISTINTO") {
-    return validarTipoDist(opI, opD);
-  } else if (exp.tipo == "OPERACION_IGUALIGUAL") {
-    return validarTipoIgIg(opI, opD);
+  if (opI.tipo != "Error Semantico" && opD.tipo != "Error Semantico") {
+    if (exp.tipo == "OPERACION_MAYORIGUALQUE") {
+      return validarTipoMM(opI, opD, "MAIQ");
+    } else if (exp.tipo == "OPERACION_MAYORQUE") {
+      return validarTipoMM(opI, opD, "MAQ");
+    } else if (exp.tipo == "OPERACION_MENORIGUALQUE") {
+      return validarTipoMM(opI, opD, "MEIQ");
+    } else if (exp.tipo == "OPERACION_MENORQUE") {
+      return validarTipoMM(opI, opD, "MEQ");
+    } else if (exp.tipo == "OPERACION_DISTINTO") {
+      return validarTipoDist(opI, opD);
+    } else if (exp.tipo == "OPERACION_IGUALIGUAL") {
+      return validarTipoIgIg(opI, opD, exp.opIzq.tipo, exp.opDer.tipo);
+    }
+  } else {
+    if (opI.tipo == "Error Semantico") {
+      return opI;
+    } else if (opD.tipo == "Error Semantico") {
+      return opD;
+    }
   }
 }
 
@@ -334,19 +685,19 @@ function validarTipoMM(opIzq, opDer, tipoOp) {
     if (tipoOp == "MAIQ") {
       var op = opIzq.valor >= opDer.valor;
       var tip = asignarTipo(typeof op);
-      return { tipo: tip, valor: op };
+      return { tipo: tip, opR: 1, valor: op };
     } else if (tipoOp == "MAQ") {
       var op = opIzq.valor > opDer.valor;
       var tip = asignarTipo(typeof op);
-      return { tipo: tip, valor: op };
+      return { tipo: tip, opR: 1, valor: op };
     } else if (tipoOp == "MEIQ") {
       var op = opIzq.valor <= opDer.valor;
       var tip = asignarTipo(typeof op);
-      return { tipo: tip, valor: op };
+      return { tipo: tip, opR: 1, valor: op };
     } else if (tipoOp == "MEQ") {
       var op = opIzq.valor < opDer.valor;
       var tip = asignarTipo(typeof op);
-      return { tipo: tip, valor: op };
+      return { tipo: tip, opR: 1, valor: op };
     }
   }
   return {
@@ -357,14 +708,16 @@ function validarTipoMM(opIzq, opDer, tipoOp) {
   };
 }
 
-function validarTipoIgIg(opIzq, opDer) {
+function validarTipoIgIg(opIzq, opDer, topI, topD) {
+  console.log(topI);
+  console.log(topD);
   if (
     opIzq.tipo != "IDENTIFICADOR" &&
     opIzq.tipo != "UNDEFINED" &&
     opDer.tipo != "IDENTIFICADOR" &&
     opDer.tipo != "UNDEFINED"
   ) {
-    if (opIzq.opR == 1) {
+    if (opIzq.opR == 1 || opDer.opR == 1) {
       var op = opIzq.valor == opDer.valor;
       var tip = asignarTipo(typeof op);
       return { tipo: tip, valor: op };
@@ -398,7 +751,11 @@ function validarTipoDist(opIzq, opDer) {
     opDer.tipo != "IDENTIFICADOR" &&
     opDer.tipo != "UNDEFINED"
   ) {
-    if (opIzq.valor == opDer.valor) {
+    if (opIzq.opR == 1 || opDer.opR == 1) {
+      var op = opIzq.valor != opDer.valor;
+      var tip = asignarTipo(typeof op);
+      return { tipo: tip, valor: op };
+    } else if (opIzq.valor == opDer.valor) {
       var op = opIzq.valor != opDer.valor;
       var tip = asignarTipo(typeof op);
       return { tipo: tip, valor: op };
@@ -424,12 +781,20 @@ function validarTipoDist(opIzq, opDer) {
 function ejecutarLogicas(exp) {
   var opI = leerExp(exp.opIzq);
   var opD = leerExp(exp.opDer);
-  if (exp.tipo == "OPERACION_AND") {
-    return validarTiposLog(opI, opD, "AND");
-  } else if (exp.tipo == "OPERACION_OR") {
-    return validarTiposLog(opI, opD, "OR");
-  } else if (exp.tipo == "OPERACION_NOT") {
-    return validarTiposLog(opI, opD, "NOT");
+  if (opI.tipo != "Error Semantico" && opD.tipo != "Error Semantico") {
+    if (exp.tipo == "OPERACION_AND") {
+      return validarTiposLog(opI, opD, "AND");
+    } else if (exp.tipo == "OPERACION_OR") {
+      return validarTiposLog(opI, opD, "OR");
+    } else if (exp.tipo == "OPERACION_NOT") {
+      return validarTiposLog(opI, opD, "NOT");
+    }
+  } else {
+    if (opI.tipo == "Error Semantico") {
+      return opI;
+    } else if (opD.tipo == "Error Semantico") {
+      return opD;
+    }
   }
 }
 
@@ -467,86 +832,158 @@ function ejecutarNegativo(exp) {
 }
 /////////////////////////////////////////////////OPERACIONES INCREMENTO
 function ejecutarIncrementoD(exp) {
-  var id = lAcceso(exp.opIzq).valor;
-  var el = buscarAmbId(exp, id);
-  if (el.tipo != "Error Semantico") {
-    if (el.modificador != "const") {
-      var f = el.valor++;
-      var tip = typeof el.valor;
-      return { tipo: tip, valor: f, fila: el.fila };
+  if (Array.isArray(exp.opIzq)) {
+    var id = lAcceso(exp.opIzq).valor;
+    var el = buscarAmbId(exp, id);
+    if (el.tipo != "Error Semantico") {
+      if (el.modificador != "const") {
+        if (el.tipoDato == "NUMERO") {
+          var f = el.valor++;
+          var tip = typeof el.valor;
+          return { tipo: tip, valor: f, opR: 1, fila: el.fila };
+        } else {
+          return {
+            tipo: "Error Semantico",
+            Error: "Tipo de dato incompatible con operacion de incremento",
+            Fila: el.fila,
+            Columna: 0,
+          };
+        }
+      } else {
+        return {
+          tipo: "Error Semantico",
+          Error: "No se puede modificar el valor de una constante",
+          Fila: el.fila,
+          Columna: 0,
+        };
+      }
     } else {
-      return {
-        tipo: "Error Semantico",
-        Error: "No se puede modificar el valor de una constante",
-        Fila: el.fila,
-        Columna: 0,
-      };
+      return el;
     }
   } else {
-    return el;
+    return {
+      tipo: "Error Semantico",
+      Error: "El incremento unicamente funciona con variables",
+      Fila: exp.opIzq.fila,
+      Columna: 0,
+    };
   }
 }
 
 function ejecutarIncrementoA(exp) {
-  var id = lAcceso(exp.opIzq).valor;
-  var el = buscarAmbId(exp, id);
-  if (el.tipo != "Error Semantico") {
-    if (el.modificador != "const") {
-      var f = ++el.valor;
-      var tip = typeof el.valor;
-      return { tipo: tip, valor: f, fila: el.fila };
+  if (Array.isArray(exp.opIzq)) {
+    var id = lAcceso(exp.opIzq).valor;
+    var el = buscarAmbId(exp, id);
+    if (el.tipo != "Error Semantico") {
+      if (el.modificador != "const") {
+        if (el.tipoDato == "NUMERO") {
+          var f = ++el.valor;
+          var tip = typeof el.valor;
+          return { tipo: tip, valor: f, opR: 1, fila: el.fila };
+        } else {
+          return {
+            tipo: "Error Semantico",
+            Error: "Tipo de dato incompatible con operacion de incremento",
+            Fila: el.fila,
+            Columna: 0,
+          };
+        }
+      } else {
+        return {
+          tipo: "Error Semantico",
+          Error: "No se puede modificar el valor de una constante",
+          Fila: el.fila,
+          Columna: 0,
+        };
+      }
     } else {
-      return {
-        tipo: "Error Semantico",
-        Error: "No se puede modificar el valor de una constante",
-        Fila: el.fila,
-        Columna: 0,
-      };
+      return el;
     }
   } else {
-    return el;
+    return {
+      tipo: "Error Semantico",
+      Error: "El incremento unicamente funciona con variables",
+      Fila: exp.opIzq.fila,
+      Columna: 0,
+    };
   }
 }
 
 function ejecutarDecrementoD(exp) {
-  var id = lAcceso(exp.opIzq).valor;
-  var el = buscarAmbId(exp, id);
-  if (el.tipo != "Error Semantico") {
-    if (el.modificador != "const") {
-      var f = el.valor--;
-      var tip = typeof el.valor;
-      return { tipo: tip, valor: f, fila: el.fila };
+  if (Array.isArray(exp.opIzq)) {
+    var id = lAcceso(exp.opIzq).valor;
+    var el = buscarAmbId(exp, id);
+    if (el.tipo != "Error Semantico") {
+      if (el.modificador != "const") {
+        if (el.tipoDato == "NUMERO") {
+          var f = el.valor--;
+          var tip = typeof el.valor;
+          return { tipo: tip, valor: f, opR: 1, fila: el.fila };
+        } else {
+          return {
+            tipo: "Error Semantico",
+            Error: "Tipo de dato incompatible con operacion de incremento",
+            Fila: el.fila,
+            Columna: 0,
+          };
+        }
+      } else {
+        return {
+          tipo: "Error Semantico",
+          Error: "No se puede modificar el valor de una constante",
+          Fila: el.fila,
+          Columna: 0,
+        };
+      }
     } else {
-      return {
-        tipo: "Error Semantico",
-        Error: "No se puede modificar el valor de una constante",
-        Fila: el.fila,
-        Columna: 0,
-      };
+      return el;
     }
   } else {
-    return el;
+    return {
+      tipo: "Error Semantico",
+      Error: "El incremento unicamente funciona con variables",
+      Fila: exp.opIzq.fila,
+      Columna: 0,
+    };
   }
 }
 
 function ejecutarDecrementoA(exp) {
-  var id = lAcceso(exp.opIzq).valor;
-  var el = buscarAmbId(exp, id);
-  if (el.tipo != "Error Semantico") {
-    if (el.modificador != "const") {
-      var f = --el.valor;
-      var tip = typeof el.valor;
-      return { tipo: tip, valor: f, fila: el.fila };
+  if (Array.isArray(exp.opIzq)) {
+    var id = lAcceso(exp.opIzq).valor;
+    var el = buscarAmbId(exp, id);
+    if (el.tipo != "Error Semantico") {
+      if (el.modificador != "const") {
+        if (el.tipoDato == "NUMERO") {
+          var f = --el.valor;
+          var tip = typeof el.valor;
+          return { tipo: tip, valor: f, opR: 1, fila: el.fila };
+        } else {
+          return {
+            tipo: "Error Semantico",
+            Error: "Tipo de dato incompatible con operacion de incremento",
+            Fila: el.fila,
+            Columna: 0,
+          };
+        }
+      } else {
+        return {
+          tipo: "Error Semantico",
+          Error: "No se puede modificar el valor de una constante",
+          Fila: el.fila,
+          Columna: 0,
+        };
+      }
     } else {
-      return {
-        tipo: "Error Semantico",
-        Error: "No se puede modificar el valor de una constante",
-        Fila: el.fila,
-        Columna: 0,
-      };
+      return el;
     }
   } else {
-    return el;
+    return {
+      tipo: "Error Semantico",
+      Error: "El incremento unicamente funciona con variables",
+      Fila: exp.opIzq.fila,
+      Columna: 0,
+    };
   }
 }
 /////////////////////////////////////////////////COLOCA RESULTADO EN CONSOLA
@@ -631,6 +1068,23 @@ function separar(opIzq, opDer) {
 //////////////////////////////////////////////LISTA DE ACCESO
 function lAcceso(op) {
   if (op.length == 1) {
+    //es una variable
     return op[0];
   }
+}
+///////////////////////////////////////////////AGREGAR AMBITO
+function agregarAmbito(nombre) {
+  ambitos.push([]);
+  nAmbitos.push(nombre);
+}
+//////////////////////////////////////////////ELMINAR AMBITO
+function eliminarA() {
+  //agregando ambito elminado al log de cambios
+  log.push(ambitos.pop());
+  //eliminando nombre de vector de nombres
+  nAmbitos.pop();
+}
+//////////////////////////////////////////////RETORNAR NOMBRE DEL AMBITO
+function rNomAmbito() {
+  return nAmbitos[nAmbitos.length - 1];
 }
