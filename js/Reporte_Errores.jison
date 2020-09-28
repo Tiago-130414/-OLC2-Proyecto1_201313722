@@ -265,22 +265,22 @@ DO_WHILE: R_Do S_LlaveAbre EDD S_LlaveCierra R_While S_ParentesisAbre EXPRESION_
 ;
 
 /*---------------------------------------------FOR---------------------------------------------------------*/
-FOR : R_For S_ParentesisAbre CONT_FOR EXPRESION_G S_PuntoComa FIN_FOR S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra  
+FOR : R_For S_ParentesisAbre CONT_FOR EXPRESION_G S_PuntoComa FIN_FOR S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra  //{$$ ={tipoInstruccion : "FOR" , inicio : $3 , condicion : $4 , fin : $6, instrucciones : $9} ;}
 ;
 
 CONT_FOR
-    : R_Let Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G S_PuntoComa
-    | R_Let Identificador S_Igual EXPRESION_G S_PuntoComa
-    | Identificador S_PuntoComa
-    | Identificador S_Igual EXPRESION_G S_PuntoComa
+    : R_Let Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G S_PuntoComa                                 //{$$ = {tipoInstruccion :"DECLARACION" , modificador : $1, contenido : [{tipo : "VARIABLE" , identificador : $2 , tipoDato : $4 , valor : $6 , fila : this._$.first_line}], nombreA : $4};}
+    | R_Let Identificador S_Igual EXPRESION_G S_PuntoComa                                                           //{$$ = {tipoInstruccion :"DECLARACION" , modificador : $1, contenido : [{tipo : "VARIABLE" , identificador : $2 , tipoDato : undefined , valor : $4 , fila : this._$.first_line}], nombreA : $4};}
+    | Identificador S_PuntoComa                                                                                     //{$$ = {tipoInstruccion : "ASIGNACION", identificador:$1};}    
+    | Identificador S_Igual EXPRESION_G S_PuntoComa                                                                 //{$$ = {tipoInstruccion : "ASIGNACION", identificador:$1 , expresion :$3};}
 ;
 
 FIN_FOR
-    : Identificador S_Igual EXPRESION_G                                                
-    | Identificador OP_Incremento
-    | OP_Incremento Identificador
-    | Identificador OP_Decremento
-    | OP_Decremento IdentificadorG                                                                      
+    : Identificador S_Igual EXPRESION_G                                                                             //{$$ = {tipoInstruccion : "ASIGNACION", identificador:$1 , expresion :$3};}                             
+    | Identificador OP_Incremento                                                                                   //{ $$ = operacionU($1,"OPERACION_INCREMENTO_D"); }
+    | OP_Incremento Identificador                                                                                   //{ $$ = operacionU($1,"OPERACION_INCREMENTO_A"); }
+    | Identificador OP_Decremento                                                                                   //{ $$ = operacionU($1,"OPERACION_DECREMENTO_D"); }
+    | OP_Decremento IdentificadorG                                                                                  //{ $$ = operacionU($1,"OPERACION_DECREMENTO_A"); }
     ;
 /*---------------------------------------------FOR IN---------------------------------------------------------*/
 
