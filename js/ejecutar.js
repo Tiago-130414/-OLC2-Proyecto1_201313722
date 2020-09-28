@@ -29,7 +29,6 @@ function ejJson() {
   //console.log(ambitos);
   eliminarA();
   console.log(log);
-  ambitos = [];
 }
 
 function ejecutarArchivo(json) {
@@ -50,12 +49,20 @@ function ejecutarArchivo(json) {
       ejecutarAsignacion(element);
     } else if (element.tipoInstruccion == "ASIGNACION_DEC_A") {
       ejecutarAsignacion(element);
+    } else if (element.tipoInstruccion == "PUSH") {
+      ejecutarAsignacion(element);
+    } else if (element.tipoInstruccion == "POP") {
+      realizarPop(element);
     } else if (element.tipoInstruccion == "LISTADO_IF") {
       ejecutarIF(element.contenido);
     } else if (element.tipoInstruccion == "WHILE") {
       ejecutarWhile(element);
     } else if (element.tipoInstruccion == "DOWHILE") {
       ejecutarDoWhile(element);
+    } else if (element.tipoInstruccion == "FOR_IN") {
+      ejecutarForIn(element);
+    } else if (element.tipoInstruccion == "FOR_OF") {
+      ejecutarForOf(element);
     }
   }
 }
@@ -242,7 +249,7 @@ function declaracionArrayST(ele, mod, ambi) {
 function declaracionArrayCT(ele, mod, ambi) {
   //BUSCANDO VARIABLE PARA SABER SI YA ESTA DECLARADA
   if (!buscarVariable(ele.identificador)) {
-    console.log("me puedo declarar");
+    //console.log("me puedo declarar");
     insertarAmbito({
       tipo: ele.tipo,
       ambito: rNomAmbito(),
@@ -270,7 +277,7 @@ function declaracionArrayCTV(ele, mod, ambi) {
   if (!buscarVariable(ele.identificador)) {
     //VERIFICAR EXPRESIONES
     var v = [];
-    //console.log(ele.valor.length);
+    console.log(ele);
     //VERIFICANDO TAMAñO DE VECTOR DE VALORES PARA SABER SI ES NECESARIO ASIGNAR VALORES
     if (ele.valor.length > 0) {
       //console.log("traigo valores");
@@ -305,7 +312,7 @@ function declaracionArrayCTV(ele, mod, ambi) {
           ambito: rNomAmbito(),
           modificador: mod,
           identificador: ele.identificador,
-          tipoDato: undefined,
+          tipoDato: ele.tipoDato,
           valor: v,
           fila: ele.fila,
         });
@@ -327,7 +334,7 @@ function declaracionArrayCTV(ele, mod, ambi) {
         ambito: rNomAmbito(),
         modificador: mod,
         identificador: ele.identificador,
-        tipoDato: undefined,
+        tipoDato: ele.tipoDato,
         valor: v,
         fila: ele.fila,
       });
@@ -355,6 +362,8 @@ function ejecutarAsignacion(elemento) {
       decVarD(ele);
     } else if (ele.tipoInstruccion == "ASIGNACION_DEC_A") {
       decVarA(ele);
+    } else if (ele.tipoInstruccion == "PUSH") {
+      realizarPush(ele);
     }
   }
 }
@@ -580,6 +589,129 @@ function decVarA(ele) {
     });
   }
 }
+/////////////////////////////////////////////////INSTRUCCION PUSH
+function realizarPush(ele) {
+  //console.log(ele);
+  //console.log(exp);
+  //SE OBTIENE EL ID DEL VECTOR
+  var id = lAcceso(ele.identificador).valor;
+  //console.log(id);
+  //SE BUSCA LA VARIABLE PARA SABER SI EXISTE
+  if (buscarVariable(id)) {
+    //SE BUSCA EL ELEMENTO EN LOS AMBITOS
+    var v = buscarVModificar(ele, id);
+    //console.log(v);
+    //SI ES VECTOR
+    if (v.tipo != "Error Semantico") {
+      if (
+        v.tipo == "ARRAY_ST" ||
+        v.tipo == "ARRAY_CT" ||
+        v.tipo == "ARRAY_CTV"
+      ) {
+        var val = leerExp(ele.valor).valor;
+        //console.log(v.valor);
+        if (Array.isArray(v.valor)) {
+          if (v.tipoDato == undefined) {
+            v.valor.push(val);
+          } else {
+            if (v.tipoDato == val.tipo) {
+              v.valor.push(val);
+            } else {
+              errorSemantico.push({
+                tipo: "Error Semantico",
+                Error:
+                  "El vector no coincide con el tipo de dato del cual quiere hacer push",
+                Fila: ele.fila,
+                Columna: 0,
+              });
+            }
+          }
+        } else {
+          errorSemantico.push({
+            tipo: "Error Semantico",
+            Error:
+              "La variable " +
+              id +
+              " esta siendo usada antes de asignarle valor",
+            Fila: ele.fila,
+            Columna: 0,
+          });
+        }
+      } else {
+        //NO ES VECTOR SE REPORTA
+        errorSemantico.push({
+          tipo: "Error Semantico",
+          Error:
+            "El valor al cual intenta hacer push no es un vector ->  " + id,
+          Fila: ele.fila,
+          Columna: 0,
+        });
+      }
+    } else {
+      errorSemantico.push(v);
+    }
+  } else {
+    errorSemantico.push({
+      tipo: "Error Semantico",
+      Error: "Se necesita declarar la variable -> " + id,
+      Fila: ele.fila,
+      Columna: 0,
+    });
+  }
+}
+/////////////////////////////////////////////////INSTRUCCION POP
+function realizarPop(ele) {
+  //console.log(ele);
+  //console.log(exp);
+  //SE OBTIENE EL ID DEL VECTOR
+  var id = lAcceso(ele.identificador).valor;
+  //console.log(id);
+  //SE BUSCA LA VARIABLE PARA SABER SI EXISTE
+  if (buscarVariable(id)) {
+    //SE BUSCA EL ELEMENTO EN LOS AMBITOS
+    var v = buscarVModificar(ele, id);
+    //console.log(v);
+    //SI ES VECTOR
+    if (v.tipo != "Error Semantico") {
+      if (
+        v.tipo == "ARRAY_ST" ||
+        v.tipo == "ARRAY_CT" ||
+        v.tipo == "ARRAY_CTV"
+      ) {
+        if (v.valor != undefined) {
+          var f = v.valor.pop();
+          //console.log(f);
+          return { tipo: "VECTOR", valor: f, opR: 1, fila: v.fila };
+        } else {
+          errorSemantico.push({
+            tipo: "Error Semantico",
+            Error: "No se puede hacer pop sobre undefined -> " + id,
+            Fila: ele.fila,
+            Columna: 0,
+          });
+        }
+      } else {
+        //NO ES VECTOR SE REPORTA
+        errorSemantico.push({
+          tipo: "Error Semantico",
+          Error:
+            "El valor al cual intenta hacer push no es un vector ->  " + id,
+          Fila: ele.fila,
+          Columna: 0,
+        });
+      }
+    } else {
+      errorSemantico.push(v);
+    }
+  } else {
+    errorSemantico.push({
+      tipo: "Error Semantico",
+      Error: "Se necesita declarar la variable -> " + id,
+      Fila: ele.fila,
+      Columna: 0,
+    });
+  }
+}
 ////////////////////////////////////////////////INSTRUCCION GRAFICAR TS
 function graficar() {
   generarTablas(ambitos);
@@ -664,6 +796,105 @@ function ejecutarDoWhile(ele) {
     errorSemantico.push(exp);
   }
 }
+////////////////////////////////////////////////INSTRUCCION FOR
+function ejecutarFor(ele) {
+  console.log(ele);
+}
+////////////////////////////////////////////////INSTRUCCION FOR IN
+function ejecutarForIn(ele) {
+  //console.log(ele);
+  agregarAmbito("FOR_IN_TEMP");
+  var variableB;
+  var vectorR;
+  if (ele.condicion.tipoInstruccion == "DECLARACION") {
+    verificarDeclaracion(ele.condicion);
+    variableB = ele.condicion.contenido[0].identificador;
+    vectorR = ele.condicion.nombreA;
+    console.log(vectorR);
+    //console.log(variableB);
+  } else if (ele.condicion.tipoInstruccion == "ASIGNACION") {
+    variableB = ele.condicion.identificador;
+    vectorR = ele.condicion.nombreA;
+    console.log(variableB);
+  }
+  /*VARIABLES QUE TIENEN LOS JSON QUE SE MODIFICAN*/
+  var vecM = buscarVModificar(ele, vectorR); //vector a modificar
+  var varM = buscarVModificar(ele, variableB); // variable a modificar
+  //console.log(vecM);
+  //console.log(varM);
+  if (vecM.tipo != "Error Semantico") {
+    if (varM.tipo != "Error Semantico") {
+      if (vecM.valor != undefined) {
+        for (varM.valor in vecM.valor) {
+          agregarAmbito("FOR_IN");
+          ejecutarArchivo(ele.instrucciones);
+          eliminarA();
+        }
+      } else {
+        errorSemantico.push({
+          tipo: "Error Semantico",
+          Error:
+            "No es posible recorrer un vector con valor asignado de undefined",
+          Fila: ele.fila,
+          Columna: 0,
+        });
+      }
+    } else {
+      errorSemantico.push(varM);
+    }
+  } else {
+    errorSemantico.push(vecM);
+  }
+  eliminarA();
+}
+////////////////////////////////////////////////INSTRUCCION FOR OF
+function ejecutarForOf(ele) {
+  //console.log(ele);
+  agregarAmbito("FOR_OF_TEMP");
+  var variableB;
+  var vectorR;
+  if (ele.condicion.tipoInstruccion == "DECLARACION") {
+    verificarDeclaracion(ele.condicion);
+    variableB = ele.condicion.contenido[0].identificador;
+    vectorR = ele.condicion.nombreA;
+    console.log(vectorR);
+    //console.log(variableB);
+  } else if (ele.condicion.tipoInstruccion == "ASIGNACION") {
+    variableB = ele.condicion.identificador;
+    vectorR = ele.condicion.nombreA;
+    console.log(variableB);
+  }
+  /*VARIABLES QUE TIENEN LOS JSON QUE SE MODIFICAN*/
+  var vecM = buscarVModificar(ele, vectorR); //vector a modificar
+  var varM = buscarVModificar(ele, variableB); // variable a modificar
+  //console.log(vecM);
+  //console.log(varM);
+  if (vecM.tipo != "Error Semantico") {
+    if (varM.tipo != "Error Semantico") {
+      if (vecM.valor != undefined) {
+        for (varM.valor of vecM.valor) {
+          agregarAmbito("FOR_OF");
+          ejecutarArchivo(ele.instrucciones);
+          eliminarA();
+        }
+      } else {
+        errorSemantico.push({
+          tipo: "Error Semantico",
+          Error:
+            "No es posible recorrer un vector con valor asignado de undefined",
+          Fila: ele.fila,
+          Columna: 0,
+        });
+      }
+    } else {
+      errorSemantico.push(varM);
+    }
+  } else {
+    errorSemantico.push(vecM);
+  }
+  eliminarA();
+}
+
 ////////////////////////////////////////////////INSTRUCCION SWITCH
 function ejecutarSwitch(ele) {}
 
@@ -703,6 +934,10 @@ function leerExp(exp) {
     return ejecutarDecrementoD(exp);
   } else if (exp.tipo == "OPERACION_DECREMENTO_A") {
     return ejecutarDecrementoA(exp);
+  } else if (exp.tipo == "POP") {
+    return ejecutarPop(exp);
+  } else if (exp.tipo == "LENGTH") {
+    return ejecutarLength(exp);
   } else if (exp.tipo == "NUMERO") {
     return { tipo: exp.tipo, opR: 0, valor: exp.valor, fila: exp.fila };
   } else if (exp.tipo == "CADENA") {
@@ -1173,6 +1408,111 @@ function ejecutarDecrementoA(exp) {
       tipo: "Error Semantico",
       Error: "El incremento unicamente funciona con variables",
       Fila: exp.opIzq.fila,
+      Columna: 0,
+    };
+  }
+}
+
+//////////////////////////////////////////////////OPERACION POP
+function ejecutarPop(exp) {
+  //console.log(exp);
+  //SE OBTIENE EL ID DEL VECTOR
+  var id = lAcceso(exp.identificador).valor;
+  //console.log(id);
+  //SE BUSCA EL VECTOR POR ID PARA SABER SI ESTA DECLARADO
+  if (buscarVariable(id)) {
+    var v = buscarVModificar(exp, id);
+    // console.log(v);
+    //SE OBTIENE EL ID DE LA TABLA DE ELEMENTOS Y SE VERIFICA SI ESTA BIEN
+    if (v.tipo != "Error Semantico") {
+      if (
+        v.tipo == "ARRAY_ST" ||
+        v.tipo == "ARRAY_CT" ||
+        v.tipo == "ARRAY_CTV"
+      ) {
+        if (v.valor != undefined) {
+          var f = v.valor.pop();
+          console.log(f);
+          return { tipo: "VECTOR", valor: f, opR: 1, fila: v.fila };
+        } else {
+          return {
+            tipo: "Error Semantico",
+            Error: "No se puede hacer pop sobre undefined -> " + id,
+            Fila: exp.fila,
+            Columna: 0,
+          };
+        }
+      } else {
+        return {
+          tipo: "Error Semantico",
+          Error:
+            "No se puede realizar la accion pop al id referenciado -> " + id,
+          Fila: exp.fila,
+          Columna: 0,
+        };
+      }
+    } else {
+      //SI LA VARIABLE NO SE ENCUENTRA
+      return v;
+    }
+  } else {
+    //SI LA VARIABLE NO SE ENCUENTRA
+    return {
+      tipo: "Error Semantico",
+      Error: "Se necesita declarar la variable -> " + id,
+      Fila: exp.fila,
+      Columna: 0,
+    };
+  }
+}
+/////////////////////////////////////////////////OPERACION LENGTH
+function ejecutarLength(exp) {
+  //console.log(exp);
+  //SE OBTIENE EL ID DEL VECTOR
+  var id = lAcceso(exp.identificador).valor;
+  //console.log(id);
+  //SE BUSCA EL VECTOR POR ID PARA SABER SI ESTA DECLARADO
+  if (buscarVariable(id)) {
+    var v = buscarVModificar(exp, id);
+    // console.log(v);
+    //SE OBTIENE EL ID DE LA TABLA DE ELEMENTOS Y SE VERIFICA SI ESTA BIEN
+    if (v.tipo != "Error Semantico") {
+      if (
+        v.tipo == "ARRAY_ST" ||
+        v.tipo == "ARRAY_CT" ||
+        v.tipo == "ARRAY_CTV"
+      ) {
+        if (v.valor != undefined) {
+          var f = v.valor.length;
+          console.log(f);
+          return { tipo: "VECTOR", valor: f, opR: 1, fila: v.fila };
+        } else {
+          return {
+            tipo: "Error Semantico",
+            Error: "No se puede hacer length sobre undefined -> " + id,
+            Fila: exp.fila,
+            Columna: 0,
+          };
+        }
+      } else {
+        return {
+          tipo: "Error Semantico",
+          Error:
+            "No se puede realizar la accion length al id referenciado -> " + id,
+          Fila: exp.fila,
+          Columna: 0,
+        };
+      }
+    } else {
+      //SI LA VARIABLE NO SE ENCUENTRA
+      return v;
+    }
+  } else {
+    //SI LA VARIABLE NO SE ENCUENTRA
+    return {
+      tipo: "Error Semantico",
+      Error: "Se necesita declarar la variable -> " + id,
+      Fila: exp.fila,
       Columna: 0,
     };
   }

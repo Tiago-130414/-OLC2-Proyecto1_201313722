@@ -169,9 +169,9 @@ CONTENIDO : FUNCIONES
 ;
 /*---------------------------------------------DEFINICION DE FUNCIONES---------------------------------------------------------*/
 
-FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra {$$ = $1 + $2 +$3 +$4 +$5 +$6 }
-          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre EDD S_LlaveCierra {$$ = $1 + $2 +$3 +$4 +$5 +$6 }
-          | R_Let Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre EDD S_LlaveCierra S_PuntoComa {$$ = $1 + $2 +$3 +$4 +$5 +$6 +$7+$8+$9}
+FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra 
+          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre EDD S_LlaveCierra 
+          | R_Let Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre EDD S_LlaveCierra S_PuntoComa 
           | R_Const Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre EDD S_LlaveCierra S_PuntoComa
           
 ;
@@ -284,22 +284,22 @@ FIN_FOR
     ;
 /*---------------------------------------------FOR IN---------------------------------------------------------*/
 
-FOR_IN: R_For S_ParentesisAbre CONT_FOR_IN S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra
+FOR_IN: R_For S_ParentesisAbre CONT_FOR_IN S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra                         {$$ = {tipoInstruccion : "FOR_IN" , condicion : $3 , instrucciones : $6};}
 ;
 
-CONT_FOR_IN : R_Const Identificador R_In Identificador
-            | R_Let Identificador R_In Identificador
-            | Identificador R_In Identificador
+CONT_FOR_IN : R_Const Identificador R_In Identificador                                                              {$$ = {tipoInstruccion :"DECLARACION" , modificador : $1, contenido : [{tipo : "VARIABLE" , identificador : $2 , tipoDato : undefined , valor : undefined , fila : this._$.first_line}], nombreA : $4};}
+            | R_Let Identificador R_In Identificador                                                                {$$ = {tipoInstruccion :"DECLARACION" , modificador : $1, contenido : [{tipo : "VARIABLE" , identificador : $2 , tipoDato : undefined , valor : undefined , fila : this._$.first_line}], nombreA : $4};}
+            | Identificador R_In Identificador                                                                      {$$ = {tipoInstruccion : "ASIGNACION", identificador:$1 , nombreA :$3};}
 ;
 
 
 /*---------------------------------------------FOR OF---------------------------------------------------------*/
-FOR_OF: R_For S_ParentesisAbre CONT_FOR_OF S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra
+FOR_OF: R_For S_ParentesisAbre CONT_FOR_OF S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra                         {$$ = {tipoInstruccion : "FOR_OF" , condicion : $3 , instrucciones : $6};}
 ;
 
-CONT_FOR_OF : R_Const Identificador R_Of Identificador
-            | R_Let Identificador R_Of Identificador
-            | Identificador R_Of Identificador
+CONT_FOR_OF : R_Const Identificador R_Of Identificador                                                              {$$ = {tipoInstruccion :"DECLARACION" , modificador : $1, contenido : [{tipo : "VARIABLE" , identificador : $2 , tipoDato : undefined , valor : undefined , fila : this._$.first_line}], nombreA : $4};}
+            | R_Let Identificador R_Of Identificador                                                                {$$ = {tipoInstruccion :"DECLARACION" , modificador : $1, contenido : [{tipo : "VARIABLE" , identificador : $2 , tipoDato : undefined , valor : undefined , fila : this._$.first_line}], nombreA : $4};}
+            | Identificador R_Of Identificador                                                                      {$$ = {tipoInstruccion :"ASIGNACION", identificador:$1 , nombreA :$3};}
 ;
 
 /*---------------------------------------------ASIGNACION VARIABLES---------------------------------------------------------*/
@@ -310,7 +310,7 @@ ASIGNACION : ATRIBUTOS S_Igual LISTA_DE_ASIGNACIONES COMPLETAR_ASIGNACION S_Punt
            | OP_Incremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa                                {$$ = {tipoInstruccion : "ASIGNACION_INC_A", contenido : [{tipoInstruccion : "ASIGNACION_INC_A", identificador :$2 ,valor : undefined}].concat($3)};}
            | ATRIBUTOS OP_Decremento COMPLETAR_ASIGNACION S_PuntoComa                                {$$ = {tipoInstruccion : "ASIGNACION_DEC_D", contenido : [{tipoInstruccion : "ASIGNACION_DEC_D", identificador :$1 ,valor : undefined}].concat($3)};}
            | OP_Decremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa                                {$$ = {tipoInstruccion : "ASIGNACION_DEC_A", contenido : [{tipoInstruccion : "ASIGNACION_DEC_A", identificador :$2 ,valor : undefined}].concat($3)};}
-           | ATRIBUTOS S_Punto R_Push S_ParentesisAbre LISTA_DE_ASIGNACIONES S_ParentesisCierra COMPLETAR_ASIGNACION S_PuntoComa
+           | ATRIBUTOS S_Punto R_Push S_ParentesisAbre LISTA_DE_ASIGNACIONES S_ParentesisCierra COMPLETAR_ASIGNACION S_PuntoComa    {$$ = {tipoInstruccion : "PUSH" , contenido : [{tipoInstruccion : "PUSH" , identificador : $1 , valor : $5, fila : this._$.first_line}].concat($7)};}
 ;
 
 COMPLETAR_ASIGNACION : LISTADO_ASIGNACION
@@ -326,7 +326,7 @@ CONTENIDO_ASIGNACION: S_Coma Identificador S_Igual EXPRESION_G                  
                     | S_Coma OP_Incremento Identificador                                {$$ = {tipoInstruccion : "ASIGNACION_INC_A", identificador :[valor("IDENTIFICADOR" ,$3,this._$.first_line)] ,valor : undefined };}
                     | S_Coma Identificador OP_Decremento                                {$$ = {tipoInstruccion : "ASIGNACION_DEC_D", identificador :[valor("IDENTIFICADOR" ,$2,this._$.first_line)] ,valor : undefined };}
                     | S_Coma OP_Decremento Identificador                                {$$ = {tipoInstruccion : "ASIGNACION_DEC_A", identificador :[valor("IDENTIFICADOR" ,$3,this._$.first_line)] ,valor : undefined };}
-                    | S_Coma ATRIBUTOS S_Punto R_Push S_ParentesisAbre LISTA_DE_ASIGNACIONES S_ParentesisCierra 
+                    | S_Coma ATRIBUTOS S_Punto R_Push S_ParentesisAbre LISTA_DE_ASIGNACIONES S_ParentesisCierra {$$ = {tipoInstruccion : "PUSH" , contenido : [{tipoInstruccion : "PUSH" , identificador : $2 , valor : $6 , fila : this._$.first_line}]};}
 ;
 
 LISTA_DE_ASIGNACIONES : EXPRESION_G                                                     {$$ = $1;}
@@ -402,7 +402,7 @@ CONT_VAR: Identificador /*declaracion de variable solo id*/                     
 
 LLAMADA_FUNC
     : Identificador S_ParentesisAbre PARAMETROS_FUNC S_ParentesisCierra S_PuntoComa 
-    | ATRIBUTOS S_Punto R_Pop S_ParentesisAbre S_ParentesisCierra S_PuntoComa 
+    | ATRIBUTOS S_Punto R_Pop S_ParentesisAbre S_ParentesisCierra S_PuntoComa                                                       {$$ = {tipoInstruccion : "POP" , identificador : $1, fila : this._$.first_line};}
 ;
 
 PARAMETROS_FUNC
@@ -518,8 +518,8 @@ EXPRESION_G
     | Identificador S_ParentesisAbre OPCIONAL S_ParentesisCierra                                 
     | S_ParentesisAbre EXPRESION_G S_ParentesisCierra                                             {$$ = $2;}
     | ATRIBUTOS                                                                                   {$$ = $1;}
-    | ATRIBUTOS S_Punto R_Length
-    | ATRIBUTOS S_Punto R_Pop S_ParentesisAbre S_ParentesisCierra
+    | ATRIBUTOS S_Punto R_Length                                                                  {$$ = {tipo : "LENGTH" , identificador : $1 , fila : this._$.first_line};}
+    | ATRIBUTOS S_Punto R_Pop S_ParentesisAbre S_ParentesisCierra                                 {$$ = {tipo : "POP" , identificador : $1 , fila : this._$.first_line};}
 ; /*ATRIBUTOS CONTIENE ID Y VECTOR */
 
 OPCIONAL 

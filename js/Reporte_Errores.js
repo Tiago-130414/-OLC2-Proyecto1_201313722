@@ -95,15 +95,6 @@ break;
 case 8: case 18:
 this.$ ='';tablaErrores.push({ tipo  : ' Error_Sintactico ', Error  : 'Simbolo inesperado: ' + yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });
 break;
-case 9:
-this.$ = $$[$0-7] + $$[$0-6] +$$[$0-5] +$$[$0-4] +$$[$0-3] +$$[$0-2] 
-break;
-case 10:
-this.$ = $$[$0-9] + $$[$0-8] +$$[$0-7] +$$[$0-6] +$$[$0-5] +$$[$0-4] 
-break;
-case 11:
-this.$ = $$[$0-11] + $$[$0-10] +$$[$0-9] +$$[$0-8] +$$[$0-7] +$$[$0-6] +$$[$0-5]+$$[$0-4]+$$[$0-3]
-break;
 case 14: case 42: case 81:
 this.$ = [];
 break;
@@ -137,6 +128,21 @@ break;
 case 55:
 var exp;if(Array.isArray($$[$0-2])){exp = $$[$0-2];}else{exp = [$$[$0-2]];}; this.$ = {tipoInstruccion : "DOWHILE" , condicion : exp , instrucciones : $$[$0-6]};
 break;
+case 66:
+this.$ = {tipoInstruccion : "FOR_IN" , condicion : $$[$0-4] , instrucciones : $$[$0-1]};
+break;
+case 67: case 68: case 71: case 72:
+this.$ = {tipoInstruccion :"DECLARACION" , modificador : $$[$0-3], contenido : [{tipo : "VARIABLE" , identificador : $$[$0-2] , tipoDato : undefined , valor : undefined , fila : this._$.first_line}], nombreA : $$[$0]};
+break;
+case 69:
+this.$ = {tipoInstruccion : "ASIGNACION", identificador:$$[$0-2] , nombreA :$$[$0]};
+break;
+case 70:
+this.$ = {tipoInstruccion : "FOR_OF" , condicion : $$[$0-4] , instrucciones : $$[$0-1]};
+break;
+case 73:
+this.$ = {tipoInstruccion :"ASIGNACION", identificador:$$[$0-2] , nombreA :$$[$0]};
+break;
 case 74:
 var v ;if(Array.isArray($$[$0-2])){v = $$[$0-2];}else{v = [$$[$0-2]];};this.$ = {tipoInstruccion : "ASIGNACION" , contenido : [{tipoInstruccion : "ASIGNACION", identificador :$$[$0-4] ,valor : v }].concat($$[$0-1])} ;
 break;
@@ -152,6 +158,9 @@ break;
 case 78:
 this.$ = {tipoInstruccion : "ASIGNACION_DEC_A", contenido : [{tipoInstruccion : "ASIGNACION_DEC_A", identificador :$$[$0-2] ,valor : undefined}].concat($$[$0-1])};
 break;
+case 79:
+this.$ = {tipoInstruccion : "PUSH" , contenido : [{tipoInstruccion : "PUSH" , identificador : $$[$0-7] , valor : $$[$0-3], fila : this._$.first_line}].concat($$[$0-1])};
+break;
 case 84:
 this.$ = {tipoInstruccion : "ASIGNACION", identificador :[valor("IDENTIFICADOR" ,$$[$0-2],this._$.first_line)] ,valor : $$[$0]};
 break;
@@ -166,6 +175,9 @@ this.$ = {tipoInstruccion : "ASIGNACION_DEC_D", identificador :[valor("IDENTIFIC
 break;
 case 88:
 this.$ = {tipoInstruccion : "ASIGNACION_DEC_A", identificador :[valor("IDENTIFICADOR" ,$$[$0],this._$.first_line)] ,valor : undefined };
+break;
+case 89:
+this.$ = {tipoInstruccion : "PUSH" , contenido : [{tipoInstruccion : "PUSH" , identificador : $$[$0-5] , valor : $$[$0-1] , fila : this._$.first_line}]};
 break;
 case 96: case 184:
 this.$ = $$[$0-1];
@@ -196,6 +208,9 @@ case 111:
 break;
 case 112:
  this.$ = {tipo : "ARRAY_CTV", identificador : $$[$0-5] , tipoDato : $$[$0-3] , valor : $$[$0] , fila : this._$.first_line};
+break;
+case 116:
+this.$ = {tipoInstruccion : "POP" , identificador : $$[$0-5], fila : this._$.first_line};
 break;
 case 144:
 this.$ = "NUMERO";
@@ -292,6 +307,12 @@ this.$ = valor("UNDEFINED", undefined,this._$.first_line);
 break;
 case 181:
 this.$ = valor("CADENA" , String($$[$0]), this._$.first_line);
+break;
+case 186:
+this.$ = {tipo : "LENGTH" , identificador : $$[$0-2] , fila : this._$.first_line};
+break;
+case 187:
+this.$ = {tipo : "POP" , identificador : $$[$0-4] , fila : this._$.first_line};
 break;
 }
 },
