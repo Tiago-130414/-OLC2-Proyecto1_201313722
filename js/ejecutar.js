@@ -63,6 +63,8 @@ function ejecutarArchivo(json) {
       ejecutarForIn(element);
     } else if (element.tipoInstruccion == "FOR_OF") {
       ejecutarForOf(element);
+    } else if (element.tipoInstruccion == "FOR") {
+      ejecutarFor(element);
     }
   }
 }
