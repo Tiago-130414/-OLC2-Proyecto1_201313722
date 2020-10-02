@@ -55,6 +55,8 @@ function ejecutarArchivo(json) {
       realizarPop(element);
     } else if (element.tipoInstruccion == "LISTADO_IF") {
       ejecutarIF(element.contenido);
+    } else if (element.tipoInstruccion == "SWITCH") {
+      ejecutarSwitch(element);
     } else if (element.tipoInstruccion == "WHILE") {
       ejecutarWhile(element);
     } else if (element.tipoInstruccion == "DOWHILE") {
@@ -390,7 +392,7 @@ function asigVar(ele) {
           var tipV = typeof lee.valor;
           variable.valor = lee.valor;
           variable.tipoDato = asignarTipo(tipV);
-          console.log(variable);
+          //console.log(variable);
         } else {
           //SI LOS TIPOS NO SON IGUALES SE REPORTA ERROR
           errorSemantico.push({
@@ -800,7 +802,52 @@ function ejecutarDoWhile(ele) {
 }
 ////////////////////////////////////////////////INSTRUCCION FOR
 function ejecutarFor(ele) {
-  console.log(ele);
+  agregarAmbito("FOR_TEMP");
+  var idAsiM;
+  var tpA = false;
+  var inicio = ele.inicio;
+  var fin = ele.fin;
+  //console.log(inicio);
+  //DETERMINANDO SI EL INICIO DEL FOR ES DECLARACION O ASIGNACION
+  if (inicio.tipoInstruccion == "DECLARACION") {
+    verificarDeclaracion(inicio);
+  } else if (inicio.tipoInstruccion == "ASIGNACION") {
+    asigVar(inicio);
+  } else if (inicio.tipoInstruccion == "ASIGNACION_M") {
+    tpA = true;
+    idAsiM = buscarVariable(inicio.identificador);
+    //console.log(idAsiM);
+  }
+  //EVALUANDO LA CONDICION ANTES DE EJECUTARLA EN EL FOR LUEGO DE DECLARAR LA VARIABLE
+  var condi = leerExp(ele.condicion);
+  //REVISANDO LA CONDICION DEL FOR
+  //console.log(condi);
+  if (
+    condi.tipo != "Error Semantico" &&
+    (idAsiM == undefined || idAsiM == true)
+  ) {
+    while (condi) {
+      //console.log("prueba");
+      agregarAmbito("FOR");
+      ejecutarArchivo(ele.instrucciones);
+      eliminarA();
+      ejecutarAsignacion(fin);
+      condi = leerExp(ele.condicion).valor;
+      //console.log(condi);
+    }
+  } else {
+    if (condi.tipo == "Error Semantico") {
+      errorSemantico.push(condi);
+    } else {
+      errorSemantico.push({
+        tipo: "Error Semantico",
+        Error: "variable no declarada -> " + inicio.identificador,
+        Fila: ele.fila,
+        Columna: 0,
+      });
+    }
+  }
+  eliminarA();
 }
 ////////////////////////////////////////////////INSTRUCCION FOR IN
 function ejecutarForIn(ele) {
@@ -896,9 +943,54 @@ function ejecutarForOf(ele) {
   }
   eliminarA();
 }
-
 ////////////////////////////////////////////////INSTRUCCION SWITCH
-function ejecutarSwitch(ele) {}
+function ejecutarSwitch(ele) {
+  agregarAmbito("SWITCH");
+  //VERIFICANDO LA CONDICION
+  var condicion = leerExp(ele.condicion);
+  console.log(condicion);
+  //VERIFICANDO QUE LA EXPRESION SEA VALIDA
+  if (condicion.tipo != "Error Semantico") {
+    for (var e of ele.contenido) {
+      if (e.tipoInstruccion == "CASE") {
+        //OBTENIENDO CONDICION DEL CASE
+        var condCase = leerExp(e.condicion);
+        //console.log(condCase);
+        //VERIFICANDO SI LA CONDICION ES VALIDA
+        if (condCase != "Error Semantico") {
+          //SE VERIFICAN LOS TIPOS DE CONDICION
+          if (
+            (condCase.tipo == "BOOLEAN" && condCase.valor == false) ||
+            (condicion.tipo == condCase.tipo &&
+              condCase.valor != (true && undefined))
+          ) {
+            agregarAmbito("CASE_TEMP");
+            ejecutarArchivo(e.instrucciones);
+            eliminarA();
+          } else {
+            //ERROR SI LOS TIPOS DE CONDICION NO CONINCIDEN
+            errorSemantico.push({
+              tipo: "Error Semantico",
+              Error: "Los tipos de condicion switch y case no coinciden",
+              Fila: e.fila,
+              Columna: 0,
+            });
+          }
+        } else {
+          //SI LA CONDICION EVALUADA ES INVALIDA
+          errorSemantico.push(condCase);
+        }
+      } else if (e.tipoInstruccion == "DEFAULT") {
+        agregarAmbito("DEFAULT");
+        ejecutarArchivo(e.instrucciones);
+        eliminarA();
+      }
+    }
+  } else {
+    errorSemantico.push(condicion);
+  }
+  eliminarA();
+}
 
 //////////////////////////////////////////////// REALIZAR OPERACION
 function leerExp(exp) {
@@ -1267,7 +1359,7 @@ function ejecutarIncrementoD(exp) {
       if (el.modificador != "const") {
         if (el.tipoDato == "NUMERO") {
           var f = el.valor++;
-          var tip = typeof el.valor;
+          var tip = asignarTipo(typeof el.valor);
           return { tipo: tip, valor: f, opR: 1, fila: el.fila };
         } else {
           return {
@@ -1306,7 +1398,7 @@ function ejecutarIncrementoA(exp) {
       if (el.modificador != "const") {
         if (el.tipoDato == "NUMERO") {
           var f = ++el.valor;
-          var tip = typeof el.valor;
+          var tip = asignarTipo(typeof el.valor);
           return { tipo: tip, valor: f, opR: 1, fila: el.fila };
         } else {
           return {
@@ -1345,7 +1437,7 @@ function ejecutarDecrementoD(exp) {
       if (el.modificador != "const") {
         if (el.tipoDato == "NUMERO") {
           var f = el.valor--;
-          var tip = typeof el.valor;
+          var tip = asignarTipo(typeof el.valor);
           return { tipo: tip, valor: f, opR: 1, fila: el.fila };
         } else {
           return {
@@ -1384,7 +1476,7 @@ function ejecutarDecrementoA(exp) {
       if (el.modificador != "const") {
         if (el.tipoDato == "NUMERO") {
           var f = --el.valor;
-          var tip = typeof el.valor;
+          var tip = asignarTipo(typeof el.valor);
           return { tipo: tip, valor: f, opR: 1, fila: el.fila };
         } else {
           return {
@@ -1414,7 +1506,6 @@ function ejecutarDecrementoA(exp) {
     };
   }
 }
-
 //////////////////////////////////////////////////OPERACION POP
 function ejecutarPop(exp) {
   //console.log(exp);
