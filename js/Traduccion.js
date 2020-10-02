@@ -103,14 +103,18 @@ case 7:
  
                                         var pila = eval('$$');
                                         //console.log(pila);
-                                        var anterior = pila[pila.length - 2];  
+                                        var anterior = pila[pila.length - 2]; 
                                         if(Array.isArray(anterior)){
                                             var temp = anterior.concat($$[$0]);
+                                            //console.log(temp);
                                         }else{
                                             if(Array.isArray($$[$0])){
                                                 var temp = $$[$0];
+                                                //console.log(temp);
                                             }else{
+
                                                 var temp  = [$$[$0]];
+                                                //console.log(temp);
                                             }
                                         }
                                         this.$ = temp;
@@ -124,7 +128,11 @@ case 8:
                                         if(Array.isArray(anterior)){
                                             var temp = anterior.concat($$[$0]);
                                         }else{
-                                            var temp  = [$$[$0]];
+                                            if(Array.isArray($$[$0])){
+                                                var temp = $$[$0];
+                                            }else{
+                                                var temp  = [$$[$0]];
+                                            }
                                         }
                                         this.$ = temp;
                                         
@@ -746,7 +754,7 @@ function recorrerJson(json){
     if(t.length == 0){
         return json;
     }else{
-        return [json].concat(t);
+        return t.concat([json]);
     }
 }
 

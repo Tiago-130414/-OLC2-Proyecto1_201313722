@@ -168,7 +168,7 @@ function recorrerJson(json){
     if(t.length == 0){
         return json;
     }else{
-        return [json].concat(t);
+        return t.concat([json]);
     }
 }
 
@@ -585,14 +585,18 @@ LISTA_CONTENIDO_PRIM : CONTENIDO LISTA_CONTENIDO_PRIM          {$$ = $2;}
 CONTENIDO : FUNCIONES                   { 
                                         var pila = eval('$$');
                                         //console.log(pila);
-                                        var anterior = pila[pila.length - 2];  
+                                        var anterior = pila[pila.length - 2]; 
                                         if(Array.isArray(anterior)){
                                             var temp = anterior.concat($1);
+                                            //console.log(temp);
                                         }else{
                                             if(Array.isArray($1)){
                                                 var temp = $1;
+                                                //console.log(temp);
                                             }else{
+
                                                 var temp  = [$1];
+                                                //console.log(temp);
                                             }
                                         }
                                         $$ = temp;
@@ -604,7 +608,11 @@ CONTENIDO : FUNCIONES                   {
                                         if(Array.isArray(anterior)){
                                             var temp = anterior.concat($1);
                                         }else{
-                                            var temp  = [$1];
+                                            if(Array.isArray($1)){
+                                                var temp = $1;
+                                            }else{
+                                                var temp  = [$1];
+                                            }
                                         }
                                         $$ = temp;
                                         }
