@@ -108,7 +108,7 @@ case 33:
 this.$ = {tipoInstruccion : "GRAFICARTS" , contenido : []};
 break;
 case 34:
-this.$ = {tipoInstruccion : "BREAK" , contenido : []};
+this.$ = {tipoInstruccion : "BREAK" , contenido : [] , fila : this._$.first_line };
 break;
 case 38: case 99: case 104: case 151:
 $$[$0-2].push($$[$0]);this.$ = $$[$0-2];

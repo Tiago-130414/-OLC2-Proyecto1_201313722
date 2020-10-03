@@ -2,7 +2,7 @@ var errorSemantico = [];
 var ambitos = [];
 var nAmbitos = [];
 var log = [];
-
+//////////////////////////////////////////////////EJECUTAR ARCHIVO
 function ejJson() {
   Consola.setValue("");
   var texto = Codigo.getValue();
@@ -28,9 +28,10 @@ function ejJson() {
   //IMPRIMIENDO LOS AMBITOS
   //console.log(ambitos);
   eliminarA();
+  //eliminarA();
+  //console.log(ambitos);
   console.log(log);
 }
-
 function ejecutarArchivo(json) {
   for (var element of json) {
     if (element.tipoInstruccion == "CONSOLE") {
@@ -54,7 +55,7 @@ function ejecutarArchivo(json) {
     } else if (element.tipoInstruccion == "POP") {
       realizarPop(element);
     } else if (element.tipoInstruccion == "LISTADO_IF") {
-      ejecutarIF(element.contenido);
+      return ejecutarIF(element.contenido);
     } else if (element.tipoInstruccion == "SWITCH") {
       ejecutarSwitch(element);
     } else if (element.tipoInstruccion == "WHILE") {
@@ -67,6 +68,20 @@ function ejecutarArchivo(json) {
       ejecutarForOf(element);
     } else if (element.tipoInstruccion == "FOR") {
       ejecutarFor(element);
+    } else if (element.tipoInstruccion == "BREAK") {
+      //console.log("soy yo" + ejecutarBreak());
+      if (ejecutarBreak()) {
+        console.log("si encontre un ciclo");
+        console.log(ejecutarBreak());
+        return element;
+      } else {
+        errorSemantico.push({
+          tipo: "Error Semantico",
+          Error: "break en sentencia inadecuada",
+          Fila: ele.fila,
+          Columna: 0,
+        });
+      }
     }
   }
 }
@@ -181,7 +196,6 @@ function ejecutarDeclaracion(ele, mod, ambi) {
   }
   //}
 }
-
 /////////////////////////////////////////////////INSTRUCCION DECLARACION DE VECTOR SIN TIPO CON VALOR
 function declaracionArrayST(ele, mod, ambi) {
   //console.log(ele);
@@ -737,9 +751,18 @@ function ejecutarIF(ele) {
             //console.log("instrucciones del if");
             //aqui se agrega el ambito
             agregarAmbito("IF");
-            ejecutarArchivo(element.instrucciones);
+            var cd = ejecutarArchivo(element.instrucciones);
+            //console.log("if");
+            //console.log(cd);
             //aqui se elimina el ambito
             eliminarA();
+            if (cd != undefined) {
+              console.log("si soy != undefined");
+              if (cd.tipoInstruccion == "BREAK") {
+                console.log("retornare valor");
+                return cd;
+              }
+            }
             //ejecuteIf = true;
             break;
           }
@@ -767,13 +790,18 @@ function ejecutarWhile(ele) {
   //console.log(exp);
   //VERIFICANDO QUE SEA UNA EXPRESION VALIDA
   if (exp.tipo != "Error Semantico") {
-    console.log(exp);
-    console.log(ele.instrucciones);
+    //console.log(exp);
+    //console.log(ele.instrucciones);
     while (exp.valor) {
-      console.log(exp);
+      //console.log(exp);
       agregarAmbito("WHILE");
-      ejecutarArchivo(ele.instrucciones);
+      var cd = ejecutarArchivo(ele.instrucciones);
       eliminarA();
+      if (cd != undefined) {
+        if (cd.tipoInstruccion == "BREAK") {
+          return undefined;
+        }
+      }
       exp = leerExp(ele.condicion);
     }
   } else {
@@ -788,11 +816,16 @@ function ejecutarDoWhile(ele) {
   //console.log(exp);
   //SE COMPRUEBA QUE SEA UNA EXPRESION VALIDA
   if (exp.tipo != "Error Semantico") {
-    console.log(ele.instrucciones);
+    //console.log(ele.instrucciones);
     do {
       agregarAmbito("DOWHILE");
-      ejecutarArchivo(ele.instrucciones);
+      var cd = ejecutarArchivo(ele.instrucciones);
       eliminarA();
+      if (cd != undefined) {
+        if (cd.tipoInstruccion == "BREAK") {
+          return undefined;
+        }
+      }
       exp = leerExp(ele.condicion);
     } while (exp.valor);
   } else {
@@ -829,8 +862,16 @@ function ejecutarFor(ele) {
     while (condi) {
       //console.log("prueba");
       agregarAmbito("FOR");
-      ejecutarArchivo(ele.instrucciones);
+      var cd = ejecutarArchivo(ele.instrucciones);
+      //console.log("soy un ciclo for");
+      //console.log(cd);
       eliminarA();
+      if (cd != undefined) {
+        if (cd.tipoInstruccion == "BREAK") {
+          console.log("tpsm");
+          return undefined;
+        }
+      }
       ejecutarAsignacion(fin);
       condi = leerExp(ele.condicion).valor;
       //console.log(condi);
@@ -859,12 +900,12 @@ function ejecutarForIn(ele) {
     verificarDeclaracion(ele.condicion);
     variableB = ele.condicion.contenido[0].identificador;
     vectorR = ele.condicion.nombreA;
-    console.log(vectorR);
+    //console.log(vectorR);
     //console.log(variableB);
   } else if (ele.condicion.tipoInstruccion == "ASIGNACION") {
     variableB = ele.condicion.identificador;
     vectorR = ele.condicion.nombreA;
-    console.log(variableB);
+    //console.log(variableB);
   }
   /*VARIABLES QUE TIENEN LOS JSON QUE SE MODIFICAN*/
   var vecM = buscarVModificar(ele, vectorR); //vector a modificar
@@ -876,8 +917,13 @@ function ejecutarForIn(ele) {
       if (vecM.valor != undefined) {
         for (varM.valor in vecM.valor) {
           agregarAmbito("FOR_IN");
-          ejecutarArchivo(ele.instrucciones);
+          var cd = ejecutarArchivo(ele.instrucciones);
           eliminarA();
+          if (cd != undefined) {
+            if (cd.tipoInstruccion == "BREAK") {
+              return undefined;
+            }
+          }
         }
       } else {
         errorSemantico.push({
@@ -906,12 +952,12 @@ function ejecutarForOf(ele) {
     verificarDeclaracion(ele.condicion);
     variableB = ele.condicion.contenido[0].identificador;
     vectorR = ele.condicion.nombreA;
-    console.log(vectorR);
+    //console.log(vectorR);
     //console.log(variableB);
   } else if (ele.condicion.tipoInstruccion == "ASIGNACION") {
     variableB = ele.condicion.identificador;
     vectorR = ele.condicion.nombreA;
-    console.log(variableB);
+    //console.log(variableB);
   }
   /*VARIABLES QUE TIENEN LOS JSON QUE SE MODIFICAN*/
   var vecM = buscarVModificar(ele, vectorR); //vector a modificar
@@ -923,8 +969,13 @@ function ejecutarForOf(ele) {
       if (vecM.valor != undefined) {
         for (varM.valor of vecM.valor) {
           agregarAmbito("FOR_OF");
-          ejecutarArchivo(ele.instrucciones);
+          var cd = ejecutarArchivo(ele.instrucciones);
           eliminarA();
+          if (cd != undefined) {
+            if (cd.tipoInstruccion == "BREAK") {
+              return undefined;
+            }
+          }
         }
       } else {
         errorSemantico.push({
@@ -948,14 +999,14 @@ function ejecutarSwitch(ele) {
   agregarAmbito("SWITCH");
   //VERIFICANDO LA CONDICION
   var condicion = leerExp(ele.condicion);
-  console.log(condicion);
+  //console.log(condicion);
   //VERIFICANDO QUE LA EXPRESION SEA VALIDA
   if (condicion.tipo != "Error Semantico") {
     for (var e of ele.contenido) {
       if (e.tipoInstruccion == "CASE") {
         //OBTENIENDO CONDICION DEL CASE
         var condCase = leerExp(e.condicion);
-        console.log(condCase);
+        //console.log(condCase);
         //VERIFICANDO SI LA CONDICION ES VALIDA
         if (condCase != "Error Semantico") {
           //SE VERIFICAN LOS TIPOS PARA PODER OPERAR
@@ -965,8 +1016,13 @@ function ejecutarSwitch(ele) {
               //VERIFICANDO SI LOS VALORES COINCIDEN
               if (condCase.valor == condicion.valor) {
                 agregarAmbito("CASE_TEMP");
-                ejecutarArchivo(e.instrucciones);
+                var cd = ejecutarArchivo(e.instrucciones);
                 eliminarA();
+                if (cd != undefined) {
+                  if (cd.tipoInstruccion == "BREAK") {
+                    return undefined;
+                  }
+                }
               }
             } else {
               errorSemantico.push({
@@ -1002,7 +1058,7 @@ function ejecutarSwitch(ele) {
 ////////////////////////////////////////////////SENTENCIA BREAK
 function ejecutarBreak() {
   for (var i = nAmbitos.length - 1; i >= 0; i--) {
-    console.log(nAmbitos[i]);
+    //console.log(nAmbitos[i]);
     if (
       nAmbitos[i] == "SWITCH" ||
       nAmbitos[i] == "FOR_IN_TEMP" ||
@@ -1014,7 +1070,6 @@ function ejecutarBreak() {
       return true;
     }
   }
-  return false;
 }
 //////////////////////////////////////////////// REALIZAR OPERACION
 function leerExp(exp) {
@@ -1253,8 +1308,8 @@ function validarTipoMM(opIzq, opDer, tipoOp) {
 }
 
 function validarTipoIgIg(opIzq, opDer, topI, topD) {
-  console.log(topI);
-  console.log(topD);
+  //console.log(opIzq);
+  //console.log(topD);
   if (
     opIzq.tipo != "IDENTIFICADOR" &&
     opIzq.tipo != "UNDEFINED" &&
@@ -1265,7 +1320,7 @@ function validarTipoIgIg(opIzq, opDer, topI, topD) {
       var op = opIzq.valor == opDer.valor;
       var tip = asignarTipo(typeof op);
       return { tipo: tip, valor: op };
-    } else if (opIzq.valor == opDer.valor) {
+    } else if (opIzq.tipo == opDer.tipo) {
       var op = opIzq.valor == opDer.valor;
       var tip = asignarTipo(typeof op);
       return { tipo: tip, valor: op };
@@ -1728,9 +1783,8 @@ function agregarAmbito(nombre) {
 //////////////////////////////////////////////ELMINAR AMBITO
 function eliminarA() {
   //agregando ambito elminado al log de cambios
-  log.push(ambitos.pop());
+  log.push({ NombreAmbito: nAmbitos.pop(), contenido: ambitos.pop() });
   //eliminando nombre de vector de nombres
-  nAmbitos.pop();
 }
 //////////////////////////////////////////////RETORNAR NOMBRE DEL AMBITO
 function rNomAmbito() {
