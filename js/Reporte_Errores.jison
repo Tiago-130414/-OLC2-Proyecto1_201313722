@@ -211,10 +211,10 @@ FUNCION_GRAFICAR : R_Graficar S_ParentesisAbre S_ParentesisCierra S_PuntoComa   
 
 /*--------------------------------------------- SENTENCIAS DE TRANSFERENCIA ---------------------------------------------------------*/
 
-SENTENCIAS_TRANSFERENCIA : R_Break S_PuntoComa
-                         | R_Continue S_PuntoComa
-                         | R_Return S_PuntoComa
-                         | R_Return EXPRESION_G S_PuntoComa
+SENTENCIAS_TRANSFERENCIA : R_Break S_PuntoComa                                               {$$ = {tipoInstruccion : "BREAK" , contenido : []};}
+                         | R_Continue S_PuntoComa                                            //{$$ = {tipoInstruccion : "CONTINUE" , contenido : []};}
+                         | R_Return S_PuntoComa                                              //{$$ = {tipoInstruccion : "RETURN" , contenido : []};}
+                         | R_Return EXPRESION_G S_PuntoComa                                  //{$$ = {tipoInstruccion : "RETURN_V" , contenido : $2};}
 ;
 
 /*--------------------------------------------- LISTADO IF---------------------------------------------------------*/

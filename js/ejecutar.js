@@ -955,24 +955,32 @@ function ejecutarSwitch(ele) {
       if (e.tipoInstruccion == "CASE") {
         //OBTENIENDO CONDICION DEL CASE
         var condCase = leerExp(e.condicion);
-        //console.log(condCase);
+        console.log(condCase);
         //VERIFICANDO SI LA CONDICION ES VALIDA
         if (condCase != "Error Semantico") {
-          //SE VERIFICAN LOS TIPOS DE CONDICION
-          if (
-            (condCase.tipo == "BOOLEAN" && condCase.valor == false) ||
-            (condicion.tipo == condCase.tipo &&
-              condCase.valor != (true && undefined))
-          ) {
-            agregarAmbito("CASE_TEMP");
-            ejecutarArchivo(e.instrucciones);
-            eliminarA();
+          //SE VERIFICAN LOS TIPOS PARA PODER OPERAR
+          if (condCase.tipo == condicion.tipo) {
+            //SE VERIFICAN LOS VALORES
+            if (condCase.valor != (undefined && true)) {
+              //VERIFICANDO SI LOS VALORES COINCIDEN
+              if (condCase.valor == condicion.valor) {
+                agregarAmbito("CASE_TEMP");
+                ejecutarArchivo(e.instrucciones);
+                eliminarA();
+              }
+            } else {
+              errorSemantico.push({
+                tipo: "Error Semantico",
+                Error: "El valor de case no es aceptado por switch",
+                Fila: condCase.fila,
+                Columna: 0,
+              });
+            }
           } else {
-            //ERROR SI LOS TIPOS DE CONDICION NO CONINCIDEN
             errorSemantico.push({
               tipo: "Error Semantico",
               Error: "Los tipos de condicion switch y case no coinciden",
-              Fila: e.fila,
+              Fila: condCase.fila,
               Columna: 0,
             });
           }
@@ -991,7 +999,23 @@ function ejecutarSwitch(ele) {
   }
   eliminarA();
 }
-
+////////////////////////////////////////////////SENTENCIA BREAK
+function ejecutarBreak() {
+  for (var i = nAmbitos.length - 1; i >= 0; i--) {
+    console.log(nAmbitos[i]);
+    if (
+      nAmbitos[i] == "SWITCH" ||
+      nAmbitos[i] == "FOR_IN_TEMP" ||
+      nAmbitos[i] == "FOR_TEMP" ||
+      nAmbitos[i] == "FOR_OF_TEMP" ||
+      nAmbitos[i] == "WHILE" ||
+      nAmbitos[i] == "DOWHILE"
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
 //////////////////////////////////////////////// REALIZAR OPERACION
 function leerExp(exp) {
   if (
