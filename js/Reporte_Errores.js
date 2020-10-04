@@ -89,13 +89,19 @@ break;
 case 4: case 82:
 $$[$0-1].push($$[$0]);this.$=$$[$0-1];
 break;
-case 5: case 16: case 39: case 47: case 83: case 100: case 105: case 152:
+case 5: case 16: case 39: case 47: case 83: case 100: case 105: case 123: case 152:
 this.$ = [$$[$0]];
 break;
 case 8: case 18:
 this.$ ='';tablaErrores.push({ tipo  : ' Error_Sintactico ', Error  : 'Simbolo inesperado: ' + yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });
 break;
-case 14: case 42: case 45: case 50: case 81:
+case 9:
+this.$ = { tipoInstruccion : "FUNCIONSTR" , identificador : [valor("IDENTIFICADOR" ,$$[$0-6],this._$.first_line)] ,tipoDato : undefined , parametros : $$[$0-4] , instrucciones : $$[$0-1] , fila : this._$.first_line};
+break;
+case 10:
+this.$ = { tipoInstruccion : "FUNCIONCTR" , identificador : [valor("IDENTIFICADOR" ,$$[$0-8],this._$.first_line)] ,tipoDato : $$[$0-3],parametros : $$[$0-6] , instrucciones : $$[$0-3], fila : this._$.first_line};
+break;
+case 14: case 42: case 45: case 50: case 81: case 121:
 this.$ = [];
 break;
 case 15: case 46:
@@ -109,6 +115,15 @@ this.$ = {tipoInstruccion : "GRAFICARTS" , contenido : []};
 break;
 case 34:
 this.$ = {tipoInstruccion : "BREAK" , contenido : [] , fila : this._$.first_line };
+break;
+case 35:
+this.$ = {tipoInstruccion : "CONTINUE" , contenido : [], fila : this._$.first_line};
+break;
+case 36:
+this.$ = {tipoInstruccion : "RETURN" , contenido : [], fila : this._$.first_line};
+break;
+case 37:
+this.$ = {tipoInstruccion : "RETURN_V" , contenido : $$[$0-1], fila : this._$.first_line};
 break;
 case 38: case 99: case 104: case 151:
 $$[$0-2].push($$[$0]);this.$ = $$[$0-2];
@@ -233,7 +248,7 @@ break;
 case 106:
  this.$ = {tipo : "VARIABLE" , identificador : $$[$0] , tipoDato : undefined , valor : undefined , fila : this._$.first_line};
 break;
-case 107:
+case 107: case 124:
  this.$ = {tipo : "VARIABLE" , identificador : $$[$0-2] , tipoDato : $$[$0] , valor : undefined , fila : this._$.first_line};
 break;
 case 108:
@@ -253,6 +268,12 @@ case 112:
 break;
 case 116:
 this.$ = {tipoInstruccion : "POP" , identificador : $$[$0-5], fila : this._$.first_line};
+break;
+case 122:
+$$[$0-2].push($$[$0]); this.$ = $$[$0-2];
+break;
+case 125:
+ this.$ = {tipo : "VARIABLE" , identificador : $$[$0-4] , tipoDato : $$[$0-2] , valor : $$[$0] , fila : this._$.first_line};
 break;
 case 144:
 this.$ = "NUMERO";

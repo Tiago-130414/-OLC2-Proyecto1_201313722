@@ -169,10 +169,10 @@ CONTENIDO : FUNCIONES
 ;
 /*---------------------------------------------DEFINICION DE FUNCIONES---------------------------------------------------------*/
 
-FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra 
-          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre EDD S_LlaveCierra 
-          | R_Let Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre EDD S_LlaveCierra S_PuntoComa 
-          | R_Const Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre EDD S_LlaveCierra S_PuntoComa
+FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra                                             {$$ = { tipoInstruccion : "FUNCIONSTR" , identificador : [valor("IDENTIFICADOR" ,$2,this._$.first_line)] ,tipoDato : undefined , parametros : $4 , instrucciones : $7 , fila : this._$.first_line};}
+          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre EDD S_LlaveCierra                   {$$ = { tipoInstruccion : "FUNCIONCTR" , identificador : [valor("IDENTIFICADOR" ,$2,this._$.first_line)] ,tipoDato : $7,parametros : $4 , instrucciones : $7, fila : this._$.first_line};}
+          | R_Let Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre EDD S_LlaveCierra S_PuntoComa     //{$$ = { tipoInstruccion : "FUNCIONSTP" , nombre : $2 , parametros : $4 , instrucciones : $7};}
+          | R_Const Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre EDD S_LlaveCierra S_PuntoComa   //{$$ = { tipoInstruccion : "FUNCIONSTP" , nombre : $2 , parametros : $4 , instrucciones : $7};}
           
 ;
 /*---------------------------------------------LISTADO DE ESTRUCTURAS DE CONTROL---------------------------------------------------------*/
@@ -212,9 +212,9 @@ FUNCION_GRAFICAR : R_Graficar S_ParentesisAbre S_ParentesisCierra S_PuntoComa   
 /*--------------------------------------------- SENTENCIAS DE TRANSFERENCIA ---------------------------------------------------------*/
 
 SENTENCIAS_TRANSFERENCIA : R_Break S_PuntoComa                                               {$$ = {tipoInstruccion : "BREAK" , contenido : [] , fila : this._$.first_line };}
-                         | R_Continue S_PuntoComa                                            //{$$ = {tipoInstruccion : "CONTINUE" , contenido : []};}
-                         | R_Return S_PuntoComa                                              //{$$ = {tipoInstruccion : "RETURN" , contenido : []};}
-                         | R_Return EXPRESION_G S_PuntoComa                                  //{$$ = {tipoInstruccion : "RETURN_V" , contenido : $2};}
+                         | R_Continue S_PuntoComa                                            {$$ = {tipoInstruccion : "CONTINUE" , contenido : [], fila : this._$.first_line};}
+                         | R_Return S_PuntoComa                                              {$$ = {tipoInstruccion : "RETURN" , contenido : [], fila : this._$.first_line};}
+                         | R_Return EXPRESION_G S_PuntoComa                                  {$$ = {tipoInstruccion : "RETURN_V" , contenido : $2, fila : this._$.first_line};}
 ;
 
 /*--------------------------------------------- LISTADO IF---------------------------------------------------------*/
@@ -413,15 +413,15 @@ PARAMETROS_FUNC
 
 /*---------------------------------------------PARAMETROS---------------------------------------------------------*/
 PARAM: LISTA_PARAMETROS
-     |
+     |                                                                  {$$ = [];}
 ;
 
-LISTA_PARAMETROS : LISTA_PARAMETROS S_Coma PARAMETROS  
-                 | PARAMETROS              
+LISTA_PARAMETROS : LISTA_PARAMETROS S_Coma PARAMETROS                   {$1.push($3); $$ = $1;}
+                 | PARAMETROS                                           {$$ = [$1];}
 ;
 
-PARAMETROS : Identificador S_DosPuntos TIPOS_DE_DATO 
-           | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G 
+PARAMETROS : Identificador S_DosPuntos TIPOS_DE_DATO                                                    { $$ = {tipo : "VARIABLE" , identificador : $1 , tipoDato : $3 , valor : undefined , fila : this._$.first_line};}
+           | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G                                { $$ = {tipo : "VARIABLE" , identificador : $1 , tipoDato : $3 , valor : $5 , fila : this._$.first_line};}
            | Identificador S_Interrogacion S_DosPuntos TIPOS_DE_DATO 
            | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE                                 
            | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE S_Igual LISTA_DE_ASIGNACIONES 

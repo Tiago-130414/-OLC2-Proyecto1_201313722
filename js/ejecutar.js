@@ -55,7 +55,10 @@ function ejecutarArchivo(json) {
     } else if (element.tipoInstruccion == "POP") {
       realizarPop(element);
     } else if (element.tipoInstruccion == "LISTADO_IF") {
-      return ejecutarIF(element.contenido);
+      var p = ejecutarIF(element.contenido);
+      if (p != undefined) {
+        return p;
+      }
     } else if (element.tipoInstruccion == "SWITCH") {
       ejecutarSwitch(element);
     } else if (element.tipoInstruccion == "WHILE") {
@@ -69,22 +72,79 @@ function ejecutarArchivo(json) {
     } else if (element.tipoInstruccion == "FOR") {
       ejecutarFor(element);
     } else if (element.tipoInstruccion == "BREAK") {
-      //console.log("soy yo" + ejecutarBreak());
-      if (ejecutarBreak()) {
-        console.log("si encontre un ciclo");
-        console.log(ejecutarBreak());
+      //console.log("soy yo" + ejecutarBreak()); RETORNA DIRECTAMENTE
+      if (ejecutarBreak(element)) {
+        //console.log("si encontre un ciclo");
+        //console.log(ejecutarBreak());
         return element;
-      } else {
-        errorSemantico.push({
-          tipo: "Error Semantico",
-          Error: "break en sentencia inadecuada",
-          Fila: ele.fila,
-          Columna: 0,
-        });
       }
+    } else if (element.tipoInstruccion == "CONTINUE") {
+      //console.log("soy yo" + ejecutarBreak()); RETORNA DIRECTAMENTE
+      if (ejecutarContinue(element, "Continue")) {
+        //console.log("si encontre un ciclo");
+        //console.log(ejecutarBreak());
+        return element;
+      }
+    } else if (element.tipoInstruccion == "FUNCIONSTR") {
+      //funcion sin tipo de retorno
+      declaracionFuncion(element);
     }
   }
 }
+function declaracionFuncion(elemento) {
+  console.log(elemento);
+  var id = elemento.identificador[0].valor;
+  //console.log(id);
+  //BUSCANDO UN ID REPETIDO EN LOS AMBITOS
+  if (!buscarVariable(id)) {
+    //console.log(buscarPRepetidos(elemento.parametros));
+    if (buscarPRepetidos(elemento.parametros) == false) {
+      insertarAmbito({
+        tipo: elemento.tipoInstruccion,
+        ambito: rNomAmbito(),
+        identificador: id,
+        parametros: elemento.parametros,
+        tipoDato: elemento.tipoDato,
+        instrucciones: elemento.instrucciones,
+        fila: elemento.fila,
+      });
+    }
+  } else {
+    //SI HAY UN ID REPETIDO
+    errorSemantico.push({
+      tipo: "Error Semantico",
+      Error: "identificador duplicado -> " + id,
+      Fila: elemento.fila,
+      Columna: 0,
+    });
+  }
+}
+///////////////////////////////////////////////////FUNCION QUE BUSCA PARAMETROS REPETIDOS
+function buscarPRepetidos(arr) {
+  var repetidas = false;
+  for (var element in arr) {
+    var idE = arr[element].identificador;
+    var index = element;
+    for (var i = 0; i < arr.length; i++) {
+      if (index != i) {
+        if (idE == arr[i].identificador) {
+          repetidas = true;
+          errorSemantico.push({
+            tipo: "Error Semantico",
+            Error: "identificador duplicado -> " + idE,
+            Fila: arr[element].fila,
+            Columna: 0,
+          });
+          break;
+        }
+      } else {
+        continue;
+      }
+    }
+  }
+  return repetidas;
+}
+
 //////////////////////////////////////////////////INSTRUCCION IMPRIMIR
 function ejecutarImprimir(elemento) {
   var id;
@@ -295,7 +355,7 @@ function declaracionArrayCTV(ele, mod, ambi) {
   if (!buscarVariable(ele.identificador)) {
     //VERIFICAR EXPRESIONES
     var v = [];
-    console.log(ele);
+    //console.log(ele);
     //VERIFICANDO TAMAñO DE VECTOR DE VALORES PARA SABER SI ES NECESARIO ASIGNAR VALORES
     if (ele.valor.length > 0) {
       //console.log("traigo valores");
@@ -450,14 +510,17 @@ function asigVar(ele) {
 /////////////////////////////////////////////////INSTRUCCION ASIGNACION INCREMENTO DESPUES
 function incVarD(ele) {
   var idAs = lAcceso(ele.identificador);
+  //console.log(idAs);
   //SABER SI EXISTE VARIABLE
   if (buscarVariable(idAs.valor)) {
     //OBTENIENDO VARIABLE DE AMBITOS
     var variable = buscarVModificar(ele, idAs.valor);
+    //console.log(variable);
     if (variable.modificador != "const") {
       //SE VERIFICA SI ES NUMERO PARA QUE SE PUEDA AUMENTAR EL VALOR
       if (variable.tipoDato == "NUMERO") {
         variable.valor++;
+        //console.log(variable.valor);
       } else {
         //NO SE PUEDE AUMENTAR EL VALOR DE VARIABLE
         errorSemantico.push({
@@ -757,11 +820,11 @@ function ejecutarIF(ele) {
             //aqui se elimina el ambito
             eliminarA();
             if (cd != undefined) {
-              console.log("si soy != undefined");
-              if (cd.tipoInstruccion == "BREAK") {
-                console.log("retornare valor");
-                return cd;
-              }
+              //console.log("si soy != undefined");
+              //if (cd.tipoInstruccion == "BREAK") {
+              //console.log("retornare valor");
+              return cd;
+              //}
             }
             //ejecuteIf = true;
             break;
@@ -777,8 +840,15 @@ function ejecutarIF(ele) {
     if (element.tipoInstruccion == "ELSE") {
       //console.log("hijole");
       agregarAmbito("ELSE");
-      ejecutarArchivo(element.instrucciones);
+      var cd = ejecutarArchivo(element.instrucciones);
       eliminarA();
+      if (cd != undefined) {
+        //console.log("si soy != undefined");
+        if (cd.tipoInstruccion == "BREAK") {
+          //console.log("retornare valor");
+          return cd;
+        }
+      }
     }
     //var exp = leerExp();
   }
@@ -800,6 +870,8 @@ function ejecutarWhile(ele) {
       if (cd != undefined) {
         if (cd.tipoInstruccion == "BREAK") {
           return undefined;
+        } else if (cd.tipoInstruccion == "CONTINUE") {
+          continue;
         }
       }
       exp = leerExp(ele.condicion);
@@ -824,6 +896,8 @@ function ejecutarDoWhile(ele) {
       if (cd != undefined) {
         if (cd.tipoInstruccion == "BREAK") {
           return undefined;
+        } else if (cd.tipoInstruccion == "CONTINUE") {
+          continue;
         }
       }
       exp = leerExp(ele.condicion);
@@ -868,8 +942,10 @@ function ejecutarFor(ele) {
       eliminarA();
       if (cd != undefined) {
         if (cd.tipoInstruccion == "BREAK") {
-          console.log("tpsm");
+          //console.log("tpsm");
           return undefined;
+        } else if (cd.tipoInstruccion == "CONTINUE") {
+          continue;
         }
       }
       ejecutarAsignacion(fin);
@@ -922,6 +998,8 @@ function ejecutarForIn(ele) {
           if (cd != undefined) {
             if (cd.tipoInstruccion == "BREAK") {
               return undefined;
+            } else if (cd.tipoInstruccion == "CONTINUE") {
+              continue;
             }
           }
         }
@@ -974,6 +1052,8 @@ function ejecutarForOf(ele) {
           if (cd != undefined) {
             if (cd.tipoInstruccion == "BREAK") {
               return undefined;
+            } else if (cd.tipoInstruccion == "CONTINUE") {
+              continue;
             }
           }
         }
@@ -1021,6 +1101,8 @@ function ejecutarSwitch(ele) {
                 if (cd != undefined) {
                   if (cd.tipoInstruccion == "BREAK") {
                     return undefined;
+                  } else if (cd.tipoInstruccion == "CONTINUE") {
+                    return cd;
                   }
                 }
               }
@@ -1056,7 +1138,7 @@ function ejecutarSwitch(ele) {
   eliminarA();
 }
 ////////////////////////////////////////////////SENTENCIA BREAK
-function ejecutarBreak() {
+function ejecutarBreak(ele) {
   for (var i = nAmbitos.length - 1; i >= 0; i--) {
     //console.log(nAmbitos[i]);
     if (
@@ -1070,6 +1152,33 @@ function ejecutarBreak() {
       return true;
     }
   }
+  errorSemantico.push({
+    tipo: "Error Semantico",
+    Error: "break en sentencia inadecuada",
+    Fila: ele.fila,
+    Columna: 0,
+  });
+}
+////////////////////////////////////////////////SENTENCIA CONTINUE
+function ejecutarContinue(ele) {
+  for (var i = nAmbitos.length - 1; i >= 0; i--) {
+    //console.log(nAmbitos[i]);
+    if (
+      nAmbitos[i] == "FOR_IN_TEMP" ||
+      nAmbitos[i] == "FOR_TEMP" ||
+      nAmbitos[i] == "FOR_OF_TEMP" ||
+      nAmbitos[i] == "WHILE" ||
+      nAmbitos[i] == "DOWHILE"
+    ) {
+      return true;
+    }
+  }
+  errorSemantico.push({
+    tipo: "Error Semantico",
+    Error: "continue en sentencia inadecuada",
+    Fila: ele.fila,
+    Columna: 0,
+  });
 }
 //////////////////////////////////////////////// REALIZAR OPERACION
 function leerExp(exp) {
@@ -1131,6 +1240,7 @@ function leerExp(exp) {
       if (vla.tipo == "Error Semantico") {
         return vla;
       } else {
+        //console.log(vla.valor);
         return {
           tipo: asignarTipo(tipoVar),
           opR: 0,
@@ -1318,11 +1428,14 @@ function validarTipoIgIg(opIzq, opDer, topI, topD) {
   ) {
     if (opIzq.opR == 1 || opDer.opR == 1) {
       var op = opIzq.valor == opDer.valor;
+      //console.log(op);
       var tip = asignarTipo(typeof op);
+      console.log(tip);
       return { tipo: tip, valor: op };
     } else if (opIzq.tipo == opDer.tipo) {
       var op = opIzq.valor == opDer.valor;
       var tip = asignarTipo(typeof op);
+      console.log(tip);
       return { tipo: tip, valor: op };
     }
   } else if (
@@ -1354,7 +1467,7 @@ function validarTipoDist(opIzq, opDer) {
       var op = opIzq.valor != opDer.valor;
       var tip = asignarTipo(typeof op);
       return { tipo: tip, valor: op };
-    } else if (opIzq.valor == opDer.valor) {
+    } else if (opIzq.valor != opDer.valor) {
       var op = opIzq.valor != opDer.valor;
       var tip = asignarTipo(typeof op);
       return { tipo: tip, valor: op };
