@@ -170,7 +170,7 @@ CONTENIDO : FUNCIONES
 /*---------------------------------------------DEFINICION DE FUNCIONES---------------------------------------------------------*/
 
 FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra                                             {$$ = { tipoInstruccion : "FUNCIONSTR" , identificador : [valor("IDENTIFICADOR" ,$2,this._$.first_line)] ,tipoDato : undefined , parametros : $4 , instrucciones : $7 , fila : this._$.first_line};}
-          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre EDD S_LlaveCierra                   {$$ = { tipoInstruccion : "FUNCIONCTR" , identificador : [valor("IDENTIFICADOR" ,$2,this._$.first_line)] ,tipoDato : $7,parametros : $4 , instrucciones : $7, fila : this._$.first_line};}
+          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre EDD S_LlaveCierra                   {$$ = { tipoInstruccion : "FUNCIONCTR" , identificador : [valor("IDENTIFICADOR" ,$2,this._$.first_line)] ,tipoDato : $7,parametros : $4 , instrucciones : $9, fila : this._$.first_line};}
           | R_Let Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre EDD S_LlaveCierra S_PuntoComa     //{$$ = { tipoInstruccion : "FUNCIONSTP" , nombre : $2 , parametros : $4 , instrucciones : $7};}
           | R_Const Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre EDD S_LlaveCierra S_PuntoComa   //{$$ = { tipoInstruccion : "FUNCIONSTP" , nombre : $2 , parametros : $4 , instrucciones : $7};}
           
@@ -214,7 +214,7 @@ FUNCION_GRAFICAR : R_Graficar S_ParentesisAbre S_ParentesisCierra S_PuntoComa   
 SENTENCIAS_TRANSFERENCIA : R_Break S_PuntoComa                                               {$$ = {tipoInstruccion : "BREAK" , contenido : [] , fila : this._$.first_line };}
                          | R_Continue S_PuntoComa                                            {$$ = {tipoInstruccion : "CONTINUE" , contenido : [], fila : this._$.first_line};}
                          | R_Return S_PuntoComa                                              {$$ = {tipoInstruccion : "RETURN" , contenido : [], fila : this._$.first_line};}
-                         | R_Return EXPRESION_G S_PuntoComa                                  {$$ = {tipoInstruccion : "RETURN_V" , contenido : $2, fila : this._$.first_line};}
+                         | R_Return EXPRESION_G S_PuntoComa                                  {var exp;if(Array.isArray($2)){exp = $2;}else{exp = [$2];};$$ = {tipoInstruccion : "RETURN_V" , contenido : exp, fila : this._$.first_line};}
 ;
 
 /*--------------------------------------------- LISTADO IF---------------------------------------------------------*/
@@ -401,14 +401,14 @@ CONT_VAR: Identificador /*declaracion de variable solo id*/                     
 /*---------------------------------------------LLAMADAS A FUNCION---------------------------------------------------------*/
 
 LLAMADA_FUNC
-    : Identificador S_ParentesisAbre PARAMETROS_FUNC S_ParentesisCierra S_PuntoComa 
+    : Identificador S_ParentesisAbre PARAMETROS_FUNC S_ParentesisCierra S_PuntoComa                                                 {$$ = {tipoInstruccion : "LLAMADA_F" , identificador : $1 , parametros : $3 , fila : this._$.first_line};}
     | ATRIBUTOS S_Punto R_Pop S_ParentesisAbre S_ParentesisCierra S_PuntoComa                                                       {$$ = {tipoInstruccion : "POP" , identificador : $1, fila : this._$.first_line};}
 ;
 
 PARAMETROS_FUNC
-    : PARAMETROS_FUNC S_Coma EXPRESION_G 
-    | EXPRESION_G
-    | 
+    : PARAMETROS_FUNC S_Coma EXPRESION_G        {var v ;var exp;if(Array.isArray($3)){exp = $3;}else{exp = [$3];};v = $1.concat(exp);$$ = v;}
+    | EXPRESION_G                               {var exp;if(Array.isArray($1)){exp = $1;}else{exp = [$1];};$$ = exp;}
+    |                                           {$$ = [];}
 ;
 
 /*---------------------------------------------PARAMETROS---------------------------------------------------------*/
@@ -514,8 +514,8 @@ EXPRESION_G
     | R_False                                                                                     {$$ = valor("BOOLEAN", false,this._$.first_line);}
     | R_Undefined                                                                                 {$$ = valor("UNDEFINED", undefined,this._$.first_line);}  
     | Cadena                                                                                      {$$ = valor("CADENA" , String($1), this._$.first_line);}
-    | Identificador S_ParentesisAbre S_ParentesisCierra                                          
-    | Identificador S_ParentesisAbre OPCIONAL S_ParentesisCierra                                 
+    | Identificador S_ParentesisAbre S_ParentesisCierra                                           {$$ = {tipo : "LLAMADA_F" , identificador : $1 , parametros : [] , fila : this._$.first_line};}                          
+    | Identificador S_ParentesisAbre OPCIONAL S_ParentesisCierra                                  {$$ = {tipo : "LLAMADA_F" , identificador : $1 , parametros : $3 , fila : this._$.first_line};}
     | S_ParentesisAbre EXPRESION_G S_ParentesisCierra                                             {$$ = $2;}
     | ATRIBUTOS                                                                                   {$$ = $1;}
     | ATRIBUTOS S_Punto R_Length                                                                  {$$ = {tipo : "LENGTH" , identificador : $1 , fila : this._$.first_line};}
@@ -523,6 +523,6 @@ EXPRESION_G
 ; /*ATRIBUTOS CONTIENE ID Y VECTOR */
 
 OPCIONAL 
-    : OPCIONAL S_Coma EXPRESION_G                                                                
-    | EXPRESION_G    
+    : OPCIONAL S_Coma EXPRESION_G                                                                 {var exp;if(Array.isArray($3)){exp = $3;}else{exp = [$3];};var v; v = $1.concat(exp);$$=v;}                                                                
+    | EXPRESION_G                                                                                 {var exp;if(Array.isArray($1)){exp = $1;}else{exp = [$1];};$$ = exp;}
 ; 

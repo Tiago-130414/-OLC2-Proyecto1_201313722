@@ -99,9 +99,9 @@ case 9:
 this.$ = { tipoInstruccion : "FUNCIONSTR" , identificador : [valor("IDENTIFICADOR" ,$$[$0-6],this._$.first_line)] ,tipoDato : undefined , parametros : $$[$0-4] , instrucciones : $$[$0-1] , fila : this._$.first_line};
 break;
 case 10:
-this.$ = { tipoInstruccion : "FUNCIONCTR" , identificador : [valor("IDENTIFICADOR" ,$$[$0-8],this._$.first_line)] ,tipoDato : $$[$0-3],parametros : $$[$0-6] , instrucciones : $$[$0-3], fila : this._$.first_line};
+this.$ = { tipoInstruccion : "FUNCIONCTR" , identificador : [valor("IDENTIFICADOR" ,$$[$0-8],this._$.first_line)] ,tipoDato : $$[$0-3],parametros : $$[$0-6] , instrucciones : $$[$0-1], fila : this._$.first_line};
 break;
-case 14: case 42: case 45: case 50: case 81: case 121:
+case 14: case 42: case 45: case 50: case 81: case 119: case 121:
 this.$ = [];
 break;
 case 15: case 46:
@@ -123,7 +123,7 @@ case 36:
 this.$ = {tipoInstruccion : "RETURN" , contenido : [], fila : this._$.first_line};
 break;
 case 37:
-this.$ = {tipoInstruccion : "RETURN_V" , contenido : $$[$0-1], fila : this._$.first_line};
+var exp;if(Array.isArray($$[$0-1])){exp = $$[$0-1];}else{exp = [$$[$0-1]];};this.$ = {tipoInstruccion : "RETURN_V" , contenido : exp, fila : this._$.first_line};
 break;
 case 38: case 99: case 104: case 151:
 $$[$0-2].push($$[$0]);this.$ = $$[$0-2];
@@ -266,8 +266,17 @@ break;
 case 112:
  this.$ = {tipo : "ARRAY_CTV", identificador : $$[$0-5] , tipoDato : $$[$0-3] , valor : $$[$0] , fila : this._$.first_line};
 break;
+case 115:
+this.$ = {tipoInstruccion : "LLAMADA_F" , identificador : $$[$0-4] , parametros : $$[$0-2] , fila : this._$.first_line};
+break;
 case 116:
 this.$ = {tipoInstruccion : "POP" , identificador : $$[$0-5], fila : this._$.first_line};
+break;
+case 117:
+var v ;var exp;if(Array.isArray($$[$0])){exp = $$[$0];}else{exp = [$$[$0]];};v = $$[$0-2].concat(exp);this.$ = v;
+break;
+case 118: case 189:
+var exp;if(Array.isArray($$[$0])){exp = $$[$0];}else{exp = [$$[$0]];};this.$ = exp;
 break;
 case 122:
 $$[$0-2].push($$[$0]); this.$ = $$[$0-2];
@@ -371,11 +380,20 @@ break;
 case 181:
 this.$ = valor("CADENA" , String($$[$0]), this._$.first_line);
 break;
+case 182:
+this.$ = {tipo : "LLAMADA_F" , identificador : $$[$0-2] , parametros : [] , fila : this._$.first_line};
+break;
+case 183:
+this.$ = {tipo : "LLAMADA_F" , identificador : $$[$0-3] , parametros : $$[$0-1] , fila : this._$.first_line};
+break;
 case 186:
 this.$ = {tipo : "LENGTH" , identificador : $$[$0-2] , fila : this._$.first_line};
 break;
 case 187:
 this.$ = {tipo : "POP" , identificador : $$[$0-4] , fila : this._$.first_line};
+break;
+case 188:
+var exp;if(Array.isArray($$[$0])){exp = $$[$0];}else{exp = [$$[$0]];};var v; v = $$[$0-2].concat(exp);this.$=v;
 break;
 }
 },

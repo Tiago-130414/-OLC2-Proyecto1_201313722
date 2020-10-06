@@ -2,7 +2,7 @@ function generarTablas(ambitos) {
   var div = document.getElementById("htmlTxt");
   var cad = " ";
   cad = recorrerAmbitos(ambitos);
-  div.innerHTML = cad;
+  div.innerHTML += cad;
 }
 
 function recorrerAmbitos(ambitos) {

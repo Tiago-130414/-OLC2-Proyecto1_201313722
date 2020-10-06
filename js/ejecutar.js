@@ -31,6 +31,8 @@ function ejJson() {
   //eliminarA();
   //console.log(ambitos);
   console.log(log);
+  console.log(ambitos);
+  ambitos = [];
 }
 function ejecutarArchivo(json) {
   for (var element of json) {
@@ -85,20 +87,65 @@ function ejecutarArchivo(json) {
         //console.log(ejecutarBreak());
         return element;
       }
+    } else if (element.tipoInstruccion == "RETURN_V") {
+      //console.log(element);
+      return ejecutarReturn(element);
+    } else if (element.tipoInstruccion == "RETURN") {
+      //console.log(element);
     } else if (element.tipoInstruccion == "FUNCIONSTR") {
       //funcion sin tipo de retorno
-      declaracionFuncion(element);
+      declaracionFuncionSTR(element);
+    } else if (element.tipoInstruccion == "FUNCIONCTR") {
+      //funcion con tipo de retorno
+      declaracionFuncionCTR(element);
+    } else if (element.tipoInstruccion == "LLAMADA_F") {
+      var v = buscarF(element);
+      if (v != undefined) {
+        return v;
+      }
     }
   }
 }
-function declaracionFuncion(elemento) {
-  console.log(elemento);
+///////////////////////////////////////////////////DECLARACION DE FUNCION SIN TIPO Y CON TIPO (SOLO INSERCION A LOS AMBITOS)
+function declaracionFuncionSTR(elemento) {
+  //console.log(elemento);
   var id = elemento.identificador[0].valor;
   //console.log(id);
   //BUSCANDO UN ID REPETIDO EN LOS AMBITOS
   if (!buscarVariable(id)) {
     //console.log(buscarPRepetidos(elemento.parametros));
     if (buscarPRepetidos(elemento.parametros) == false) {
+      insertarAmbito({
+        tipo: elemento.tipoInstruccion,
+        ambito: rNomAmbito(),
+        identificador: id,
+        parametros: elemento.parametros,
+        tipoDato: elemento.tipoDato,
+        instrucciones: elemento.instrucciones,
+        fila: elemento.fila,
+      });
+    }
+  } else {
+    //SI HAY UN ID REPETIDO
+    errorSemantico.push({
+      tipo: "Error Semantico",
+      Error: "identificador duplicado -> " + id,
+      Fila: elemento.fila,
+      Columna: 0,
+    });
+  }
+}
+function declaracionFuncionCTR(elemento) {
+  //console.log(elemento);
+  var id = elemento.identificador[0].valor;
+  //console.log(id);
+  //BUSCANDO UN ID REPETIDO EN LOS AMBITOS
+  if (!buscarVariable(id)) {
+    //console.log(buscarPRepetidos(elemento.parametros));
+    if (buscarPRepetidos(elemento.parametros) == false) {
+      //console.log(elemento.tipoDato);
+      //console.log(elemento.instrucciones);
+      //buscarReturn(elemento.tipoDato, elemento.instrucciones);
       insertarAmbito({
         tipo: elemento.tipoInstruccion,
         ambito: rNomAmbito(),
@@ -144,7 +191,267 @@ function buscarPRepetidos(arr) {
   }
   return repetidas;
 }
+///////////////////////////////////////////////////FUNCION QUE BUSCA RETURN PARA FUNCION CON TIPO AUN NO SE UTILIZARA
+function ejecutarReturn(element) {
+  //console.log(element);
+  //SE OBTIENE LA EXPRESION
+  var v = leerExp(element.contenido);
+  //SE VERIFICA SI LA EXPRESION ES CORRECTA
+  //console.log(v);
+  if (v != undefined) {
+    if (v.tipo != "Error Semantico") {
+      return v;
+    } else {
+      //SI LA EXPRESION NO ES CORRECTA SE RETORNA ERROR
+      return v;
+    }
+  }
+}
+//////////////////////////////////////////////////EJECUTAR FUNCIONES SIN TIPO DE RETORNO
+function buscarF(element) {
+  var encontrado = false;
+  var f = buscarFuncion(element.identificador);
+  //console.log(f);
+  //console.log(element);
+  //PRIMERO SE BUSCARA LA FUNCION EN AMBITOS
+  if (f != undefined) {
+    encontrado = true;
+    //SE VERIFICA SI ES UNA FUNCION SIN TIPO DE RETORNO
+    if (f.tipo == "FUNCIONSTR") {
+      var v = ejecutarFSTR(f, element.parametros);
+      if (v != undefined) {
+        if (v != "Error Semantico") {
+          return v;
+        } else {
+          //errorSemantico.push(v);
+          return v;
+        }
+      }
+    } else if (f.tipo == "FUNCIONCTR") {
+      var v = ejecutarFCTR(f, element.parametros);
+      if (v != undefined) {
+        if (v != "Error Semantico") {
+          return v;
+        } else {
+          //errorSemantico.push(v);
+          return v;
+        }
+      }
+    } else {
+      //ERROR YA QUE NO SERIA FUNCION
+      /*errorSemantico.push({
+        tipo: "Error Semantico",
+        Error: "el identificador proporcionado no pertenece a una funcion",
+        Fila: funcion.fila,
+        Columna: 0,
+      });*/
+      return {
+        tipo: "Error Semantico",
+        Error: "el identificador proporcionado no pertenece a una funcion",
+        Fila: funcion.fila,
+        Columna: 0,
+      };
+    }
+  } else {
+    //ERROR NO SE ENCONTRO FUNCION
+    /*errorSemantico.push({
+      tipo: "Error Semantico",
+      Error: "no se encontro funcion",
+      Fila: element.fila,
+      Columna: 0,
+    });*/
+    encontrado = false;
+    return {
+      tipo: "Error Semantico",
+      Error: "no se encontro funcion",
+      Fila: element.fila,
+      Columna: 0,
+    };
+  }
 
+  //encontrado = true;
+  //break;
+
+  if (encontrado == false) {
+    errorSemantico.push({
+      tipo: "Error Semantico",
+      Error: "necesita declarar antes la funcion -> " + element.identificador,
+      Fila: element.fila,
+      Columna: 0,
+    });
+  }
+}
+function buscarFuncion(id) {
+  for (var i = ambitos.length - 1; i >= 0; i--) {
+    for (var e of ambitos[i]) {
+      //SE COMPARAN LOS IDENTIFICADORES DE LLAMADAS DE FUNCION CON LOS AMBITOS DISPONIBLES
+      if (e.identificador == id) {
+        return e;
+      }
+    }
+  }
+  return undefined;
+}
+
+function ejecutarFSTR(funcion, parametrosLL) {
+  //console.log(funcion);
+  //console.log(parametrosLL);
+  agregarAmbito("FUNCIONSTR");
+  //VERIFICAR CANTIDAD DE PARAMETROS
+  if (funcion.parametros.length == parametrosLL.length) {
+    //VERIFICAR LOS TIPOS DE PARAMETROS Y DECLARARLOS
+    if (
+      verificarTParametros(funcion.parametros, parametrosLL, funcion.fila) ==
+      true
+    ) {
+      //console.log("parametros declarados");
+      //SI YA SE DECLARARON LOS PARAMETROS SE PUEDEN EJECUTAR FUNCIONES
+      agregarAmbito("FUNCIONSTR_TEMP");
+      var v = ejecutarArchivo(funcion.instrucciones);
+      eliminarA();
+      if (v != undefined) {
+        if (v.tipo != "Error Semantico") {
+          eliminarA();
+          return v;
+        } else {
+          errorSemantico.push(v);
+        }
+      }
+      //console.log(v);
+    } else {
+      //ERROR CON LOS PARAMETROS
+      errorSemantico.push({
+        tipo: "Error Semantico",
+        Error: "problema con parametros",
+        Fila: funcion.fila,
+        Columna: 0,
+      });
+    }
+  } else {
+    //ERROR POR MENOR CANTIDAD DE PARAMETROS
+    errorSemantico.push({
+      tipo: "Error Semantico",
+      Error:
+        "cantidad de parametros proporcionada no coinciden con los de funcion",
+      Fila: funcion.fila,
+      Columna: 0,
+    });
+  }
+  eliminarA();
+}
+//////////////////////////////////////////////////EJECUTAR FUNCIONES CON TIPO DE RETORNO
+function ejecutarFCTR(funcion, parametrosLL) {
+  //console.log(funcion);
+  //console.log(parametrosLL);
+  agregarAmbito("FUNCIONCTR");
+  //VERIFICAR CANTIDAD DE PARAMETROS
+  if (funcion.parametros.length == parametrosLL.length) {
+    //VERIFICAR LOS TIPOS DE PARAMETROS Y DECLARARLOS
+    if (
+      verificarTParametros(funcion.parametros, parametrosLL, funcion.fila) ==
+      true
+    ) {
+      //console.log("parametros declarados");
+      //SI YA SE DECLARARON LOS PARAMETROS SE PUEDEN EJECUTAR FUNCIONES
+      //agregarAmbito("FUNCIONCTR_TEMP");
+      var v = ejecutarArchivo(funcion.instrucciones);
+      //console.log(funcion.instrucciones);
+      //eliminarA();
+      if (v != undefined) {
+        if (v.tipo != "Error Semantico") {
+          //console.log(v);
+          if (funcion.tipoDato == v.tipo) {
+            //console.log(v);
+            eliminarA();
+            return v;
+          } else {
+            //SI NO COINCIDEN LOS TIPOS ERROR SEMANTICO
+            errorSemantico.push({
+              tipo: "Error Semantico",
+              Error: "El tipo de retorno no coincide con el asignado a funcion",
+              Fila: funcion.fila,
+              Columna: 0,
+            });
+          }
+        } else {
+          errorSemantico.push(v);
+        }
+      } else {
+        errorSemantico.push({
+          tipo: "Error Semantico",
+          Error: "Es necesario retornar un valor",
+          Fila: funcion.fila,
+          Columna: 0,
+        });
+      }
+      //console.log(v);
+    } else {
+      //ERROR CON LOS PARAMETROS
+      errorSemantico.push({
+        tipo: "Error Semantico",
+        Error: "problema con parametros",
+        Fila: funcion.fila,
+        Columna: 0,
+      });
+    }
+  } else {
+    //ERROR POR MENOR CANTIDAD DE PARAMETROS
+    errorSemantico.push({
+      tipo: "Error Semantico",
+      Error:
+        "cantidad de parametros proporcionada no coinciden con los de funcion",
+      Fila: funcion.fila,
+      Columna: 0,
+    });
+  }
+  eliminarA();
+}
+//////////////////////////////////////////////////VERIFICAR TIPOS DE PARAMETROS
+function verificarTParametros(parametrosF, parametrosLL, fila) {
+  let parametrosCorrectos = false;
+  //console.log(parametrosLL);
+  //VERIFICANDO SI EXISTEN PARAMETROS
+  //console.log(parametrosF);
+  if (parametrosF.length > 0 && parametrosLL.length > 0) {
+    for (let i = 0; i < parametrosF.length; i++) {
+      var pF = parametrosF[i];
+      var pLL = leerExp(parametrosLL[i]);
+      //console.log(pLL);
+      if (pF.tipoDato == pLL.tipo) {
+        //DECLARAR PARAMETROS DE FUNCION
+        //verificarDeclaracion(parametrosF);
+        //console.log(pF);
+
+        //ASIGNAR VALOR A LA VARIABLE PARA DECLARARLA
+        pF.valor = pLL;
+        parametrosCorrectos = true;
+      } else {
+        //SI NO COINCIDEN TIPOS ERROR
+        errorSemantico.push({
+          tipo: "Error Semantico",
+          Error: "tipo de dato incompatible en -> " + pF.identificador,
+          Fila: fila,
+          Columna: 0,
+        });
+        parametrosCorrectos = false;
+      }
+    }
+    if (parametrosCorrectos == true) {
+      //console.log(parametrosF);
+      //SI LA VERIFICACION DE TIPOS DE PARAMETROS ES CORRECTA
+
+      verificarDeclaracion({ modificador: "let", contenido: parametrosF });
+      //console.log(ambitos);
+      return true;
+    } else {
+      //SI LA VERIFICACION DE LOS PARAMETROS NO ES CORRECTA
+      return false;
+    }
+  } else {
+    //SI NO EXISTEN PARAMETROS UNICAMENTE SE RETORNA TRUE PARA PROSEGUIR CON EJECUCION
+    return true;
+  }
+}
 //////////////////////////////////////////////////INSTRUCCION IMPRIMIR
 function ejecutarImprimir(elemento) {
   var id;
@@ -153,11 +460,15 @@ function ejecutarImprimir(elemento) {
   } else {
     id = elemento;
   }
+  //console.log(id);
   var result = leerExp(id);
-  if (result.tipo == "Error Semantico") {
-    errorSemantico.push(result);
-  } else {
-    setter(result.valor);
+  //console.log(result);
+  if (result != undefined) {
+    if (result.tipo == "Error Semantico") {
+      errorSemantico.push(result);
+    } else {
+      setter(result.valor);
+    }
   }
 }
 //////////////////////////////////////////////////DECLARACIONES
@@ -188,14 +499,20 @@ function ejecutarDeclaracion(ele, mod, ambi) {
     if (ele.valor != undefined) {
       //SI TIENE VALOR
       val = leerExp(ele.valor);
-      //VEIRIFICO SI TIENE TIPO
+      /* console.log("******************VAL*******************");
+      console.log(val);
+      console.log("******************ELE*******************");
+      console.log(ele);
+      console.log("****************************************");
+      //VEIRIFICO SI TIENE TIPO*/
       if (ele.tipoDato != undefined) {
         // SI TIENE TIPO Y ES IGUAL AL QUE SERA ASIGNADO
         if (compararTipo(ele.tipoDato, val.tipo) == true) {
           //SE VERIFICA SI EL VALOR DEVUELTO NO TIENE ERROR
           if (val.tipo != "Error Semantico") {
             insertarAmbito({
-              tipo: ele.tipo,
+              instruccion: ele.tipo,
+              tipo: val.tipo,
               ambito: rNomAmbito(),
               modificador: mod,
               identificador: ele.identificador,
@@ -224,7 +541,8 @@ function ejecutarDeclaracion(ele, mod, ambi) {
       } else {
         // SI NO TIENE TIPO SE AGREGA EL MISMO TIPO QUE EL VALOR ASIGNADO
         insertarAmbito({
-          tipo: ele.tipo,
+          instruccion: ele.tipo,
+          tipo: val.tipo,
           ambito: rNomAmbito(),
           modificador: mod,
           identificador: ele.identificador,
@@ -236,7 +554,8 @@ function ejecutarDeclaracion(ele, mod, ambi) {
     } else {
       //SI NO TIENE VALOR SE ASIGNA LO MISMO QUE CUANDO SE DECLARO
       insertarAmbito({
-        tipo: ele.tipo,
+        instruccion: ele.tipo,
+        tipo: val.tipo,
         ambito: rNomAmbito(),
         modificador: mod,
         identificador: ele.identificador,
@@ -844,10 +1163,9 @@ function ejecutarIF(ele) {
       eliminarA();
       if (cd != undefined) {
         //console.log("si soy != undefined");
-        if (cd.tipoInstruccion == "BREAK") {
-          //console.log("retornare valor");
-          return cd;
-        }
+        //if (cd.tipoInstruccion == "BREAK") {
+        //console.log("retornare valor");
+        return cd;
       }
     }
     //var exp = leerExp();
@@ -872,6 +1190,8 @@ function ejecutarWhile(ele) {
           return undefined;
         } else if (cd.tipoInstruccion == "CONTINUE") {
           continue;
+        } else {
+          return cd;
         }
       }
       exp = leerExp(ele.condicion);
@@ -898,6 +1218,8 @@ function ejecutarDoWhile(ele) {
           return undefined;
         } else if (cd.tipoInstruccion == "CONTINUE") {
           continue;
+        } else {
+          return cd;
         }
       }
       exp = leerExp(ele.condicion);
@@ -943,9 +1265,13 @@ function ejecutarFor(ele) {
       if (cd != undefined) {
         if (cd.tipoInstruccion == "BREAK") {
           //console.log("tpsm");
+          eliminarA();
           return undefined;
         } else if (cd.tipoInstruccion == "CONTINUE") {
           continue;
+        } else {
+          eliminarA();
+          return cd;
         }
       }
       ejecutarAsignacion(fin);
@@ -997,9 +1323,13 @@ function ejecutarForIn(ele) {
           eliminarA();
           if (cd != undefined) {
             if (cd.tipoInstruccion == "BREAK") {
+              eliminarA();
               return undefined;
             } else if (cd.tipoInstruccion == "CONTINUE") {
               continue;
+            } else {
+              eliminarA();
+              return cd;
             }
           }
         }
@@ -1051,9 +1381,13 @@ function ejecutarForOf(ele) {
           eliminarA();
           if (cd != undefined) {
             if (cd.tipoInstruccion == "BREAK") {
+              eliminarA();
               return undefined;
             } else if (cd.tipoInstruccion == "CONTINUE") {
               continue;
+            } else {
+              eliminarA();
+              return cd;
             }
           }
         }
@@ -1100,8 +1434,13 @@ function ejecutarSwitch(ele) {
                 eliminarA();
                 if (cd != undefined) {
                   if (cd.tipoInstruccion == "BREAK") {
+                    eliminarA();
                     return undefined;
                   } else if (cd.tipoInstruccion == "CONTINUE") {
+                    eliminarA();
+                    return cd;
+                  } else {
+                    eliminarA();
                     return cd;
                   }
                 }
@@ -1128,8 +1467,21 @@ function ejecutarSwitch(ele) {
         }
       } else if (e.tipoInstruccion == "DEFAULT") {
         agregarAmbito("DEFAULT");
-        ejecutarArchivo(e.instrucciones);
+        var cd = ejecutarArchivo(e.instrucciones);
         eliminarA();
+        //console.log(cd);
+        if (cd != undefined) {
+          if (cd.tipoInstruccion == "BREAK") {
+            eliminarA();
+            return undefined;
+          } else if (cd.tipoInstruccion == "CONTINUE") {
+            eliminarA();
+            return cd;
+          } else {
+            eliminarA();
+            return cd;
+          }
+        }
       }
     }
   } else {
@@ -1182,6 +1534,9 @@ function ejecutarContinue(ele) {
 }
 //////////////////////////////////////////////// REALIZAR OPERACION
 function leerExp(exp) {
+  //console.log("IMPRIMIENDO DESDE LEER EXP");
+  //console.log(exp);
+  //console.log("*****************************");
   if (
     exp.tipo == "OPERACION_SUMA" ||
     exp.tipo == "OPERACION_RESTA" ||
@@ -1220,6 +1575,12 @@ function leerExp(exp) {
     return ejecutarPop(exp);
   } else if (exp.tipo == "LENGTH") {
     return ejecutarLength(exp);
+  } else if (exp.tipo == "LLAMADA_F") {
+    var v = buscarF(exp);
+    // console.log(v);
+    if (v != undefined) {
+      return v;
+    }
   } else if (exp.tipo == "NUMERO") {
     return { tipo: exp.tipo, opR: 0, valor: exp.valor, fila: exp.fila };
   } else if (exp.tipo == "CADENA") {
@@ -1233,6 +1594,8 @@ function leerExp(exp) {
   } else if (Array.isArray(exp)) {
     var id = lAcceso(exp);
     if (id.tipo != "IDENTIFICADOR") {
+      //console.log("******************************************");
+      //console.log(id);
       return leerExp(id);
     } else {
       var vla = buscarAmbId(exp, id.valor);
@@ -1254,6 +1617,7 @@ function leerExp(exp) {
 
 function recuperarId(exp) {
   var ele = buscarAmbId(exp, exp.valor);
+  //console.log(ele);
   if (ele.tipo == "Error Semantico") {
     return {
       tipo: "Error Semantico",
@@ -1268,6 +1632,9 @@ function recuperarId(exp) {
 /////////////////////////////////////////////////OPERACIONES ARITMETICAS
 function ejecutarAritmetica(exp) {
   var opI = leerExp(exp.opIzq);
+  /*console.log("IMPRIMIENDO DESDE EJECUTAR ARITMETICA");
+  console.log(opI);
+  console.log("**************************************");*/
   var opD = leerExp(exp.opDer);
   if (opI.tipo != "Error Semantico" && opD.tipo != "Error Semantico") {
     if (exp.tipo == "OPERACION_SUMA") {
@@ -1430,12 +1797,12 @@ function validarTipoIgIg(opIzq, opDer, topI, topD) {
       var op = opIzq.valor == opDer.valor;
       //console.log(op);
       var tip = asignarTipo(typeof op);
-      console.log(tip);
+      //console.log(tip);
       return { tipo: tip, valor: op };
     } else if (opIzq.tipo == opDer.tipo) {
       var op = opIzq.valor == opDer.valor;
       var tip = asignarTipo(typeof op);
-      console.log(tip);
+      //console.log(tip);
       return { tipo: tip, valor: op };
     }
   } else if (
@@ -1833,11 +2200,9 @@ function compararTipo(tAsig, tVal) {
 }
 ///////////////////////////////////////////////FUNCION QUE BUSCAN ID EN AMBITOS Y RETORNA TRUE O FALSE
 function buscarVariable(idV) {
-  for (var i = ambitos.length - 1; i >= 0; i--) {
-    for (var element of ambitos[i]) {
-      if (element.identificador == idV) {
-        return true;
-      }
+  for (var element of ambitos[ambitos.length - 1]) {
+    if (element.identificador == idV) {
+      return true;
     }
   }
   return false;
