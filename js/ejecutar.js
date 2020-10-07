@@ -370,18 +370,23 @@ function ejecutarFCTR(funcion, parametrosLL) {
       if (v != undefined) {
         if (v.tipo != "Error Semantico") {
           //console.log(v);
-          if (funcion.tipoDato == v.tipo) {
-            //console.log(v);
-            eliminarA();
-            return v;
+          if (funcion.tipoDato != "void") {
+            if (funcion.tipoDato == v.tipo) {
+              //console.log(v);
+              eliminarA();
+              return v;
+            } else {
+              //SI NO COINCIDEN LOS TIPOS ERROR SEMANTICO
+              errorSemantico.push({
+                tipo: "Error Semantico",
+                Error:
+                  "El tipo de retorno no coincide con el asignado a funcion",
+                Fila: funcion.fila,
+                Columna: 0,
+              });
+            }
           } else {
-            //SI NO COINCIDEN LOS TIPOS ERROR SEMANTICO
-            errorSemantico.push({
-              tipo: "Error Semantico",
-              Error: "El tipo de retorno no coincide con el asignado a funcion",
-              Fila: funcion.fila,
-              Columna: 0,
-            });
+            return v;
           }
         } else {
           errorSemantico.push(v);
