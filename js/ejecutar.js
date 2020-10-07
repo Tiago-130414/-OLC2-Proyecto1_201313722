@@ -2,13 +2,16 @@ var errorSemantico = [];
 var ambitos = [];
 var nAmbitos = [];
 var log = [];
+function gTS() {
+  generarLog(log);
+}
 //////////////////////////////////////////////////EJECUTAR ARCHIVO
 function ejJson() {
   Consola.setValue("");
   var texto = Codigo.getValue();
   var vector = Reporte_Errores.parse(texto);
   if (vector.Arbol.length > 0) {
-    agregarAmbito("global");
+    agregarAmbito("GLOBAL");
     ejecutarArchivo(vector.Arbol);
     if (errorSemantico.length != 0) {
       if (vector.Errores.length != 0) {
@@ -31,7 +34,7 @@ function ejJson() {
   //eliminarA();
   //console.log(ambitos);
   console.log(log);
-  console.log(ambitos);
+  //console.log(ambitos);
   ambitos = [];
 }
 function ejecutarArchivo(json) {
@@ -62,17 +65,17 @@ function ejecutarArchivo(json) {
         return p;
       }
     } else if (element.tipoInstruccion == "SWITCH") {
-      ejecutarSwitch(element);
+      return ejecutarSwitch(element);
     } else if (element.tipoInstruccion == "WHILE") {
-      ejecutarWhile(element);
+      return ejecutarWhile(element);
     } else if (element.tipoInstruccion == "DOWHILE") {
-      ejecutarDoWhile(element);
+      return ejecutarDoWhile(element);
     } else if (element.tipoInstruccion == "FOR_IN") {
-      ejecutarForIn(element);
+      return ejecutarForIn(element);
     } else if (element.tipoInstruccion == "FOR_OF") {
-      ejecutarForOf(element);
+      return ejecutarForOf(element);
     } else if (element.tipoInstruccion == "FOR") {
-      ejecutarFor(element);
+      return ejecutarFor(element);
     } else if (element.tipoInstruccion == "BREAK") {
       //console.log("soy yo" + ejecutarBreak()); RETORNA DIRECTAMENTE
       if (ejecutarBreak(element)) {
@@ -92,6 +95,7 @@ function ejecutarArchivo(json) {
       return ejecutarReturn(element);
     } else if (element.tipoInstruccion == "RETURN") {
       //console.log(element);
+      return element.contenido;
     } else if (element.tipoInstruccion == "FUNCIONSTR") {
       //funcion sin tipo de retorno
       declaracionFuncionSTR(element);
@@ -191,7 +195,7 @@ function buscarPRepetidos(arr) {
   }
   return repetidas;
 }
-///////////////////////////////////////////////////FUNCION QUE BUSCA RETURN PARA FUNCION CON TIPO AUN NO SE UTILIZARA
+///////////////////////////////////////////////////FUNCION QUE EJECUTA EL RETURN CON VALOR
 function ejecutarReturn(element) {
   //console.log(element);
   //SE OBTIENE LA EXPRESION
@@ -207,9 +211,11 @@ function ejecutarReturn(element) {
     }
   }
 }
+
 //////////////////////////////////////////////////EJECUTAR FUNCIONES SIN TIPO DE RETORNO
 function buscarF(element) {
   var encontrado = false;
+  //console.log(element.identificador[0].valor);
   var f = buscarFuncion(element.identificador);
   //console.log(f);
   //console.log(element);
@@ -229,6 +235,7 @@ function buscarF(element) {
       }
     } else if (f.tipo == "FUNCIONCTR") {
       var v = ejecutarFCTR(f, element.parametros);
+
       if (v != undefined) {
         if (v != "Error Semantico") {
           return v;
@@ -286,6 +293,7 @@ function buscarFuncion(id) {
     for (var e of ambitos[i]) {
       //SE COMPARAN LOS IDENTIFICADORES DE LLAMADAS DE FUNCION CON LOS AMBITOS DISPONIBLES
       if (e.identificador == id) {
+        //console.log(e.identificador);
         return e;
       }
     }
@@ -354,7 +362,9 @@ function ejecutarFCTR(funcion, parametrosLL) {
       //console.log("parametros declarados");
       //SI YA SE DECLARARON LOS PARAMETROS SE PUEDEN EJECUTAR FUNCIONES
       //agregarAmbito("FUNCIONCTR_TEMP");
+      //console.log("*** VOY A EJECUTAR LAS FUNCIONES ***");
       var v = ejecutarArchivo(funcion.instrucciones);
+      //console.log("************************************");
       //console.log(funcion.instrucciones);
       //eliminarA();
       if (v != undefined) {
@@ -1114,7 +1124,7 @@ function realizarPop(ele) {
 }
 ////////////////////////////////////////////////INSTRUCCION GRAFICAR TS
 function graficar() {
-  generarTablas(ambitos);
+  generarTablas(ambitos, nAmbitos);
 }
 ////////////////////////////////////////////////INSTRUCCION IF
 function ejecutarIF(ele) {
@@ -1577,7 +1587,6 @@ function leerExp(exp) {
     return ejecutarLength(exp);
   } else if (exp.tipo == "LLAMADA_F") {
     var v = buscarF(exp);
-    // console.log(v);
     if (v != undefined) {
       return v;
     }
@@ -1631,6 +1640,13 @@ function recuperarId(exp) {
 }
 /////////////////////////////////////////////////OPERACIONES ARITMETICAS
 function ejecutarAritmetica(exp) {
+  /*console.log("********************EXPRESION******************");
+  console.log(exp);
+  console.log("********************OPI******************");
+  console.log(exp.opIzq);
+  console.log("********************OPD******************");
+  console.log(exp.opDer);
+  console.log("***********************************************");*/
   var opI = leerExp(exp.opIzq);
   /*console.log("IMPRIMIENDO DESDE EJECUTAR ARITMETICA");
   console.log(opI);
@@ -1699,6 +1715,7 @@ function validarTipoS(opIzq, opDer) {
 }
 
 function validarTiposOP(opIzq, opDer, tipOp) {
+  //console.log(opDer);
   if (opIzq.tipo == "NUMERO" && opDer.tipo == "NUMERO") {
     if (tipOp == "RES") {
       var op = opIzq.valor - opDer.valor;
@@ -1706,6 +1723,7 @@ function validarTiposOP(opIzq, opDer, tipOp) {
       return { tipo: tip, opR: 1, valor: op };
     } else if (tipOp == "MULT") {
       var op = opIzq.valor * opDer.valor;
+      //console.log(op);
       var tip = asignarTipo(typeof op);
       return { tipo: tip, opR: 1, valor: op };
     } else if (tipOp == "DIV") {

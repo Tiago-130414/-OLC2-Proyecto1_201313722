@@ -120,7 +120,7 @@ case 35:
 this.$ = {tipoInstruccion : "CONTINUE" , contenido : [], fila : this._$.first_line};
 break;
 case 36:
-this.$ = {tipoInstruccion : "RETURN" , contenido : [], fila : this._$.first_line};
+this.$ = {tipoInstruccion : "RETURN" , contenido : valor("UNDEFINED", undefined,this._$.first_line), fila : this._$.first_line};
 break;
 case 37:
 var exp;if(Array.isArray($$[$0-1])){exp = $$[$0-1];}else{exp = [$$[$0-1]];};this.$ = {tipoInstruccion : "RETURN_V" , contenido : exp, fila : this._$.first_line};

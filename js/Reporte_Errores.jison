@@ -213,7 +213,7 @@ FUNCION_GRAFICAR : R_Graficar S_ParentesisAbre S_ParentesisCierra S_PuntoComa   
 
 SENTENCIAS_TRANSFERENCIA : R_Break S_PuntoComa                                               {$$ = {tipoInstruccion : "BREAK" , contenido : [] , fila : this._$.first_line };}
                          | R_Continue S_PuntoComa                                            {$$ = {tipoInstruccion : "CONTINUE" , contenido : [], fila : this._$.first_line};}
-                         | R_Return S_PuntoComa                                              {$$ = {tipoInstruccion : "RETURN" , contenido : [], fila : this._$.first_line};}
+                         | R_Return S_PuntoComa                                              {$$ = {tipoInstruccion : "RETURN" , contenido : valor("UNDEFINED", undefined,this._$.first_line), fila : this._$.first_line};}
                          | R_Return EXPRESION_G S_PuntoComa                                  {var exp;if(Array.isArray($2)){exp = $2;}else{exp = [$2];};$$ = {tipoInstruccion : "RETURN_V" , contenido : exp, fila : this._$.first_line};}
 ;
 
