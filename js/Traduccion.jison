@@ -252,6 +252,8 @@ function traducir(json){
     return traduccion;
 }
 
+
+
 //funcion que retorna funcion para traduccion
 function tFuncion(f){
     var cad= "";
