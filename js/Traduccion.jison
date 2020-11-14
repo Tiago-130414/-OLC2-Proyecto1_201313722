@@ -308,7 +308,14 @@ function decVariable (f, tip){
                 cad+= e.contenido;
             }
         }else{
-            cad+= ele.contenido;
+            if(Array.isArray(ele.contenido)){
+                for(var e of ele.contenido){
+                    cad += e.contenido;
+                }
+            }else{
+             cad+= ele.contenido;   
+            }
+            //console.log(cad);
         }
     }
     cad+= "\n";
@@ -789,7 +796,7 @@ L_C: L_C LISTA_CORCHETE                                                         
 ;
 
 /*LISTA PARA DECLARACIONES*/
-LISTA_CORCHETE : S_CorcheteAbre S_CorcheteCierra                                    {$$ = [{tipo : "concatenar" , contenido : "[]" }];}
+LISTA_CORCHETE : S_CorcheteAbre S_CorcheteCierra                                    {$$ = [{tipo : "concatenar" , contenido : "["+"]" }];}
 ;
 ///LISTA CORCHETES CON VALOR
 L_CORCHETE_V : L_C_V
@@ -951,7 +958,7 @@ EXPRESION_G
     | OP_Decremento CONTENIDO_EXPRESION                                                          { $$ = unaria({ tipo : "concatenar", contenido : $1},$2); }
     | OP_Incremento CONTENIDO_EXPRESION                                                          { $$ = unaria({ tipo : "concatenar", contenido : $1},$2); }
     | OP_Menos  CONTENIDO_EXPRESION     %prec UMINUS                                             { $$ = unaria({ tipo : "concatenar", contenido : $1},$2); }
-    | LOG_Not   CONTENIDO_EXPRESION     %prec UMINUS                                             { $$ = unaria({ tipo : "concatenar", contenido : $1},$2); }
+    | LOG_Not   EXPRESION_G     %prec UMINUS                                                     { $$ = unaria({ tipo : "concatenar", contenido : $1},$2); }
     | CONTENIDO_EXPRESION
 ;
 

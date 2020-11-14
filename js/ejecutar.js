@@ -1187,16 +1187,17 @@ function ejecutarIF(ele) {
 function ejecutarWhile(ele) {
   //OBTENIENDO EL VALOR DE LA CONDICION
   var exp = leerExp(ele.condicion);
-  //console.log(exp);
+  console.log(exp);
   //VERIFICANDO QUE SEA UNA EXPRESION VALIDA
   if (exp.tipo != "Error Semantico") {
     //console.log(exp);
     //console.log(ele.instrucciones);
     while (exp.valor) {
-      //console.log(exp);
+      console.log(exp);
       agregarAmbito("WHILE");
       var cd = ejecutarArchivo(ele.instrucciones);
       eliminarA();
+      exp = leerExp(ele.condicion);
       if (cd != undefined) {
         if (cd.tipoInstruccion == "BREAK") {
           return undefined;
@@ -1206,7 +1207,6 @@ function ejecutarWhile(ele) {
           return cd;
         }
       }
-      exp = leerExp(ele.condicion);
     }
   } else {
     //REPORTANDO ERROR SI LA EXPRESION NO ES VALIDA
@@ -2220,12 +2220,21 @@ function compararTipo(tAsig, tVal) {
 }
 ///////////////////////////////////////////////FUNCION QUE BUSCAN ID EN AMBITOS Y RETORNA TRUE O FALSE
 function buscarVariable(idV) {
+  //ambitos[ambitos.length - 1]
   for (var element of ambitos[ambitos.length - 1]) {
     if (element.identificador == idV) {
       return true;
     }
   }
   return false;
+  /*for (var i = ambitos.length - 1; i >= 0; i--) {
+    for (var element of ambitos[i]) {
+      if (element.identificador == idV) {
+        return true;
+      }
+    }
+  }
+  return false;*/
 }
 //////////////////////////////////////////////FUNCION QUE BUSCA UN ID Y RETORNA ESE ELEMENTO PARA SER MODIFICADO
 function buscarVModificar(ele, idV) {
